@@ -2,17 +2,18 @@
 // desc: Entry point for the engine
 // auth: Aliyaan Zulfiqar
 //===============================================================================
-#include "Renderer/IRenderer.h"
+#include <memory>
+#include <iostream>
+
+#include "IRenderer.h"
 #ifdef USE_DX11
-#include "Renderer/D3D/RendererDX11.h"
+#include "RendererDX11.h"
 #endif
 #ifdef USE_VULKAN
 #include "Renderer/RendererVulkan.h" // To be implemented
 #endif
 //===============================================================================
-#include <memory>
-#include <iostream>
-//===============================================================================
+
 int main() {
     std::unique_ptr<IRenderer> renderer;
 

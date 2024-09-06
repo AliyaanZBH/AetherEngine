@@ -1,5 +1,4 @@
 #pragma once
-
 //===============================================================================
 // desc: A collection of handy debug utilies for DirectX, chiefly the ability to get better debugging info from HResults!
 // auth: Aliyaan Zulfiqar
@@ -7,8 +6,6 @@
 #include <d3d11.h>
 #include <stdio.h>
 //===============================================================================
-
-
 
 // Credit: Mark Featherstone
 #if defined(DEBUG) | defined(_DEBUG)

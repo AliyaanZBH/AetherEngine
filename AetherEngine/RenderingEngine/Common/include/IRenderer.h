@@ -1,5 +1,4 @@
 #pragma once
-
 //===============================================================================
 // desc: Interface for an abstract renderer, usable by DX11,Vulkan, etc.
 // auth: Aliyaan Zulfiqar

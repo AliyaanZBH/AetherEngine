@@ -10,9 +10,14 @@
 # Specify the source files
 set(SOURCES
     main.cpp
-    Renderer/D3D/RendererDX11.cpp
+    EngineD3D/src/RendererDX11.cpp
     # Add more source files as needed
 )
+
+# Include directories for source code
+include_directories(${PROJECT_SOURCE_DIR}/include)
+include_directories(EngineD3D/include)
+include_directories(Common/include)
 
 # Define the executable
 add_executable(AetherEngine ${SOURCES})
@@ -22,7 +27,7 @@ target_include_directories(AetherEngine PRIVATE ${PROJECT_SOURCE_DIR}/include)
 
 # Platform-specific configurations
 if(WIN32 AND USE_DX11)
-    # Find DirectX libraries using our "FindX.cmake" files
+    # Find DirectX libraries
     find_package(D3D11 REQUIRED)
     find_package(DXGI REQUIRED)
     find_package(D3DCompiler REQUIRED)
@@ -32,6 +37,7 @@ if(WIN32 AND USE_DX11)
     
     # Define a macro for DX11
     target_compile_definitions(AetherEngine PRIVATE USE_DX11)
+
 endif()
 
 
