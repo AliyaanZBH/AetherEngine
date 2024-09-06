@@ -41,12 +41,12 @@ bool RendererDX11::CreateDevice()
 	md3dDriverType = D3D_DRIVER_TYPE_UNKNOWN;
 
 	// Figure out how many gpus we have
-	IDXGIAdapter* pAdapter;
-	std::vector <IDXGIAdapter*> vAdapters;
+	IDXGIAdapter1* pAdapter;
+	std::vector <IDXGIAdapter1*> vAdapters;
 	// Factories handle full screen transitions
-	IDXGIFactory* pFactory = NULL;
+	IDXGIFactory1* pFactory = NULL;
 	SIZE_T useIdx = -1, mostRam = -1;
-	HR(CreateDXGIFactory(__uuidof(IDXGIFactory), (void**)&pFactory));
+	HR(CreateDXGIFactory(__uuidof(IDXGIFactory1), (void**)&pFactory));
 	for (UINT i = 0; pFactory->EnumAdapters(i, &pAdapter) != DXGI_ERROR_NOT_FOUND; ++i)
 	{
 		vAdapters.push_back(pAdapter);
