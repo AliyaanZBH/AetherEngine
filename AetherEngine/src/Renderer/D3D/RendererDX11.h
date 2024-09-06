@@ -123,6 +123,14 @@ private:
 	// Once you have a description you can create the swapchain needed
 	void CreateSwapChain(DXGI_SWAP_CHAIN_DESC& sd);
 
+
+	// Create all render buffers
+	void CreateRenderTargets();
+	void CreateDepthStencilBufferAndView(D3D11_TEXTURE2D_DESC& dsd);
+
+	// Bind the render target view and depth/stencil view to the pipeline.
+	void BindRenderTargetViewAndDepthStencilView();
+
 	// When rendering we can test the depth of pixels, usually so we
 	//	avoid rendering anything that is behind something else
 	ID3D11DepthStencilView* mpDepthStencilView = nullptr;
@@ -136,7 +144,6 @@ private:
 
 	// What sampler state do we want to use?
 	ID3D11SamplerState* mpWrapSampler = nullptr;
-	void CreateD3D(D3D_FEATURE_LEVEL desiredFeatureLevel = D3D_FEATURE_LEVEL_11_0);
 
 	// Buffers in the swap chain must match the screen resolution
 	void ResizeSwapChain(int screenWidth, int screenHeight);
@@ -144,11 +151,6 @@ private:
 	// The kind of depth stencil we want
 	void CreateDepthStencilDescription(D3D11_TEXTURE2D_DESC& dsd, int screenWidth, int screenHeight, bool msaa4X, int maxQuality);
 
-	// Create all render buffers
-	void CreateDepthStencilBufferAndView(D3D11_TEXTURE2D_DESC& dsd);
-
-	// Bind the render target view and depth/stencil view to the pipeline.
-	void BindRenderTargetViewAndDepthStencilView();
 
 	// Viewport dimensions need updating when the window changes size
 	void SetViewportDimensions(int screenWidth, int screenHeight);

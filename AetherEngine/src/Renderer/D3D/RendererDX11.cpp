@@ -7,7 +7,7 @@
 #include <d3dcompiler.h>
 
 #include "RendererDX11.h"
-#include "D3DUtil.h"
+#include "D3DUtils.h"
 //===============================================================================
 
 
@@ -21,7 +21,7 @@ bool RendererDX11::Initialize()
         std::cerr << "Failed to initialize DirectX 11 swap chain." << std::endl;
         return false;
     }
-    if (!InitRenderTarget()) {
+    if (!CreateRenderTargets()) {
         std::cerr << "Failed to initialize DirectX 11 render target." << std::endl;
         return false;
     }
