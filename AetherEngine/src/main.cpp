@@ -4,7 +4,7 @@
 //===============================================================================
 #include "Renderer/IRenderer.h"
 #ifdef USE_DX11
-#include "Renderer/RendererDX11.h"
+#include "Renderer/D3D/RendererDX11.h"
 #endif
 #ifdef USE_VULKAN
 #include "Renderer/RendererVulkan.h" // To be implemented
@@ -37,9 +37,9 @@ int main() {
         // For simplicity, we'll exit immediately
         running = false;
 
-        renderer->RenderFrame();
+        renderer->Render();
     }
 
-    renderer->Shutdown();
+    renderer->Terminate();
     return 0;
 }
