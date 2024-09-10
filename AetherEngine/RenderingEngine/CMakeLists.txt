@@ -3,29 +3,64 @@
 #
 
 
-#
-# DX11
-#
-
 # Specify the source files
-set(SOURCES
+set(SRC
     main.cpp
+    GLFW/src/WinManGLFW.cpp
     EngineD3D/src/RendererDX11.cpp
-    # Add more source files as needed
+)
+
+set(INCLUDE
+    Common/include/*.h
+    GLFW/include/*.h
+    EngineD3D/include/*.h
 )
 
 # Include directories for source code
 include_directories(${PROJECT_SOURCE_DIR}/include)
 include_directories(EngineD3D/include)
 include_directories(Common/include)
+include_directories(GLFW/include)
 
 # Define the executable
-add_executable(AetherEngine ${SOURCES})
+add_executable(AetherEngine ${SRC})
 
 # Include directories for the executable
 target_include_directories(AetherEngine PRIVATE ${PROJECT_SOURCE_DIR}/include)
+target_include_directories(AetherEngine PRIVATE include)
+target_include_directories(AetherEngine PUBLIC Common/include)
+target_include_directories(AetherEngine PUBLIC GLFW/include)
+target_include_directories(AetherEngine PUBLIC EngineD3D/include)
 
+
+# Set source groups for VS2022 quality of life
+source_group("src" FILES ${SRC})
+source_group("include" FILES ${INCLUDE})
+
+#
 # Platform-specific configurations
+#
+
+#
+# Window type
+#
+
+if(WIN32)
+    # Set pre-processor macros
+    target_compile_definitions(AetherEngine PRIVATE USE_WIN32)
+endif()
+
+if(USE_GLFW)
+    # Set pre-processor macros
+    target_compile_definitions(AetherEngine PRIVATE USE_GLFW)
+endif()
+
+
+
+#
+# DX11
+#
+
 if(WIN32 AND USE_DX11)
     # Find DirectX libraries
     find_package(D3D11 REQUIRED)

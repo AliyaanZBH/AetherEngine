@@ -19,16 +19,9 @@ class RendererDX11 : public IRenderer
 {
 public:
 	// Main start up function
-	bool Initialize() override;
+	bool Initialize(IWindow& window) override;
 	void Render() override;
 	void Terminate() override;
-
-
-
-	// Main shutdown function, don't forget to call it
-	// ExtraReporting gives a bit more information about any objects
-	//	that we haven't released properly
-	void ReleaseD3D(bool extraReporting = true);
 
 	// Is the screen/window square or letterbox or?
 	float GetAspectRatio();
@@ -110,7 +103,7 @@ private:
 	void CheckMultiSamplingSupport(UINT& quality4xMsaa);
 
 	// Create the wrap sampler 
-	void CreateWrapSampler(ID3D11SamplerState*& pSampler);
+	void CreateWrapSampler(Microsoft::WRL::ComPtr<ID3D11SamplerState>& pSampler);
 
 
 	// Private members to facillitate the above functions

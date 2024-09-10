@@ -4,11 +4,13 @@
 // auth: Aliyaan Zulfiqar
 //===============================================================================
 
+#include "IWindow.h"
+
 class IRenderer {
 public:
     virtual ~IRenderer() = default;
 
-    virtual bool Initialize() = 0;
+    virtual bool Initialize(IWindow& window) = 0;
     virtual void Render() = 0;
     virtual void Terminate() = 0;
 };

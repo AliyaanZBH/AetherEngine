@@ -31,8 +31,8 @@ Just saves typing and stops silly bugs.
 */
 
 // Credit: Mark Featherstone
-#define HR(x)                                              \
-{                                                          \
+#define HR(x)												\
+{															\
 	HRESULT hr = (x);										\
 	if(FAILED(hr))											\
 		DXError( hr, __FILE__, __LINE__);					\

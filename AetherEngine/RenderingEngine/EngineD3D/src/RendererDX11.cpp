@@ -7,51 +7,34 @@
 #include <d3dcompiler.h>
 #include <vector>
 
-#include <GLFW/glfw3.h>
-#define GLFW_EXPOSE_NATIVE_WIN32
-#define GLFW_EXPOSE_NATIVE_WGL
-#include <GLFW/glfw3native.h>
 
 #include "RendererDX11.h"
 #include "D3DUtils.h"
 //===============================================================================
 
-bool RendererDX11::Initialize()
+bool RendererDX11::Initialize(IWindow& window)
 {
-    if (!glfwInit())
-		assert(false, "Failed to initialize GLFW."); 
-	
 	if (!CreateDevice())
 		assert(false, "Failed to initialize DirectX 11 device.");
-
-	// Create a GLFW window without an OpenGL context
-	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-	// TODO: Dynamic window size
-	int w = 800, h = 600;
-	GLFWwindow* window = glfwCreateWindow(w, h, "Aether Engine", nullptr, nullptr);
-	if (window == nullptr) {
-		assert(false, "Failed to create GLFW window.");
-		glfwTerminate();
-		return false;
-	}
-
 	// Retrieve the native window handle (HWND on Windows)
-	HWND hwnd = glfwGetWin32Window(window);
+
+	HWND hwnd = static_cast<HWND>(window.GetNativeWindowHandle());
 
 	// Create swapchain description based on the current window
 	DXGI_SWAP_CHAIN_DESC sd;
-	CreateSwapChainDescription(sd, hwnd, true, w, h);
+	CreateSwapChainDescription(sd, hwnd, true, window.GetData().m_ClientWidth, window.GetData().m_ClientHeight);
 
     if (!CreateSwapChain(sd))
 		assert(false, "Failed to initialize DirectX 11 swap chain.");
 
 	// Needs to be executed every time the window is resized
 	// So just call the OnResize method here to avoid code duplication.
-	OnResize(w, h, *this);
+	OnResize(window.GetData().m_ClientWidth, window.GetData().m_ClientHeight, *this);
 
-	//if (!CreateRenderTargets())
-	//	assert(false, "Failed to initialize DirectX 11 render target.");
+	// Set sampler state
+	CreateWrapSampler(m_pWrapSampler);
 
+	// Return true if we made all the way here without failing previous functions
     return true;
 }
 
@@ -67,8 +50,28 @@ void RendererDX11::Render()
 
 void RendererDX11::Terminate()
 {
-	// Destroy GLFW window and terminate
-	glfwTerminate();
+	// Clean up D3D and exit safely
+	// 
+	// Check if full screen - not advisable to exit in full screen mode
+	if (m_pSwapChain)
+	{
+		BOOL fullscreen = false;
+		HR(m_pSwapChain->GetFullscreenState(&fullscreen, nullptr));
+		if (fullscreen) // Go for a window
+			m_pSwapChain->SetFullscreenState(false, nullptr);
+	}
+
+	// Clear context
+	if (m_pD3DImmediateContext)
+	{
+		m_pD3DImmediateContext->ClearState();
+		m_pD3DImmediateContext->Flush();
+	}
+
+	// Some extra reporting
+	Microsoft::WRL::ComPtr<ID3D11Debug> pD3DDebug;
+	HR(m_pD3DDevice->QueryInterface(__uuidof(ID3D11Debug), reinterpret_cast<void**>(pD3DDebug.Get())));
+	HR(pD3DDebug->ReportLiveDeviceObjects(D3D11_RLDO_SUMMARY));
 }
 
 
@@ -196,6 +199,18 @@ void RendererDX11::OnResize_Default(int clientWidth, int clientHeight)
 	//D3D11_TEXTURE2D_DESC depthStencilDesc;
 	//CreateDepthStencilDescription(depthStencilDesc, clientWidth, clientHeight, mEnable4xMsaa, m4xMsaaQuality - 1);
 	//CreateDepthStencilBufferAndView(depthStencilDesc);
+}
 
-
+void RendererDX11::CreateWrapSampler(Microsoft::WRL::ComPtr<ID3D11SamplerState>& pSampler)
+{
+	D3D11_SAMPLER_DESC sampDesc;
+	ZeroMemory(&sampDesc, sizeof(sampDesc));
+	sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+	sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+	sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+	sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+	sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+	sampDesc.MinLOD = 0;
+	sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
+	HR(m_pD3DDevice->CreateSamplerState(&sampDesc, &pSampler));
 }

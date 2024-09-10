@@ -12,6 +12,12 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+# Option to build with GLFW
+option(USE_GLFW "Build with GLFW" ON)
+
+# Option to build with WIN32 (default ON for Windows, currently set to off as development is focused on GLFW)
+option(USE_WIN32 "Build with WIN32" OFF)
+
 # Option to build with DX11 (default ON for Windows)
 option(USE_DX11 "Build with DirectX 11" ON)
 
@@ -21,6 +27,9 @@ option(USE_VULKAN "Build with Vulkan" OFF)
 # Include directories
 include_directories(${PROJECT_SOURCE_DIR}/include)
 include_directories(${CMAKE_SOURCE_DIR}/include)
+include_directories(RenderingEngine/EngineD3D/include)
+include_directories(RenderingEngine/Common/include)
+include_directories(RenderingEngine/GLFW/include)
 
 # Add key subdirectories
 add_subdirectory(RenderingEngine)
