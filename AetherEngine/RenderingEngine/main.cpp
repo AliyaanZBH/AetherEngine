@@ -3,7 +3,6 @@
 // auth: Aliyaan Zulfiqar
 //===============================================================================
 #include <memory>
-#include <iostream>
 
 #include "IWindow.h"
 #include "IRenderer.h"
@@ -57,7 +56,7 @@ int main() {
         assert(false);
     // Init rendering API
     if (!renderer->Initialize(*window)) {
-        std::cerr << "Renderer initialization failed." << std::endl;
+        throw "Renderer initialization failed.";
         return -1;
     }
 

@@ -126,6 +126,11 @@ private:
 	D3D_DRIVER_TYPE m_D3DDriverType = D3D_DRIVER_TYPE_UNKNOWN;
 
 
+
+	//
+	// Currently unused values that will be implemented soon
+	//
+
 	// Depth buffer for sorting pixels by distance from camera
 	ID3D11Texture2D* m_pDepthStencilBuffer = nullptr;
 

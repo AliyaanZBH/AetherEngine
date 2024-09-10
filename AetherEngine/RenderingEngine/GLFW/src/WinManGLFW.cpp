@@ -11,7 +11,7 @@ bool WinManGLFW::Initialize(const WinData& winData)
 {
     // Get GLFW setup for app window
     if (!glfwInit())
-        assert(false, "Failed to initialize GLFW.");
+        assert(false && "Failed to initialize GLFW.");
 
     // Create a GLFW window without an OpenGL context
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
@@ -20,7 +20,7 @@ bool WinManGLFW::Initialize(const WinData& winData)
     m_pWindow = glfwCreateWindow(winData.m_ClientWidth, winData.m_ClientHeight, "Aether Engine", nullptr, nullptr);
     if (m_pWindow == nullptr)
     {
-        assert(false, "Failed to create GLFW window.");
+        assert(false && "Failed to create GLFW window.");
         glfwTerminate();
         return false;
     }
