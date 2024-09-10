@@ -27,9 +27,7 @@ option(USE_VULKAN "Build with Vulkan" OFF)
 # Include directories
 include_directories(${PROJECT_SOURCE_DIR}/include)
 include_directories(${CMAKE_SOURCE_DIR}/include)
-include_directories(RenderingEngine/EngineD3D/include)
-include_directories(RenderingEngine/Common/include)
-include_directories(RenderingEngine/GLFW/include)
+
 
 # Add key subdirectories
 add_subdirectory(RenderingEngine)
@@ -38,4 +36,4 @@ add_subdirectory(RenderingEngine)
 add_subdirectory(third-party/glfw)
 
 # Link GLFW to your executable
-target_link_libraries(AetherEngine PRIVATE glfw)
+target_link_libraries(AetherRenderer PRIVATE glfw)

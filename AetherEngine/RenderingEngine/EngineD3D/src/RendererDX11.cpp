@@ -41,7 +41,7 @@ bool RendererDX11::Initialize(IWindow& window)
 void RendererDX11::Render()
 {
 	// Clear the back buffer
-	float clearColor[4] = { 0.1f, 0.2f, 0.3f, 1.0f };
+	float clearColor[4] = { 1.f, 0.3f, 0.0f, 1.0f };
 	m_pD3DImmediateContext->ClearRenderTargetView(m_pRenderTargetView.Get(), clearColor);
 
 	// Present the frame
