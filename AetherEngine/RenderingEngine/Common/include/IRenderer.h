@@ -3,8 +3,8 @@
 // desc: Interface for an abstract renderer, usable by DX11,Vulkan, etc.
 // auth: Aliyaan Zulfiqar
 //===============================================================================
-
 #include "IWindow.h"
+//===============================================================================
 
 class IRenderer {
 public:

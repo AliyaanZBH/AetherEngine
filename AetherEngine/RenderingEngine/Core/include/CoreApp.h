@@ -4,6 +4,7 @@
 // auth: Aliyaan Zulfiqar
 //===============================================================================
 #include "Core.h"
+#include "AetherUtils.h"
 //===============================================================================
 
 namespace Aether
@@ -14,8 +15,9 @@ namespace Aether
 		Application() {}
 		virtual ~Application() {}
 	
-		void Run();
+		AetherError Run();
 	};
-	
-	
+
+	// External function to be defined in clinet applications (games)
+	Application* CreateApplication();
 }

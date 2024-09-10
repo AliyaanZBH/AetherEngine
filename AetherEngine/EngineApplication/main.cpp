@@ -1,18 +1,20 @@
+//===============================================================================
+// desc: This represents an application that was created using the engine. This is where game code will go!
+// auth: Aliyaan Zulfiqar
+//===============================================================================
 #include <Aether.h>
+//===============================================================================
 
-
-class EditorApp : public Aether::Application
+class AetherGame : public Aether::Application
 {
 	public:
-		EditorApp()
+		AetherGame()
 		{}
-		~EditorApp()
+		~AetherGame()
 		{}
 };
 
-int main()
+Aether::Application* Aether::CreateApplication()
 {
-	EditorApp* app = new EditorApp();
-	app->Run();
-	delete app;
+	return new AetherGame();
 }

@@ -4,8 +4,6 @@
 
 # Specify the source files
 set(SRC
-
-    main.cpp
     Core/src/CoreApp.cpp
     GLFW/src/WinManGLFW.cpp
     EngineD3D/src/RendererDX11.cpp
@@ -13,21 +11,22 @@ set(SRC
 
 set(INCLUDE
 
+    Core/include/Core.h
+    Core/include/CoreApp.h
     Common/include/AetherUtils.h
     Common/include/IRenderer.h
     Common/include/IWindow.h
-    Core/include/Core.h
-    Core/include/CoreApp.h
     GLFW/include/WinManGLFW.h
     EngineD3D/include/D3DUtils.h
     EngineD3D/include/RendererDX11.h
     Aether.h
+    EntryPoint.h
 )
 
 # Include directories for source code
 include_directories(${PROJECT_SOURCE_DIR}/include)
-include_directories(Common/include)
 include_directories(Core/include)
+include_directories(Common/include)
 include_directories(GLFW/include)
 include_directories(EngineD3D/include)
 
