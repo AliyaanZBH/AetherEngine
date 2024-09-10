@@ -69,8 +69,8 @@ void RendererDX11::Terminate()
 	}
 
 	// Some extra reporting
-	Microsoft::WRL::ComPtr<ID3D11Debug> pD3DDebug;
-	HR(m_pD3DDevice->QueryInterface(__uuidof(ID3D11Debug), reinterpret_cast<void**>(pD3DDebug.Get())));
+	ID3D11Debug* pD3DDebug;
+	HR(m_pD3DDevice->QueryInterface(__uuidof(ID3D11Debug), reinterpret_cast<void**>(&pD3DDebug)));
 	HR(pD3DDebug->ReportLiveDeviceObjects(D3D11_RLDO_SUMMARY));
 }
 
