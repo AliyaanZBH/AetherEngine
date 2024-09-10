@@ -12,5 +12,7 @@ class EditorApp : public Aether::Application
 
 int main()
 {
-	return 0;
+	EditorApp* app = new EditorApp();
+	app->Run();
+	delete app;
 }
