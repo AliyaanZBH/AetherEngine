@@ -8,7 +8,7 @@
 	extern Aether::Application* Aether::CreateApplication();
 #endif
 
-
+// Using args for Win32 support down the line
 int main(int argc, char** argv)
 {
 	auto game = Aether::CreateApplication();

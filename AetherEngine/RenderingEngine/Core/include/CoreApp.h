@@ -15,6 +15,7 @@ namespace Aether
 		Application() {}
 		virtual ~Application() {}
 	
+		// This is where the main game loop will live
 		AetherError Run();
 	};
 

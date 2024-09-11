@@ -5,6 +5,7 @@
 # Specify the source files
 set(SRC
     Core/src/CoreApp.cpp
+    Core/src/Log.cpp
     GLFW/src/WinManGLFW.cpp
     EngineD3D/src/RendererDX11.cpp
 )
@@ -12,13 +13,17 @@ set(SRC
 set(INCLUDE
 
     EntryPoint.h
+
     Core/include/Aether.h
     Core/include/Core.h
     Core/include/CoreApp.h
     Core/include/AetherUtils.h
     Core/include/IRenderer.h
     Core/include/IWindow.h
+    Core/include/Log.h
+
     GLFW/include/WinManGLFW.h
+
     EngineD3D/include/D3DUtils.h
     EngineD3D/include/RendererDX11.h
 )
