@@ -15,9 +15,9 @@ set(INCLUDE
     Core/include/Aether.h
     Core/include/Core.h
     Core/include/CoreApp.h
-    Common/include/AetherUtils.h
-    Common/include/IRenderer.h
-    Common/include/IWindow.h
+    Core/include/AetherUtils.h
+    Core/include/IRenderer.h
+    Core/include/IWindow.h
     GLFW/include/WinManGLFW.h
     EngineD3D/include/D3DUtils.h
     EngineD3D/include/RendererDX11.h
@@ -26,7 +26,6 @@ set(INCLUDE
 # Include directories for source code
 include_directories(${PROJECT_SOURCE_DIR}/include)
 include_directories(Core/include)
-include_directories(Common/include)
 include_directories(GLFW/include)
 include_directories(EngineD3D/include)
 
@@ -36,7 +35,6 @@ add_library(AetherRenderer SHARED ${SRC} ${INCLUDE})
 # Include directories for the executable
 target_include_directories(AetherRenderer PRIVATE ${PROJECT_SOURCE_DIR}/include)
 target_include_directories(AetherRenderer PRIVATE include)
-target_include_directories(AetherRenderer PUBLIC Common/include)
 target_include_directories(AetherRenderer PUBLIC Core/include)
 target_include_directories(AetherRenderer PUBLIC GLFW/include)
 target_include_directories(AetherRenderer PUBLIC EngineD3D/include)
