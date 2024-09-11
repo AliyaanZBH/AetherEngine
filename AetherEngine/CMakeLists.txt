@@ -42,9 +42,12 @@ add_subdirectory(EngineApplication)
 
 # Third-party subdirectories
 add_subdirectory(third-party/glfw)
+add_subdirectory(third-party/spdlog)
 
-# Link GLFW to renderer
+
+# Link third party modules to renderer
 target_link_libraries(AetherRenderer PRIVATE glfw)
+target_link_libraries(AetherRenderer PRIVATE spdlog)
 
 # Link renderer DLL to Application exe
 target_link_libraries(AetherApp PRIVATE AetherRenderer)

@@ -1,0 +1,6 @@
+[submodule "AetherEngine/third-party/spdlog"]
+	path = AetherEngine/third-party/spdlog
+	url = https://github.com/gabime/spdlog.git
+[submodule "AetherEngine/third-party/glfw"]
+	path = AetherEngine/third-party/glfw
+	url = https://github.com/glfw/glfw.git
