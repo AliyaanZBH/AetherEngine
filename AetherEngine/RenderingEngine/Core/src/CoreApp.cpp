@@ -1,7 +1,9 @@
 //===============================================================================
-// desc: Entry point for the engine
+// desc: The core rendering app that facilitates DLL exporting for use in the main AetherApp
 // auth: Aliyaan Zulfiqar
 //===============================================================================
+#include "CoreApp.h"
+
 #include <memory>
 
 #include "IWindow.h"
@@ -20,31 +22,32 @@
 #endif
 //===============================================================================
 
-
-int main() {
+AetherError Aether::Application::Run()
+{
+    AetherError ret;
     // Create unique, single instances of our key interfaces
     std::unique_ptr<IWindow> window;
     std::unique_ptr<IRenderer> renderer;
 
-// Set which type of window we are creating
-// Later in development, this will be read from a JSON config file so that the user can manually change it from a GUI inside the application!
+    // Set which type of window we are creating
+    // Later in development, this will be read from a JSON config file so that the user can manually change it from a GUI inside the application!
 #ifdef USE_GLFW
     window = std::make_unique<WinManGLFW>();
 #elif defined(USE_WIN32)
     renderer = std::make_unique<WinManWin32>();
 #else
     std::cerr << "No window API defined. Please enable USE_GLFW or USE_WIN32." << std::endl;
-    return -1;
+    ret = -1;
 #endif
 
-// Set the desired rendering API, based on the chosen macro.
+    // Set the desired rendering API, based on the chosen macro.
 #ifdef USE_DX11
     renderer = std::make_unique<RendererDX11>();
 #elif defined(USE_VULKAN)
     renderer = std::make_unique<RendererVulkan>();
 #else
     std::cerr << "No rendering API defined. Please enable USE_DX11 or USE_VULKAN." << std::endl;
-    return -1;
+    ret = -1;
 #endif
 
     // Set up winData struct. Again, this would be saved and loaded from a config file later in development
@@ -57,7 +60,7 @@ int main() {
     // Init rendering API
     if (!renderer->Initialize(*window)) {
         throw "Renderer initialization failed.";
-        return -1;
+        ret = -1;
     }
 
     // Main loop
@@ -71,5 +74,5 @@ int main() {
     }
 
     renderer->Terminate();
-    return 0;
+    return AETHER_OK;
 }
