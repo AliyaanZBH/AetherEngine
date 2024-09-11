@@ -46,6 +46,15 @@ target_include_directories(AetherRenderer PUBLIC EngineD3D/include)
 source_group("src" FILES ${SRC})
 source_group("include" FILES ${INCLUDE})
 
+# Third-party subdirectories
+add_subdirectory(ThirdParty/glfw)
+add_subdirectory(ThirdParty/spdlog)
+
+# Link third party modules to renderer
+target_link_libraries(AetherRenderer PRIVATE glfw)
+target_link_libraries(AetherRenderer PRIVATE spdlog::spdlog)
+
+
 # Define macro to ensure this project exports a DLL - this is how games can function as their own apps using our rendering code
 target_compile_definitions(AetherRenderer PRIVATE AETHER_BUILD_DLL)
 
