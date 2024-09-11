@@ -28,21 +28,20 @@ set(INCLUDE
     EngineD3D/include/RendererDX11.h
 )
 
-# Include directories for source code
-include_directories(${PROJECT_SOURCE_DIR}/include)
-include_directories(Core/include)
-include_directories(GLFW/include)
-include_directories(EngineD3D/include)
 
-# Define the executable
+# Define the DLL
 add_library(AetherRenderer SHARED ${SRC} ${INCLUDE})
 
-# Include directories for the executable
+# Include directories for the DLL
 target_include_directories(AetherRenderer PRIVATE ${PROJECT_SOURCE_DIR}/include)
 target_include_directories(AetherRenderer PRIVATE include)
+target_include_directories(AetherRenderer PRIVATE EngineD3D/include)
+target_include_directories(AetherRenderer PRIVATE GLFW/include)
+# Public so application can see it
 target_include_directories(AetherRenderer PUBLIC Core/include)
-target_include_directories(AetherRenderer PUBLIC GLFW/include)
-target_include_directories(AetherRenderer PUBLIC EngineD3D/include)
+
+
+
 
 
 # Set source groups for VS2022 quality of life
@@ -55,11 +54,21 @@ add_subdirectory(ThirdParty/spdlog)
 
 # Link third party modules to renderer
 target_link_libraries(AetherRenderer PRIVATE glfw)
-target_link_libraries(AetherRenderer PRIVATE spdlog::spdlog)
+target_link_libraries(AetherRenderer PUBLIC spdlog::spdlog_header_only)
 
 
 # Define macro to ensure this project exports a DLL - this is how games can function as their own apps using our rendering code
 target_compile_definitions(AetherRenderer PRIVATE AETHER_BUILD_DLL)
+
+get_target_property( DEBUG_INCLUDES AetherRenderer LINK_LIBRARIES)
+message("AetherRenderer include directories: ${DEBUG_INCLUDES}")
+
+
+
+
+
+
+
 
 #
 # Platform-specific configurations
