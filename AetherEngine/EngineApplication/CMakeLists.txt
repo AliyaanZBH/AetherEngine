@@ -12,7 +12,7 @@ set(SRC
 )
 
 set(INCLUDE
-    ${PROJECT_SOURCE_DIR}/RenderingEngine/Aether.h
+    ${PROJECT_SOURCE_DIR}/RenderingEngine/Core/include/Aether.h
 )
 
 

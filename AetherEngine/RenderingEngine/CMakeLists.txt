@@ -11,6 +11,8 @@ set(SRC
 
 set(INCLUDE
 
+    EntryPoint.h
+    Core/include/Aether.h
     Core/include/Core.h
     Core/include/CoreApp.h
     Common/include/AetherUtils.h
@@ -19,8 +21,6 @@ set(INCLUDE
     GLFW/include/WinManGLFW.h
     EngineD3D/include/D3DUtils.h
     EngineD3D/include/RendererDX11.h
-    Aether.h
-    EntryPoint.h
 )
 
 # Include directories for source code
@@ -109,7 +109,3 @@ if(USE_VULKAN)
 endif()
 
 # Handle other platform-specific settings
-
-message("Preprocessor definitions for AetherRenderer: $<TARGET_PROPERTY:AetherRenderer,COMPILE_DEFINITIONS>")
-get_target_property(DEFINITIONS AetherRenderer COMPILE_DEFINITIONS)
-message("AetherRenderer Compile Definitions: ${DEFINITIONS}")
