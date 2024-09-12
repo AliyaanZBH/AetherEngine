@@ -14,7 +14,7 @@ void Aether::Log::Init()
 {
 	// Set global log formatting - print log level and timestamp, name of the logger (Aether or Client), and then the actual message, followed by the source file and line.
 	// It will be wrapped in a colour based on log level.
-	spdlog::set_pattern("%^[%n] [%T] %v%@%$");
+	spdlog::set_pattern("%^[%T] [%n] %v%@%$");
 
 	// Setup core logger with multithreaded colour and set level to trace
 	s_AetherLogger = spdlog::stdout_color_mt("AETHER");

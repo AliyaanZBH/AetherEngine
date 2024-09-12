@@ -6,6 +6,7 @@
 #include <cstdint>			// For standard types such as uint32_t
 //===============================================================================
 
-typedef int AetherError;	// For more useful error handling at low-level
+typedef int AetherReturn;	// For more useful error handling at low-level
 #define AETHER_OK 0
+#define AETHER_FAIL 1
 

@@ -21,10 +21,10 @@
 #endif
 //===============================================================================
 
-AetherError Aether::Application::Run()
+AetherReturn Aether::Application::Run()
 {
     // A local instance that represents possible error codes.
-    AetherError ret;
+    AetherReturn ret;
 
     // Create unique, single instances of our key interfaces
     std::unique_ptr<IWindow> window;
@@ -38,7 +38,7 @@ AetherError Aether::Application::Run()
     renderer = std::make_unique<WinManWin32>();
 #else
     #error No window API defined. Please enable USE_GLFW or USE_WIN32."
-    ret = 1;
+    ret = AETHER_FAIL;
 #endif
 
     // Set the desired rendering API, based on the chosen macro.
@@ -48,7 +48,7 @@ AetherError Aether::Application::Run()
     renderer = std::make_unique<RendererVulkan>();
 #else
     #error No rendering API defined. Please enable USE_DX11 or USE_VULKAN.
-    ret = 1;
+    ret = AETHER_FAIL;
 #endif
 
     // Set up winData struct. Again, this would be saved and loaded from a config file later in development
