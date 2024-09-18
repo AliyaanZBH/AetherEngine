@@ -60,14 +60,20 @@ target_link_libraries(AetherRenderer PUBLIC spdlog::spdlog_header_only)
 # Define macro to ensure this project exports a DLL - this is how games can function as their own apps using our rendering code
 target_compile_definitions(AetherRenderer PRIVATE AETHER_BUILD_DLL)
 
-get_target_property( DEBUG_INCLUDES AetherRenderer LINK_LIBRARIES)
-message("AetherRenderer include directories: ${DEBUG_INCLUDES}")
 
+#
+# Build Configuration specific options
+#
 
+# Configuration compile definitions
+target_compile_definitions(AetherRenderer PRIVATE $<CONFIG:Debug> AETHER_DEBUG)
+target_compile_definitions(AetherRenderer PRIVATE $<CONFIG:Release> AETHER_RELEASE)
+target_compile_definitions(AetherRenderer PRIVATE $<CONFIG:Distribution> AETHER_DIST)
 
-
-
-
+# Enable optimisations when not in debug
+if (AETHER_RELEASE OR AETHER_DIST)
+        set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
+endif()
 
 
 #
