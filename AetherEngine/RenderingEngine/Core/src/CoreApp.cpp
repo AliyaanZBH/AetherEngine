@@ -2,10 +2,9 @@
 // desc: The core rendering app that facilitates DLL exporting for use in the main AetherApp
 // auth: Aliyaan Zulfiqar
 //===============================================================================
-#include "CoreApp.h"
-
 #include <memory>
 
+#include "CoreApp.h"
 #include "IWindow.h"
 #include "IRenderer.h"
 
@@ -22,9 +21,11 @@
 #endif
 //===============================================================================
 
-AetherError Aether::Application::Run()
+AetherReturn Aether::Application::Run()
 {
-    AetherError ret;
+    // A local instance that represents possible error codes.
+    AetherReturn ret;
+
     // Create unique, single instances of our key interfaces
     std::unique_ptr<IWindow> window;
     std::unique_ptr<IRenderer> renderer;
@@ -36,8 +37,8 @@ AetherError Aether::Application::Run()
 #elif defined(USE_WIN32)
     renderer = std::make_unique<WinManWin32>();
 #else
-    std::cerr << "No window API defined. Please enable USE_GLFW or USE_WIN32." << std::endl;
-    ret = -1;
+    #error No window API defined. Please enable USE_GLFW or USE_WIN32."
+    ret = AETHER_FAIL;
 #endif
 
     // Set the desired rendering API, based on the chosen macro.
@@ -46,8 +47,8 @@ AetherError Aether::Application::Run()
 #elif defined(USE_VULKAN)
     renderer = std::make_unique<RendererVulkan>();
 #else
-    std::cerr << "No rendering API defined. Please enable USE_DX11 or USE_VULKAN." << std::endl;
-    ret = -1;
+    #error No rendering API defined. Please enable USE_DX11 or USE_VULKAN.
+    ret = AETHER_FAIL;
 #endif
 
     // Set up winData struct. Again, this would be saved and loaded from a config file later in development
@@ -63,7 +64,7 @@ AetherError Aether::Application::Run()
         ret = -1;
     }
 
-    // Main loop
+    // The game loop!
     while (!window->WindowShouldClose()) {
 
         // Handle window events here (e.g., using GLFW or another windowing library)
@@ -73,6 +74,9 @@ AetherError Aether::Application::Run()
         renderer->Render();
     }
 
+    // Make sure we release our resources
     renderer->Terminate();
+
+    // Return the OK!
     return AETHER_OK;
 }

@@ -24,12 +24,26 @@ target_include_directories(AetherApp PRIVATE ${PROJECT_SOURCE_DIR}/include)
 target_include_directories(AetherApp PRIVATE include)
 target_include_directories(AetherApp PRIVATE include)
 
-# Important step to ensure that the app IMPORTS the DLL instead of trying to export one!
-#target_compile_definitions(AetherApp PRIVATE AETHER_BUILD_DLL=0)
-
 # Set source groups for VS2022 quality of life
 source_group("src" FILES ${SRC})
 source_group("include" FILES ${INCLUDE})
+
+
+#
+# Build Configuration specific options
+#
+
+
+# Configuration compile definitions
+target_compile_definitions(AetherApp PRIVATE $<CONFIG:Debug> AETHER_DEBUG)
+target_compile_definitions(AetherApp PRIVATE $<CONFIG:Release> AETHER_RELEASE)
+target_compile_definitions(AetherApp PRIVATE $<CONFIG:Distribution> AETHER_DIST)
+
+# Enable optimisations when not in debug
+if (AETHER_RELEASE OR AETHER_DIST)
+        set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
+endif()
+
 
 # Link renderer DLL to the app exe we are creating
 target_link_libraries(AetherApp PRIVATE AetherRenderer)
@@ -40,6 +54,3 @@ add_custom_command(TARGET AetherApp POST_BUILD
         $<TARGET_FILE:AetherRenderer>               # The path to the generated .dll
         $<TARGET_FILE_DIR:AetherApp>                # The directory where the .exe is located
 )
-
-get_target_property(DEFINITIONS AetherApp COMPILE_DEFINITIONS)
-message("AetherApp Compile Definitions: ${DEFINITIONS}")

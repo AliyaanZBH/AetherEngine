@@ -12,13 +12,9 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+# Setup build configs
+set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "" FORCE)
 
-# This is a flag that will flip whether or not any of our projects are importing or exporting a dll
-#option(AETHER_BUILD_DLL "Used to distinguish when the rendering API needs to export its DLL or if an application is importing it." ON)
-
-
-
-#option(AETHER_PLATFORM_WINDOWS "Turn this on if you're targeting Windows'." ON)
 
 # Option to build with GLFW
 option(USE_GLFW "Create windows with GLFW" ON)
@@ -39,12 +35,6 @@ include_directories(${CMAKE_SOURCE_DIR}/include)
 # Add key subdirectories
 add_subdirectory(RenderingEngine)
 add_subdirectory(EngineApplication)
-
-# Third-party subdirectories
-add_subdirectory(third-party/glfw)
-
-# Link GLFW to renderer
-target_link_libraries(AetherRenderer PRIVATE glfw)
 
 # Link renderer DLL to Application exe
 target_link_libraries(AetherApp PRIVATE AetherRenderer)
