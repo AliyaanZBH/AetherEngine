@@ -26,6 +26,10 @@ set(INCLUDE
 
     EngineD3D/include/D3DUtils.h
     EngineD3D/include/RendererDX11.h
+
+    Events/include/Event.h
+    Events/include/KeyEvent.h
+    Events/include/MouseEvent.h
 )
 
 
@@ -37,12 +41,9 @@ target_include_directories(AetherRenderer PRIVATE ${PROJECT_SOURCE_DIR}/include)
 target_include_directories(AetherRenderer PRIVATE include)
 target_include_directories(AetherRenderer PRIVATE EngineD3D/include)
 target_include_directories(AetherRenderer PRIVATE GLFW/include)
+target_include_directories(AetherRenderer PRIVATE Events/include)
 # Public so application can see it
 target_include_directories(AetherRenderer PUBLIC Core/include)
-
-
-
-
 
 # Set source groups for VS2022 quality of life
 source_group("src" FILES ${SRC})
