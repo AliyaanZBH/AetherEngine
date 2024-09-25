@@ -94,7 +94,7 @@ private:
 	void ResizeSwapChain(int screenWidth, int screenHeight);
 
 	// The kind of depth stencil we want
-	void CreateDepthStencilDescription(D3D11_TEXTURE2D_DESC& dsd, int screenWidth, int screenHeight, bool msaa4X, int maxQuality);
+	void CreateDepthStencilDescription(D3D11_TEXTURE2D_DESC& dsd, int screenWidth, int screenHeight, bool msaa, int count, int maxQuality);
 
 	// Viewport dimensions need updating when the window changes size
 	void SetViewportDimensions(int screenWidth, int screenHeight);
@@ -125,19 +125,17 @@ private:
 	// What type of gpu have we got - hopefully a hardware one
 	D3D_DRIVER_TYPE m_D3DDriverType = D3D_DRIVER_TYPE_UNKNOWN;
 
-
-
-	//
-	// Currently unused values that will be implemented soon
-	//
-
 	// Depth buffer for sorting pixels by distance from camera
-	ID3D11Texture2D* m_pDepthStencilBuffer = nullptr;
+	Microsoft::WRL::ComPtr<ID3D11Texture2D> m_pDepthStencilBuffer = nullptr;
 
 
 	// When rendering we can test the depth of pixels, usually so we
 	//	avoid rendering anything that is behind something else
-	ID3D11DepthStencilView* m_pDepthStencilView = nullptr;
+	Microsoft::WRL::ComPtr<ID3D11DepthStencilView> m_pDepthStencilView = nullptr;
+
+	//
+	// Currently unused values that will be implemented soon
+	//
 
 	// Position, height, width, min+max depth of the view we are rendering
 	D3D11_VIEWPORT m_ScreenViewport;

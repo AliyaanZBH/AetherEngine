@@ -170,11 +170,44 @@ bool RendererDX11::CreateRenderTargets()
 	Microsoft::WRL::ComPtr<ID3D11Texture2D> backBuffer;
 	HR(m_pSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), &backBuffer));
 
-	HR(m_pD3DDevice->CreateRenderTargetView(backBuffer.Get(), nullptr, &m_pRenderTargetView));
+	HR(m_pD3DDevice->CreateRenderTargetView(backBuffer.Get(), nullptr, m_pRenderTargetView.GetAddressOf()));
 
-
-	m_pD3DImmediateContext->OMSetRenderTargets(1, m_pRenderTargetView.GetAddressOf(), nullptr);
+	m_pD3DImmediateContext->OMSetRenderTargets(1, m_pRenderTargetView.GetAddressOf(), m_pDepthStencilView.Get());
 	return true;
+}
+
+// Create the depth/stencil buffer description
+void RendererDX11::CreateDepthStencilDescription(D3D11_TEXTURE2D_DESC& dsd, int screenWidth, int screenHeight, bool msaa, int count, int maxQuality)
+{
+	dsd.Width = screenWidth;
+	dsd.Height = screenHeight;
+	dsd.MipLevels = 1;
+	dsd.ArraySize = 1;
+	dsd.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+
+	// Use MSAA? -- must match swap chain MSAA values.
+	if (msaa)
+	{
+		dsd.SampleDesc.Count = count;
+		dsd.SampleDesc.Quality = maxQuality - 1;
+	}
+	// No MSAA
+	else
+	{
+		dsd.SampleDesc.Count = 1;
+		dsd.SampleDesc.Quality = 0;
+	}
+
+	dsd.Usage = D3D11_USAGE_DEFAULT;
+	dsd.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+	dsd.CPUAccessFlags = 0;
+	dsd.MiscFlags = 0;
+}
+
+void RendererDX11::CreateDepthStencilBufferAndView(D3D11_TEXTURE2D_DESC& dsd)
+{
+	HR(m_pD3DDevice->CreateTexture2D(&dsd, 0, m_pDepthStencilBuffer.GetAddressOf()));
+	HR(m_pD3DDevice->CreateDepthStencilView(m_pDepthStencilBuffer.Get(), 0, m_pDepthStencilView.GetAddressOf()));
 }
 
 void RendererDX11::OnResize_Default(int clientWidth, int clientHeight)
@@ -187,18 +220,21 @@ void RendererDX11::OnResize_Default(int clientWidth, int clientHeight)
 	// will be destroying.  Also release the old depth/stencil buffer.
 
 	m_pRenderTargetView.Reset();
-	//m_pDepthStencilView.Reset();
-	//m_pDepthStencilBuffer.Reset();
+	m_pDepthStencilView.Reset();
+	m_pDepthStencilBuffer.Reset();
 
 	// Resize swap chain
 	HR(m_pSwapChain->ResizeBuffers(1, clientWidth, clientHeight, DXGI_FORMAT_R8G8B8A8_UNORM, 0));
 
+	// Create depth stencil
+	D3D11_TEXTURE2D_DESC depthStencilDesc;
+
+	// MSAA currently disabled
+	CreateDepthStencilDescription(depthStencilDesc, clientWidth, clientHeight,false, 2, 1);
+	CreateDepthStencilBufferAndView(depthStencilDesc);
+
 	// Create new render targets
 	CreateRenderTargets();
-
-	//D3D11_TEXTURE2D_DESC depthStencilDesc;
-	//CreateDepthStencilDescription(depthStencilDesc, clientWidth, clientHeight, mEnable4xMsaa, m4xMsaaQuality - 1);
-	//CreateDepthStencilBufferAndView(depthStencilDesc);
 }
 
 void RendererDX11::CreateWrapSampler(Microsoft::WRL::ComPtr<ID3D11SamplerState>& pSampler)
