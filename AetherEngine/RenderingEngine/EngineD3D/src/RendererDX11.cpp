@@ -1,3 +1,4 @@
+#ifdef USE_DX11
 //===============================================================================
 // desc: The DX11 engine, handles everything backend related. 
 //		 Based upon one I built during a university project, but the goal is to optimize and modernize things going forward.
@@ -12,8 +13,10 @@
 #include "D3DUtils.h"
 //===============================================================================
 
-bool RendererDX11::Initialize(IWindow& window)
+AETHER_RESULT RendererDX11::Initialize(IWindow& window)
 {
+	AETHER_RESULT ret = AETHER_OK;
+
 	if (!CreateDevice())
 		assert(false, "Failed to initialize DirectX 11 device.");
 	// Retrieve the native window handle (HWND on Windows)
@@ -34,8 +37,8 @@ bool RendererDX11::Initialize(IWindow& window)
 	// Set sampler state
 	CreateWrapSampler(m_pWrapSampler);
 
-	// Return true if we made all the way here without failing previous functions
-    return true;
+	// Return true / positive result if we made all the way here without failing previous functions
+    return ret;
 }
 
 void RendererDX11::Render()
@@ -56,7 +59,7 @@ void RendererDX11::Terminate()
 	if (m_pSwapChain)
 	{
 		BOOL fullscreen = false;
-		HR(m_pSwapChain->GetFullscreenState(&fullscreen, nullptr));
+		AETHER_HR_ASSERT(m_pSwapChain->GetFullscreenState(&fullscreen, nullptr));
 		if (fullscreen) // Go for a window
 			m_pSwapChain->SetFullscreenState(false, nullptr);
 	}
@@ -70,8 +73,8 @@ void RendererDX11::Terminate()
 
 	// Some extra reporting
 	ID3D11Debug* pD3DDebug;
-	HR(m_pD3DDevice->QueryInterface(__uuidof(ID3D11Debug), reinterpret_cast<void**>(&pD3DDebug)));
-	HR(pD3DDebug->ReportLiveDeviceObjects(D3D11_RLDO_SUMMARY));
+	AETHER_HR_ASSERT(m_pD3DDevice->QueryInterface(__uuidof(ID3D11Debug), reinterpret_cast<void**>(&pD3DDebug)));
+	AETHER_HR_ASSERT(pD3DDebug->ReportLiveDeviceObjects(D3D11_RLDO_SUMMARY));
 }
 
 
@@ -92,12 +95,12 @@ bool RendererDX11::CreateDevice()
 	// Factories handle full screen transitions
 	IDXGIFactory* pFactory = NULL;
 	SIZE_T useIdx = -1, mostRam = -1;
-	HR(CreateDXGIFactory(__uuidof(IDXGIFactory), (void**)&pFactory));
+	AETHER_HR_ASSERT(CreateDXGIFactory(__uuidof(IDXGIFactory), (void**)&pFactory));
 	for (UINT i = 0; pFactory->EnumAdapters(i, &pAdapter) != DXGI_ERROR_NOT_FOUND; ++i)
 	{
 		vAdapters.push_back(pAdapter);
 		DXGI_ADAPTER_DESC desc;
-		HR(pAdapter->GetDesc(&desc));
+		AETHER_HR_ASSERT(pAdapter->GetDesc(&desc));
 		//WDBOUT(L"Found adapter=(" << i << ") " << desc.Description << L" VRAM=" << desc.DedicatedVideoMemory);
 		if (desc.DedicatedVideoMemory > mostRam || mostRam == -1)
 		{
@@ -110,7 +113,7 @@ bool RendererDX11::CreateDevice()
 	assert(useIdx >= 0);
 
 	//D3D_FEATURE_LEVEL featureLevel;
-	HR(D3D11CreateDevice(
+	AETHER_HR_ASSERT(D3D11CreateDevice(
 		vAdapters[useIdx],					// Default adapter
 		m_D3DDriverType,
 		0,									// No software device
@@ -152,15 +155,15 @@ void RendererDX11::CreateSwapChainDescription(DXGI_SWAP_CHAIN_DESC& sd, HWND hMa
 bool RendererDX11::CreateSwapChain(DXGI_SWAP_CHAIN_DESC& sd)
 {
 	Microsoft::WRL::ComPtr<IDXGIDevice> dxgiDevice = 0;
-	HR(m_pD3DDevice->QueryInterface(__uuidof(IDXGIDevice), (void**)&dxgiDevice));
+	AETHER_HR_ASSERT(m_pD3DDevice->QueryInterface(__uuidof(IDXGIDevice), (void**)&dxgiDevice));
 
 	Microsoft::WRL::ComPtr<IDXGIAdapter> dxgiAdapter = 0;
-	HR(dxgiDevice->GetParent(__uuidof(IDXGIAdapter), (void**)&dxgiAdapter));
+	AETHER_HR_ASSERT(dxgiDevice->GetParent(__uuidof(IDXGIAdapter), (void**)&dxgiAdapter));
 
 	Microsoft::WRL::ComPtr<IDXGIFactory> dxgiFactory = 0;
-	HR(dxgiAdapter->GetParent(__uuidof(IDXGIFactory), (void**)&dxgiFactory));
+	AETHER_HR_ASSERT(dxgiAdapter->GetParent(__uuidof(IDXGIFactory), (void**)&dxgiFactory));
 
-	HR(dxgiFactory->CreateSwapChain(m_pD3DDevice.Get(), &sd, &m_pSwapChain));
+	AETHER_HR_ASSERT(dxgiFactory->CreateSwapChain(m_pD3DDevice.Get(), &sd, &m_pSwapChain));
 
 	return true;
 }
@@ -168,9 +171,9 @@ bool RendererDX11::CreateSwapChain(DXGI_SWAP_CHAIN_DESC& sd)
 bool RendererDX11::CreateRenderTargets()
 {
 	Microsoft::WRL::ComPtr<ID3D11Texture2D> backBuffer;
-	HR(m_pSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), &backBuffer));
+	AETHER_HR_ASSERT(m_pSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), &backBuffer));
 
-	HR(m_pD3DDevice->CreateRenderTargetView(backBuffer.Get(), nullptr, m_pRenderTargetView.GetAddressOf()));
+	AETHER_HR_ASSERT(m_pD3DDevice->CreateRenderTargetView(backBuffer.Get(), nullptr, m_pRenderTargetView.GetAddressOf()));
 
 	m_pD3DImmediateContext->OMSetRenderTargets(1, m_pRenderTargetView.GetAddressOf(), m_pDepthStencilView.Get());
 	return true;
@@ -206,8 +209,8 @@ void RendererDX11::CreateDepthStencilDescription(D3D11_TEXTURE2D_DESC& dsd, int 
 
 void RendererDX11::CreateDepthStencilBufferAndView(D3D11_TEXTURE2D_DESC& dsd)
 {
-	HR(m_pD3DDevice->CreateTexture2D(&dsd, 0, m_pDepthStencilBuffer.GetAddressOf()));
-	HR(m_pD3DDevice->CreateDepthStencilView(m_pDepthStencilBuffer.Get(), 0, m_pDepthStencilView.GetAddressOf()));
+	AETHER_HR_ASSERT(m_pD3DDevice->CreateTexture2D(&dsd, 0, m_pDepthStencilBuffer.GetAddressOf()));
+	AETHER_HR_ASSERT(m_pD3DDevice->CreateDepthStencilView(m_pDepthStencilBuffer.Get(), 0, m_pDepthStencilView.GetAddressOf()));
 }
 
 void RendererDX11::OnResize_Default(int clientWidth, int clientHeight)
@@ -224,7 +227,7 @@ void RendererDX11::OnResize_Default(int clientWidth, int clientHeight)
 	m_pDepthStencilBuffer.Reset();
 
 	// Resize swap chain
-	HR(m_pSwapChain->ResizeBuffers(1, clientWidth, clientHeight, DXGI_FORMAT_R8G8B8A8_UNORM, 0));
+	AETHER_HR_ASSERT(m_pSwapChain->ResizeBuffers(1, clientWidth, clientHeight, DXGI_FORMAT_R8G8B8A8_UNORM, 0));
 
 	// Create depth stencil
 	D3D11_TEXTURE2D_DESC depthStencilDesc;
@@ -248,5 +251,6 @@ void RendererDX11::CreateWrapSampler(Microsoft::WRL::ComPtr<ID3D11SamplerState>&
 	sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
 	sampDesc.MinLOD = 0;
 	sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
-	HR(m_pD3DDevice->CreateSamplerState(&sampDesc, &pSampler));
+	AETHER_HR_ASSERT(m_pD3DDevice->CreateSamplerState(&sampDesc, &pSampler));
 }
+#endif

@@ -21,8 +21,11 @@ option(USE_GLFW "Create windows with GLFW" ON)
 # Option to build with WIN32 API (default ON for Windows, currently set to off as development is focused on GLFW)
 option(USE_WIN32 "Create windows with WIN32" OFF)
 
-# Option to build with DX11 (default ON for Windows)
-option(USE_DX11 "Build with DirectX 11" ON)
+# Option to build with DX11
+option(USE_DX11 "Build with DirectX 11" OFF)
+
+# Option to build with DX12 (default ON for Windows)
+option(USE_DX12 "Build with DirectX 12" ON)
 
 # Option to build with Vulkan (default OFF, but ON for Linux)
 option(USE_VULKAN "Build with Vulkan" OFF)

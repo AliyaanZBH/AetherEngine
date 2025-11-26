@@ -7,8 +7,8 @@
 //===============================================================================
 
 class IWindow {
-protected:
-	// Nifty struck to access window data from the main process.
+public:
+	// Nifty struct to access window data from the main process. Public so that the renderer can see this too
 	struct WinData
 	{
 		// All windows apps have these handles
@@ -18,19 +18,14 @@ protected:
 		std::string m_MainWndCaption;
 		int m_ClientWidth;
 		int m_ClientHeight;
-		bool m_AppPaused = false;
-		bool m_Minimized = false;
-		bool m_Maximized = false;
-		bool m_Resizing = false;
+		bool m_bAppPaused = false;
+		bool m_bMinimized = false;
+		bool m_bMaximized = false;
+		bool m_bResizing = false;
+		bool m_bFullscreen = false;
 	};
-
+protected:
 	WinData m_WinData;
-
-	//IRenderer* m_Renderer;
-
-	//IWindow()
-	//	: m_Renderer(nullptr)
-	//{}
 public:
     virtual ~IWindow() = default;
 

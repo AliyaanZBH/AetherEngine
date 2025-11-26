@@ -4,9 +4,6 @@
 //		 Based upon one I built during a university project, but the goal is to optimize and modernize things going forward.
 // auth: Aliyaan Zulfiqar
 //===============================================================================
-#ifndef D3DH
-#define D3DH
-//===============================================================================
 #include <d3d11.h>
 #include <wrl/client.h>
 #include <cassert>
@@ -19,7 +16,7 @@ class RendererDX11 : public IRenderer
 {
 public:
 	// Main start up function
-	bool Initialize(IWindow& window) override;
+	AETHER_RESULT Initialize(IWindow& window) override;
 	void Render() override;
 	void Terminate() override;
 
@@ -151,5 +148,3 @@ private:
 	UINT m_MsaaQuality = 0;
 	bool m_Enable4xMsaa = true;
 };
-
-#endif

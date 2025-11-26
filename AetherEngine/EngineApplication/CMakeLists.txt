@@ -54,3 +54,16 @@ add_custom_command(TARGET AetherApp POST_BUILD
         $<TARGET_FILE:AetherRenderer>               # The path to the generated .dll
         $<TARGET_FILE_DIR:AetherApp>                # The directory where the .exe is located
 )
+
+# Also copy shaders!
+#get_property(tmp GLOBAL PROPERTY ${CSO_SHADER_FILES})
+get_property(cso_files GLOBAL PROPERTY CSO_FILES)
+message("CSOs: ${cso_files}")
+
+#message(${tmp})
+add_custom_command(TARGET AetherApp POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        ${cso_files}               
+        $<TARGET_FILE_DIR:AetherApp>                
+        COMMAND_EXPAND_LISTS
+)

@@ -1,15 +1,22 @@
 #pragma once
 //===============================================================================
-// desc: A collection of handy debug utilies for DirectX, chiefly the ability to get better debugging info from HResults!
+// desc: A collection of handy debug utilies for DirectX/WinAPI, chiefly the ability to get better debugging info from HResults!
 // auth: Aliyaan Zulfiqar
 //===============================================================================
+#if USE_DX11
 #include <d3d11.h>
+#endif
+
+#if USE_DX12
+#include <d3d12.h>
+#endif
+
 #include <stdio.h>
 //===============================================================================
 
 // Credit: Mark Featherstone
 #if defined(DEBUG) | defined(_DEBUG)
-#ifndef HR													
+#ifndef AETHER_HR_ASSERT													
 inline void DXError(HRESULT hr, const char* pFileStr, int lineNum)
 {
 	LPSTR output;
@@ -31,7 +38,7 @@ Just saves typing and stops silly bugs.
 */
 
 // Credit: Mark Featherstone
-#define HR(x)												\
+#define AETHER_HR_ASSERT(x)												\
 {															\
 	HRESULT hr = (x);										\
 	if(FAILED(hr))											\
@@ -40,7 +47,7 @@ Just saves typing and stops silly bugs.
 
 #endif
 #else
-#ifndef HR
-#define HR(x) (x)
+#ifndef AETHER_HR_ASSERT
+#define AETHER_HR_ASSERT(x) (x)
 #endif
 #endif 

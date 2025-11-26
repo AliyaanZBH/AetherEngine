@@ -4,10 +4,13 @@
 
 # Specify the source files
 set(SRC
+    
     Core/src/CoreApp.cpp
+    
     Core/src/Log.cpp
     GLFW/src/WinManGLFW.cpp
     EngineD3D/src/RendererDX11.cpp
+    EngineD3D/src/RendererDX12.cpp
 )
 
 set(INCLUDE
@@ -24,29 +27,47 @@ set(INCLUDE
 
     GLFW/include/WinManGLFW.h
 
+    # Renderers
     EngineD3D/include/D3DUtils.h
     EngineD3D/include/RendererDX11.h
+    EngineD3D/include/RendererDX12.h
+
+
+    # Third party includes
+    ThirdParty/dx12Helper/include/d3dx12.h
+    ThirdParty/dx12Helper/include/ReadData.h
 )
+
+# Specify shaders
+set(HLSL_SHADER_FILES
+
+    Shaders/VertexShader.hlsl
+    Shaders/PixelShader.hlsl
+)
+
+set_source_files_properties(${HLSL_SHADER_FILES} PROPERTIES ShaderModel "5_0")
+set_source_files_properties(Shaders/VertexShader.hlsl PROPERTIES ShaderType "vs")
+set_source_files_properties(Shaders/PixelShader.hlsl PROPERTIES ShaderType "ps")
 
 
 # Define the DLL
-add_library(AetherRenderer SHARED ${SRC} ${INCLUDE})
+add_library(AetherRenderer SHARED ${SRC} ${INCLUDE} ${HLSL_SHADER_FILES} "ThirdParty/dx12Helper/include/ReadData.h")
 
 # Include directories for the DLL
 target_include_directories(AetherRenderer PRIVATE ${PROJECT_SOURCE_DIR}/include)
 target_include_directories(AetherRenderer PRIVATE include)
 target_include_directories(AetherRenderer PRIVATE EngineD3D/include)
 target_include_directories(AetherRenderer PRIVATE GLFW/include)
+target_include_directories(AetherRenderer PRIVATE ThirdParty/dx12Helper/include)
+
 # Public so application can see it
 target_include_directories(AetherRenderer PUBLIC Core/include)
-
-
-
 
 
 # Set source groups for VS2022 quality of life
 source_group("src" FILES ${SRC})
 source_group("include" FILES ${INCLUDE})
+source_group("shaders" FILES ${HLSL_SHADER_FILES})
 
 # Third-party subdirectories
 add_subdirectory(ThirdParty/glfw)
@@ -98,21 +119,27 @@ endif()
 
 
 #
-# DX11
+# Direct X
 #
 
-if(WIN32 AND USE_DX11)
-    # Find DirectX libraries
-    find_package(D3D11 REQUIRED)
+if(WIN32 AND (USE_DX11 OR USE_DX12))
+    # Find DirectX common libraries
     find_package(DXGI REQUIRED)
     find_package(D3DCompiler REQUIRED)
+    find_package(DXGUID REQUIRED)
 
-    # Link DirectX libraries
-    target_link_libraries(AetherRenderer PRIVATE D3D11::D3D11 DXGI::DXGI D3DCompiler::D3DCompiler)
+    # Find specific feature level package, link and set macro in our renderer
+    if (USE_DX11)
+        find_package(D3D11 REQUIRED)
+        target_link_libraries(AetherRenderer PRIVATE D3D11::D3D11 DXGI::DXGI D3DCompiler::D3DCompiler)
+        target_compile_definitions(AetherRenderer PRIVATE USE_DX11)
+    endif()
     
-    # Define a macro for DX11
-    target_compile_definitions(AetherRenderer PRIVATE USE_DX11)
-
+    if(USE_DX12)
+        find_package(D3D12 REQUIRED)
+        target_link_libraries(AetherRenderer PRIVATE D3D12::D3D12 DXGI::DXGI D3DCompiler::D3DCompiler DXGUID::DXGUID)   # Note the need for DXGUID here
+        target_compile_definitions(AetherRenderer PRIVATE USE_DX12)
+    endif()
 endif()
 
 
@@ -136,3 +163,34 @@ if(USE_VULKAN)
 endif()
 
 # Handle other platform-specific settings
+
+
+
+# Build HLSL shaders
+foreach(FILE ${HLSL_SHADER_FILES})
+    get_filename_component(FILE_WE ${FILE} NAME_WE)
+    list(APPEND CSO_SHADER_FILES ${CMAKE_BINARY_DIR}/${FILE_WE}.cso)
+    get_source_file_property(shadertype ${FILE} ShaderType)
+    get_source_file_property(shadermodel ${FILE} ShaderModel)
+
+    # Copy the raw shader files across to the DX folder
+    ##add_custom_command(TARGET AetherRenderer PRE_LINK
+    ##                   COMMAND ${CMAKE_COMMAND} -E copy ${CSO_SHADER_FILES} $<TARGET_FILE_DIR:AetherRenderer/EngineD3D/src>
+    ##                   COMMAND_EXPAND_LISTS
+    ##)
+
+    add_custom_command(TARGET AetherRenderer PRE_LINK
+                       COMMAND dxc.exe /nologo /Emain /T ${shadertype}_${shadermodel} /Od /Zi /Fo ${CMAKE_BINARY_DIR}/${FILE_WE}.cso /Fd ${CMAKE_BINARY_DIR}/${FILE_WE}.pdb ${FILE}
+                       COMMENT "HLSL ${FILE}"
+                       WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                       VERBATIM)
+endforeach(FILE)
+
+# Make CSO list public and visible to our EXE so that it can copy it post-build
+set_property(GLOBAL PROPERTY CSO_FILES "${CSO_SHADER_FILES}")
+
+# Copy CSOs to DLL folder in build step
+add_custom_command(TARGET AetherRenderer POST_BUILD
+                  COMMAND ${CMAKE_COMMAND} -E copy ${CSO_SHADER_FILES} $<TARGET_FILE_DIR:AetherRenderer>
+                  COMMAND_EXPAND_LISTS
+)
