@@ -25,7 +25,7 @@ namespace DX
 {
 	inline std::vector<uint8_t> ReadData(_In_z_ const wchar_t* name)
 	{
-		std::ifstream inFile(name, std::ios::in | std::ios::binary | std::ios::ate);
+		std::ifstream inFile(name, std::ios::binary );
 		//D3DCreateBlob(inFile.)
 #if !defined(WINAPI_FAMILY) || (WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP)
 		if (!inFile)
@@ -51,6 +51,29 @@ namespace DX
 		if (!inFile)
 			throw std::runtime_error("ReadData");
 
+		if (inFile.is_open())
+		{
+			// [AZB]: Get the length of the file
+			inFile.seekg(0, std::ios::end);
+			size_t fileSize = inFile.tellg();
+			inFile.seekg(0, std::ios::beg);
+
+			// [AZB]: Allocate a buffer for the file contents
+			char* fileContents = new char[fileSize];
+
+			// [AZB]: Read the entire file into the buffer
+			inFile.read(fileContents, fileSize);
+
+			// [AZB]: Allocate a blob to store the file data
+			ID3DBlob* pBlob = nullptr;
+			HRESULT hr = D3DCreateBlob(static_cast<SIZE_T>(fileSize), &pBlob);
+
+			int tmpA = pBlob->GetBufferSize();
+
+			if (FAILED(hr)) {
+				delete[] fileContents;
+			}
+		}
 		const std::streampos len = inFile.tellg();
 		if (!inFile)
 			throw std::runtime_error("ReadData");

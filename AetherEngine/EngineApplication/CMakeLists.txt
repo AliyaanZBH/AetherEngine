@@ -55,15 +55,22 @@ add_custom_command(TARGET AetherApp POST_BUILD
         $<TARGET_FILE_DIR:AetherApp>                # The directory where the .exe is located
 )
 
-# Also copy shaders!
-#get_property(tmp GLOBAL PROPERTY ${CSO_SHADER_FILES})
+# Also copy both raw and compiled shaders!
 get_property(cso_files GLOBAL PROPERTY CSO_FILES)
-message("CSOs: ${cso_files}")
+get_property(raw_shaders GLOBAL PROPERTY SHADER_FILES)
 
-#message(${tmp})
+message(${cso_files})
+message(${raw_shaders})
+set(DEST_DIR "$<TARGET_FILE_DIR:AetherApp>/Shaders")
+
 add_custom_command(TARGET AetherApp POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${DEST_DIR}
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
         ${cso_files}               
-        $<TARGET_FILE_DIR:AetherApp>                
+        ${DEST_DIR}
+        COMMAND_EXPAND_LISTS
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        ${raw_shaders}               
+        ${DEST_DIR}
         COMMAND_EXPAND_LISTS
 )

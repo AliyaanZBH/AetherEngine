@@ -51,7 +51,7 @@ set_source_files_properties(Shaders/PixelShader.hlsl PROPERTIES ShaderType "ps")
 
 
 # Define the DLL
-add_library(AetherRenderer SHARED ${SRC} ${INCLUDE} ${HLSL_SHADER_FILES} "ThirdParty/dx12Helper/include/ReadData.h")
+add_library(AetherRenderer SHARED ${SRC} ${INCLUDE} ${HLSL_SHADER_FILES})
 
 # Include directories for the DLL
 target_include_directories(AetherRenderer PRIVATE ${PROJECT_SOURCE_DIR}/include)
@@ -169,28 +169,36 @@ endif()
 # Build HLSL shaders
 foreach(FILE ${HLSL_SHADER_FILES})
     get_filename_component(FILE_WE ${FILE} NAME_WE)
-    list(APPEND CSO_SHADER_FILES ${CMAKE_BINARY_DIR}/${FILE_WE}.cso)
+
+    # Create list of compiled and raw shader files
+    list(APPEND RAW_SHADER_FILES  ${CMAKE_CURRENT_SOURCE_DIR}/${FILE})
+    list(APPEND CSO_SHADER_FILES ${CMAKE_CURRENT_BINARY_DIR}/${FILE_WE}.cso)
+    
     get_source_file_property(shadertype ${FILE} ShaderType)
     get_source_file_property(shadermodel ${FILE} ShaderModel)
 
-    # Copy the raw shader files across to the DX folder
-    ##add_custom_command(TARGET AetherRenderer PRE_LINK
-    ##                   COMMAND ${CMAKE_COMMAND} -E copy ${CSO_SHADER_FILES} $<TARGET_FILE_DIR:AetherRenderer/EngineD3D/src>
-    ##                   COMMAND_EXPAND_LISTS
-    ##)
-
     add_custom_command(TARGET AetherRenderer PRE_LINK
-                       COMMAND dxc.exe /nologo /Emain /T ${shadertype}_${shadermodel} /Od /Zi /Fo ${CMAKE_BINARY_DIR}/${FILE_WE}.cso /Fd ${CMAKE_BINARY_DIR}/${FILE_WE}.pdb ${FILE}
+                       COMMAND dxc.exe /nologo /E main /T ${shadertype}_${shadermodel} /Od /Zi /Fo ${CMAKE_CURRENT_BINARY_DIR}/${FILE_WE}.cso /Fd ${CMAKE_CURRENT_BINARY_DIR}/${FILE_WE}.pdb ${FILE}
                        COMMENT "HLSL ${FILE}"
                        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                        VERBATIM)
 endforeach(FILE)
 
-# Make CSO list public and visible to our EXE so that it can copy it post-build
+# Make raw shader and CSO list public and visible to our EXE so that it can copy it post-build
+set_property(GLOBAL PROPERTY SHADER_FILES "${RAW_SHADER_FILES}")
 set_property(GLOBAL PROPERTY CSO_FILES "${CSO_SHADER_FILES}")
 
 # Copy CSOs to DLL folder in build step
 add_custom_command(TARGET AetherRenderer POST_BUILD
                   COMMAND ${CMAKE_COMMAND} -E copy ${CSO_SHADER_FILES} $<TARGET_FILE_DIR:AetherRenderer>
                   COMMAND_EXPAND_LISTS
+)
+
+set(DEST_DIR "$<TARGET_FILE_DIR:AetherRenderer>/Shaders")
+add_custom_command(TARGET AetherRenderer POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${DEST_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        ${RAW_SHADER_FILES}               
+        ${DEST_DIR}
+        COMMAND_EXPAND_LISTS
 )

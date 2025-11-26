@@ -366,23 +366,34 @@ AETHER_RESULT RendererDX12::CompileShaders()
 {
 	AETHER_RESULT ar = AETHER_OK;
 
-	//ID3DBlob* vertexShader; // D3D blob for holding vertex shader bytecode
+	ID3DBlob* vertexShader; // D3D blob for holding vertex shader bytecode
 	ID3DBlob* errorBuff;    // A buffer holding the error data if any
 	auto vertexShaderByteCode = DX::ReadData(L"VertexShader.cso");
-	//ETHER_HR_ASSERT(D3DCompileFromFile(L"VertexShader.hlsl",
-	//	nullptr,
-	//	nullptr,
-	//	"main",
-	//	"vs_5_0",
-	//	D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
-	//	0,
-	//	&vertexShader,
-	//	&errorBuff
-	//);
+
+	// [AZB]: Define the list of directories to search for include files
+	std::vector<std::wstring> includeDirs =
+	{
+		L"..\\Shaders"  // [AZB]: Main common shader directory, this is where my stuff lives
+	};
+
+	// [AZB]: Create an instance of the custom include handler with the list of directories and the current shader
+	std::wstring shaderFile = L"VertexShader.hlsl";
+	CustomIncludeHandler includeHandler(includeDirs, shaderFile);
+
+	D3DCompileFromFile(shaderFile.c_str(),
+		nullptr,
+		&includeHandler,
+		"main",
+		"vs_5_0",
+		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
+		0,
+		&vertexShader,
+		&errorBuff
+	);
 
 	// Fill out  shader bytecode struct, which is basically just a pointer to the shader bytecode and the size of the shader bytecode    
-	//m_VS.BytecodeLength = vertexShader->GetBufferSize();
-	//m_VS.pShaderBytecode = vertexShader->GetBufferPointer();
+	m_VS.BytecodeLength = vertexShader->GetBufferSize();
+	m_VS.pShaderBytecode = vertexShader->GetBufferPointer();
 	int tmp = sizeof(int) * vertexShaderByteCode.size();
 	m_VS.BytecodeLength = vertexShaderByteCode.size();
 	m_VS.pShaderBytecode = vertexShaderByteCode.data();
