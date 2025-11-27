@@ -69,7 +69,7 @@ private:
 	//
 	
 	static const UINT8 m_kNumFrameBuffers = 2u;
-	const float m_kClearColour[3] = { 1.f, 0.3f, 0.0f };
+	const float m_kClearColour[3] = { 0.1f, 0.2f, 1.0f };
 
 	// Main handle used to create resources and access D3D
 	Microsoft::WRL::ComPtr<IDXGIFactory2> m_DXGIFactory;

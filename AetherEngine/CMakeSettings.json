@@ -30,6 +30,11 @@
           "name": "USE_DX12",
           "value": "True",
           "type": "BOOL"
+        },
+        {
+          "name": "USE_DX11",
+          "value": "False",
+          "type": "BOOL"
         }
       ]
     },
