@@ -455,6 +455,7 @@ AETHER_RESULT RendererDX12::CreateInputLayoutAndPSO()
 	psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);   // Lazy default init, good enough for triangle!
 	psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);             // Lazy default init, good enough for triangle!
 	psoDesc.DepthStencilState = dsDesc;                                 // Depth buffer enable!
+	psoDesc.DSVFormat = DXGI_FORMAT_D32_FLOAT;                          // Depth buffer format!
 	psoDesc.NumRenderTargets = 1;
 
 	// Create the PSO
