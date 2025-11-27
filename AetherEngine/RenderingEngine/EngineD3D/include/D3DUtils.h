@@ -107,6 +107,10 @@ public:
 		// [AZB]: No specific cleanup is needed because we're not allocating memory dynamically here
 		return S_OK;
 	}
+
+
+	// Helper function to read directories when we need them
+	const std::vector<std::wstring>& GetDirectories() { return m_IncludeDirs; }
 private:
 	// [AZB]: Container of file paths that tell HLSL compiler where to look
 	std::vector<std::wstring> m_IncludeDirs;

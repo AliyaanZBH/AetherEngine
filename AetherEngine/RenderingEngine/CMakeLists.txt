@@ -35,7 +35,7 @@ set(INCLUDE
 
     # Third party includes
     ThirdParty/dx12Helper/include/d3dx12.h
-    ThirdParty/dx12Helper/include/ReadData.h
+    
 )
 
 # Specify shaders
@@ -132,13 +132,13 @@ if(WIN32 AND (USE_DX11 OR USE_DX12))
     if (USE_DX11)
         find_package(D3D11 REQUIRED)
         target_link_libraries(AetherRenderer PRIVATE D3D11::D3D11 DXGI::DXGI D3DCompiler::D3DCompiler)
-        target_compile_definitions(AetherRenderer PRIVATE USE_DX11)
+        target_compile_definitions(AetherRenderer PUBLIC USE_DX11)
     endif()
     
     if(USE_DX12)
         find_package(D3D12 REQUIRED)
         target_link_libraries(AetherRenderer PRIVATE D3D12::D3D12 DXGI::DXGI D3DCompiler::D3DCompiler DXGUID::DXGUID)   # Note the need for DXGUID here
-        target_compile_definitions(AetherRenderer PRIVATE USE_DX12)
+        target_compile_definitions(AetherRenderer PUBLIC USE_DX12)
     endif()
 endif()
 

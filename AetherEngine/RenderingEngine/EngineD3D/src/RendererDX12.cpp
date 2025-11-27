@@ -298,7 +298,7 @@ AETHER_RESULT RendererDX12::CreateDevice()
 
 		if (desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE)
 		{
-			// We dont want a software device
+			// We don't want a software device
 			adapterIndex++;
 			continue;
 		}
@@ -368,8 +368,6 @@ AETHER_RESULT RendererDX12::CompileShaders()
 
 	ID3DBlob* vertexShader; // D3D blob for holding vertex shader bytecode
 	ID3DBlob* errorBuff;    // A buffer holding the error data if any
-	auto vertexShaderByteCode = DX::ReadData(L"VertexShader.cso");
-
 	// [AZB]: Define the list of directories to search for include files
 	std::vector<std::wstring> includeDirs =
 	{
@@ -380,7 +378,10 @@ AETHER_RESULT RendererDX12::CompileShaders()
 	std::wstring shaderFile = L"VertexShader.hlsl";
 	CustomIncludeHandler includeHandler(includeDirs, shaderFile);
 
-	D3DCompileFromFile(shaderFile.c_str(),
+	std::wstring workingShaderDir = includeHandler.GetDirectories().back();
+	std::wstring fullPathToShader = workingShaderDir + L"\\" + shaderFile;
+
+	D3DCompileFromFile(fullPathToShader.c_str(),
 		nullptr,
 		&includeHandler,
 		"main",
@@ -390,33 +391,35 @@ AETHER_RESULT RendererDX12::CompileShaders()
 		&vertexShader,
 		&errorBuff
 	);
+	
+	// Print errors!
+	if (errorBuff != nullptr)
+		OutputDebugStringA((char*)errorBuff->GetBufferPointer());
 
 	// Fill out  shader bytecode struct, which is basically just a pointer to the shader bytecode and the size of the shader bytecode    
 	m_VS.BytecodeLength = vertexShader->GetBufferSize();
 	m_VS.pShaderBytecode = vertexShader->GetBufferPointer();
-	int tmp = sizeof(int) * vertexShaderByteCode.size();
-	m_VS.BytecodeLength = vertexShaderByteCode.size();
-	m_VS.pShaderBytecode = vertexShaderByteCode.data();
 
 	// Repeat for pixel
+	ID3DBlob* pixelShader; 
+	shaderFile = L"PixelShader.hlsl";
+	fullPathToShader = workingShaderDir + L"\\" + shaderFile;
+	D3DCompileFromFile(fullPathToShader.c_str(),
+		nullptr,
+		&includeHandler,
+		"main",
+		"ps_5_0",
+		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
+		0,
+		&pixelShader,
+		&errorBuff
+	);
+	if (errorBuff != nullptr)
+		OutputDebugStringA((char*)errorBuff->GetBufferPointer());
 
-	//ID3DBlob* pizelShader; 
-	auto pixelShaderByteCode = DX::ReadData(L"PixelShader.cso");
-	//AETHER_HR_ASSERT(D3DCompileFromFile(L"PixelShader.hlsl",
-	//	nullptr,
-	//	nullptr,
-	//	"main",
-	//	"ps_5_0",
-	//	D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
-	//	0,
-	//	&pixelShader,
-	//	&errorBuff
-	//));
+	m_PS.BytecodeLength = pixelShader->GetBufferSize();
+	m_PS.pShaderBytecode = pixelShader->GetBufferPointer();
 
-	//m_PS.BytecodeLength = pixelShader->GetBufferSize();
-	//m_PS.pShaderBytecode = pixelShader->GetBufferPointer();
-	m_PS.BytecodeLength = pixelShaderByteCode.size();
-	m_PS.pShaderBytecode = pixelShaderByteCode.data();
 	return ar;
 }
 

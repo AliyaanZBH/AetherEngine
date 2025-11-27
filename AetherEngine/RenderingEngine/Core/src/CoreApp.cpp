@@ -65,10 +65,7 @@ AETHER_RESULT Aether::Application::Run()
     if (!window->Initialize(window->GetData()))
         assert(false);
     // Init rendering API
-    if (!renderer->Initialize(*window)) {
-        throw "Renderer initialization failed.";
-        ret = -1;
-    }
+    AETHER_ASSERT(!renderer->Initialize(*window));
 
     // The game loop!
     while (!window->WindowShouldClose()) {
