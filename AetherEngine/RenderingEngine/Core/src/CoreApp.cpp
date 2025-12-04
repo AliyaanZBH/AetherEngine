@@ -16,15 +16,19 @@
 #include "RendererDX11.h"
 #endif
 
+#ifdef USE_DX12
+#include "RendererDX12.h"
+#endif
+
 #ifdef USE_VULKAN
 #include "Renderer/RendererVulkan.h" // To be implemented
 #endif
 //===============================================================================
 
-AetherReturn Aether::Application::Run()
+AETHER_RESULT Aether::Application::Run()
 {
     // A local instance that represents possible error codes.
-    AetherReturn ret;
+    AETHER_RESULT ret;
 
     // Create unique, single instances of our key interfaces
     std::unique_ptr<IWindow> window;
@@ -44,6 +48,8 @@ AetherReturn Aether::Application::Run()
     // Set the desired rendering API, based on the chosen macro.
 #ifdef USE_DX11
     renderer = std::make_unique<RendererDX11>();
+#elif defined(USE_DX12)
+	renderer = std::make_unique<RendererDX12>();
 #elif defined(USE_VULKAN)
     renderer = std::make_unique<RendererVulkan>();
 #else
@@ -59,10 +65,7 @@ AetherReturn Aether::Application::Run()
     if (!window->Initialize(window->GetData()))
         assert(false);
     // Init rendering API
-    if (!renderer->Initialize(*window)) {
-        throw "Renderer initialization failed.";
-        ret = -1;
-    }
+    AETHER_ASSERT(!renderer->Initialize(*window));
 
     // The game loop!
     while (!window->WindowShouldClose()) {
