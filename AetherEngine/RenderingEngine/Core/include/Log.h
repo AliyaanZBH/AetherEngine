@@ -3,8 +3,6 @@
 // desc: A wrapper class for spdlog, that will be exported for use by any application using Aether
 // auth: Aliyaan Zulfiqar
 //===============================================================================
-//#include "AetherPCH.h"
-
 #include "Core.h"
 #include "spdlog/spdlog.h"
 //===============================================================================

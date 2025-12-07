@@ -4,7 +4,6 @@
 // auth: Aliyaan Zulfiqar
 //===============================================================================
 
-
 // [AZB]: I didn't want to have to keep copy and pasting shader files into all the different directories, so I wrote this in order to get shader files from a single common folder
 class CustomIncludeHandler : public ID3DInclude
 {
