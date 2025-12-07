@@ -21,10 +21,10 @@
 #endif
 //===============================================================================
 
-AetherReturn Aether::Application::Run()
+AetherResult Aether::Application::Run()
 {
     // A local instance that represents possible error codes.
-    AetherReturn ret;
+    AetherResult ret;
 
     // Create unique, single instances of our key interfaces
     std::unique_ptr<IWindow> window;

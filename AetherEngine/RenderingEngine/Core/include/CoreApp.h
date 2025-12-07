@@ -16,7 +16,7 @@ namespace Aether
 		virtual ~Application() {}
 	
 		// This is where the main game loop will live
-		AetherReturn Run();
+		AetherResult Run();
 	};
 
 	// External function to be defined in clinet applications (games)

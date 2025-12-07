@@ -7,11 +7,9 @@
 
 class AetherGame : public Aether::Application
 {
-	public:
-		AetherGame()
-		{}
-		~AetherGame()
-		{}
+public:
+	AetherGame() {}
+	~AetherGame() {}
 };
 
 Aether::Application* Aether::CreateApplication()

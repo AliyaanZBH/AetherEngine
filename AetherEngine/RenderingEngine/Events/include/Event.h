@@ -28,7 +28,7 @@ namespace Aether
 
 	// Helps with filtering events, for example when ordering our event queue
 	// Using a bit field as events can fall under multiple categories
-	enum class EventCategory
+	enum EventCategory
 	{
 		None = 0,
 		Application = BIT(0),
@@ -43,7 +43,7 @@ namespace Aether
 	//
 
 	// The static types are needed so that we can read key events without being tied to a specific instance of the event class.
-#define EVENT_CLASS_TYPE(type)					static EventType GetStaticType()				{ return EventType::##type; }\
+#define EVENT_CLASS_TYPE(type)				static EventType GetStaticType()				{ return EventType::##type; }\
 											virtual EventType GetEventType() const override { return GetStaticType(); }\
 											virtual const char* GetName()    const override { return #type; }
 
@@ -76,8 +76,10 @@ namespace Aether
 		bool m_EventHandled = false;
 	};
 
+	// Dispatches multiple types of events
 	class EventDispatcher
 	{
+		template <typename T>
 
 	};
 }

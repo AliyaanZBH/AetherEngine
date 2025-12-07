@@ -30,6 +30,7 @@ set(INCLUDE
     Events/include/Event.h
     Events/include/KeyEvent.h
     Events/include/MouseEvent.h
+    Events/include/AppEvent.h
 )
 
 
