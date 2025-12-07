@@ -1,5 +1,5 @@
 # CMake version requirement
-cmake_minimum_required(VERSION 3.15)
+cmake_minimum_required(VERSION 3.16)
 
 # Add the custom modules path
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/modules" ${CMAKE_MODULE_PATH})
@@ -30,11 +30,12 @@ option(USE_DX12 "Build with DirectX 12" ON)
 # Option to build with Vulkan (default OFF, but ON for Linux)
 option(USE_VULKAN "Build with Vulkan" OFF)
 
+
 # Include directories
 include_directories(${PROJECT_SOURCE_DIR}/include)
 include_directories(${CMAKE_SOURCE_DIR}/include)
 
 
-# Add key subdirectories
+# Add main projects as indivudual subdirectories as they have their own CMakeLists file
 add_subdirectory(RenderingEngine)
 add_subdirectory(EngineApplication)

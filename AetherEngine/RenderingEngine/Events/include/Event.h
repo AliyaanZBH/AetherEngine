@@ -3,8 +3,6 @@
 // desc: The main file that ties the whole Event System together
 // auth: Aliyaan Zulfiqar
 //===============================================================================
-#include <string>
-#include <functional>	// TODO: Move these to PCH
 
 #include "Core.h"
 //===============================================================================

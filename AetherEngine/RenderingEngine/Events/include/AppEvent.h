@@ -5,8 +5,6 @@
 //===============================================================================
 #include "Event.h"
 
-#include <sstream>
-
 namespace Aether
 {
 	class AETHER_API WindowResizeEvent : public Event

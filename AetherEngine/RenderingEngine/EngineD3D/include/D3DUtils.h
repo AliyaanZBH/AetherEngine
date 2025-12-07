@@ -3,25 +3,6 @@
 // desc: A collection of handy debug utilies for DirectX/WinAPI, chiefly the ability to get better debugging info from HResults!
 // auth: Aliyaan Zulfiqar
 //===============================================================================
-#if USE_DX11
-#include <d3d11.h>
-#endif
-
-#if USE_DX12
-#include <d3d12.h>
-#endif
-
-#include <stdio.h>
-
-#include <vector>
-#include <string>
-#include <fstream>
-#include <d3dcompiler.h>
-#include <cassert>
-
-//===============================================================================
-
-
 
 // [AZB]: I didn't want to have to keep copy and pasting shader files into all the different directories, so I wrote this in order to get shader files from a single common folder
 class CustomIncludeHandler : public ID3DInclude

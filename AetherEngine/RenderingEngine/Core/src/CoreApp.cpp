@@ -2,8 +2,6 @@
 // desc: The core rendering app that facilitates DLL exporting for use in the main AetherApp
 // auth: Aliyaan Zulfiqar
 //===============================================================================
-#include <memory>
-
 #include "CoreApp.h"
 #include "IWindow.h"
 #include "IRenderer.h"

@@ -3,8 +3,9 @@
 // desc: Contains key constants aswell as internal types and macros for error handling
 // auth: Aliyaan Zulfiqar
 //===============================================================================
-#include <stdio.h>
 #include <stdexcept>
+#include <sstream>
+
 //===============================================================================
 
 typedef int AETHER_RESULT;	// For more useful error handling at low-level, can be used interchangeably with Windows HResult

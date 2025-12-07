@@ -2,6 +2,9 @@
 # Set renderer-specific implementations
 #
 
+# Specify the precompiled header file first
+set(PCH_HEADER "PCH/AetherPCH.h")
+
 # Specify the source files
 set(SRC
     
@@ -40,7 +43,6 @@ set(INCLUDE
 
     # Third party includes
     ThirdParty/dx12Helper/include/d3dx12.h
-    
 )
 
 # Specify shaders
@@ -55,8 +57,13 @@ set_source_files_properties(Shaders/VertexShader.hlsl PROPERTIES ShaderType "vs"
 set_source_files_properties(Shaders/PixelShader.hlsl PROPERTIES ShaderType "ps")
 
 
-# Define the DLL
+# Define the DLL target
 add_library(AetherRenderer SHARED ${SRC} ${INCLUDE} ${HLSL_SHADER_FILES})
+
+# Enable PCH for Visual Studio
+if (MSVC)  # Check if we're on Visual Studio
+    target_precompile_headers(AetherRenderer PRIVATE ${PCH_HEADER})
+endif()
 
 # Include directories for the DLL
 target_include_directories(AetherRenderer PRIVATE ${PROJECT_SOURCE_DIR}/include)
