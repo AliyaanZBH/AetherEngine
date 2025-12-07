@@ -2,10 +2,7 @@
 # Set renderer-specific implementations
 #
 
-# Specify PCH files first
-#
-
-# Specify the precompiled header file
+# Specify the precompiled header file first
 set(PCH_HEADER "PCH/AetherPCH.h")
 
 # Specify the source files

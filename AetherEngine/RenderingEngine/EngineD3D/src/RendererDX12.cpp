@@ -5,8 +5,6 @@
 //
 // auth: Aliyaan Zulfiqar
 //===============================================================================
-//#include "AetherPCH.h"
-
 #include "RendererDX12.h"
 
 #include "D3DUtils.h"

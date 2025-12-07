@@ -3,9 +3,6 @@
 // desc: A collection of handy debug utilies for DirectX/WinAPI, chiefly the ability to get better debugging info from HResults!
 // auth: Aliyaan Zulfiqar
 //===============================================================================
-//#include "PCH/AetherPCH.h"
-//===============================================================================
-
 
 
 // [AZB]: I didn't want to have to keep copy and pasting shader files into all the different directories, so I wrote this in order to get shader files from a single common folder

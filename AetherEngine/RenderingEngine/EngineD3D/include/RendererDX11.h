@@ -4,8 +4,6 @@
 //		 Based upon one I built during a university project, but the goal is to optimize and modernize things going forward.
 // auth: Aliyaan Zulfiqar
 //===============================================================================
-//#include "PCH/AetherPCH.h"
-
 #include "IRenderer.h"
 #include "AetherUtils.h"
 //===============================================================================

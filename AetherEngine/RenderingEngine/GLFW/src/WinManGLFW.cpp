@@ -1,5 +1,3 @@
-//#include "AetherPCH.h"
-
 #include "WinManGLFW.h"
 
 static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)

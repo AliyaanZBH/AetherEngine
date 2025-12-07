@@ -3,7 +3,6 @@
 // desc: The main file that ties the whole Event System together
 // auth: Aliyaan Zulfiqar
 //===============================================================================
-//#include "PCH/AetherPCH.h"
 
 #include "Core.h"
 //===============================================================================
