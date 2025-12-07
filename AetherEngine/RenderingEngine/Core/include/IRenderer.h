@@ -4,13 +4,14 @@
 // auth: Aliyaan Zulfiqar
 //===============================================================================
 #include "IWindow.h"
+#include "AetherUtils.h"
 //===============================================================================
 
 class IRenderer {
 public:
     virtual ~IRenderer() = default;
 
-    virtual bool Initialize(IWindow& window) = 0;
+    virtual AETHER_RESULT Initialize(IWindow& window) = 0;
     virtual void Render() = 0;
     virtual void Terminate() = 0;
 };

@@ -47,6 +47,9 @@ endif()
 # Add dependencie to ensure that dll is built first
 add_dependencies(AetherApp AetherRenderer)
 
+# Also explicitly add as dependency - this ensures that when running the exe, the DLL gets recompiled too :)
+add_dependencies(AetherApp AetherRenderer)
+
 # Link renderer DLL to the app exe we are creating
 target_link_libraries(AetherApp PRIVATE AetherRenderer)
 
@@ -55,4 +58,25 @@ add_custom_command(TARGET AetherApp POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy
         $<TARGET_FILE:AetherRenderer>               # The path to the generated .dll
         $<TARGET_FILE_DIR:AetherApp>                # The directory where the .exe is located
+   COMMAND ${CMAKE_COMMAND} -E copy                 # Copy .PDB also!
+        $<TARGET_PDB_FILE:AetherRenderer>
+        $<TARGET_FILE_DIR:AetherApp>
+)       
+
+# Also copy both raw and compiled shaders!
+get_property(cso_files GLOBAL PROPERTY CSO_FILES)
+get_property(raw_shaders GLOBAL PROPERTY SHADER_FILES)
+
+set(DEST_DIR "$<TARGET_FILE_DIR:AetherApp>/Shaders")
+
+add_custom_command(TARGET AetherApp POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${DEST_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        ${cso_files}               
+        ${DEST_DIR}
+        COMMAND_EXPAND_LISTS
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        ${raw_shaders}               
+        ${DEST_DIR}
+        COMMAND_EXPAND_LISTS
 )
