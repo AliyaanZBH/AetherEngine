@@ -36,5 +36,8 @@ include_directories(${CMAKE_SOURCE_DIR}/include)
 add_subdirectory(RenderingEngine)
 add_subdirectory(EngineApplication)
 
+# Add dependency to ensure that dll is built first
+add_dependencies(AetherApp AetherRenderer)
+
 # Link renderer DLL to Application exe
 target_link_libraries(AetherApp PRIVATE AetherRenderer)

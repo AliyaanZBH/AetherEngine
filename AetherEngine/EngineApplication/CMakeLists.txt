@@ -44,13 +44,15 @@ if (AETHER_RELEASE OR AETHER_DIST)
         set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
 endif()
 
+# Add dependencie to ensure that dll is built first
+add_dependencies(AetherApp AetherRenderer)
 
 # Link renderer DLL to the app exe we are creating
 target_link_libraries(AetherApp PRIVATE AetherRenderer)
 
 # Post-build step to copy the DLL to the directory where the .exe is - huge time saver!
 add_custom_command(TARGET AetherApp POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+    COMMAND ${CMAKE_COMMAND} -E copy
         $<TARGET_FILE:AetherRenderer>               # The path to the generated .dll
         $<TARGET_FILE_DIR:AetherApp>                # The directory where the .exe is located
 )
