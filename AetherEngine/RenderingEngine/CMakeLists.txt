@@ -30,6 +30,11 @@ set(INCLUDE
     # Renderers
     EngineD3D/include/D3DUtils.h
     EngineD3D/include/RendererDX11.h
+
+    Events/include/Event.h
+    Events/include/KeyEvent.h
+    Events/include/MouseEvent.h
+    Events/include/AppEvent.h
     EngineD3D/include/RendererDX12.h
 
 
@@ -58,6 +63,7 @@ target_include_directories(AetherRenderer PRIVATE ${PROJECT_SOURCE_DIR}/include)
 target_include_directories(AetherRenderer PRIVATE include)
 target_include_directories(AetherRenderer PRIVATE EngineD3D/include)
 target_include_directories(AetherRenderer PRIVATE GLFW/include)
+target_include_directories(AetherRenderer PRIVATE Events/include)
 target_include_directories(AetherRenderer PRIVATE ThirdParty/dx12Helper/include)
 
 # Public so application can see it

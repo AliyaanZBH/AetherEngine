@@ -23,6 +23,9 @@
 #ifdef USE_VULKAN
 #include "Renderer/RendererVulkan.h" // To be implemented
 #endif
+
+#include "AppEvent.h"
+#include "Log.h"
 //===============================================================================
 
 AETHER_RESULT Aether::Application::Run()
@@ -66,6 +69,10 @@ AETHER_RESULT Aether::Application::Run()
         assert(false);
     // Init rendering API
     AETHER_ASSERT(!renderer->Initialize(*window));
+
+    // TEST: Try out events
+    WindowResizeEvent e(1920u, 1080u);
+    AETHER_TRACE(e);
 
     // The game loop!
     while (!window->WindowShouldClose()) {

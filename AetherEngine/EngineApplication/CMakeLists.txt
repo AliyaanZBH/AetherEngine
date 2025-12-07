@@ -44,6 +44,8 @@ if (AETHER_RELEASE OR AETHER_DIST)
         set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
 endif()
 
+# Add dependencie to ensure that dll is built first
+add_dependencies(AetherApp AetherRenderer)
 
 # Also explicitly add as dependency - this ensures that when running the exe, the DLL gets recompiled too :)
 add_dependencies(AetherApp AetherRenderer)

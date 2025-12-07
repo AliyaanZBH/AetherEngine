@@ -13,3 +13,6 @@
 #else
 	#error Aether currently only supports Windows! Linux and Mac are coming soon <3
 #endif
+
+// Bit field macro
+#define BIT(x) (1 << x)
