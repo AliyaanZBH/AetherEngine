@@ -4,9 +4,7 @@
 //		 Based upon one I built during a university project, but the goal is to optimize and modernize things going forward.
 // auth: Aliyaan Zulfiqar
 //===============================================================================
-#include <d3d11.h>
-#include <wrl/client.h>
-#include <cassert>
+//#include "PCH/AetherPCH.h"
 
 #include "IRenderer.h"
 #include "AetherUtils.h"

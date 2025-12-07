@@ -2,6 +2,8 @@
 // desc: A wrapper class for spdlog, that will be exported for use by any application using Aether
 // auth: Aliyaan Zulfiqar
 //===============================================================================
+//#include "AetherPCH.h"
+
 #include "Log.h"
 #include "spdlog/sinks/stdout_color_sinks.h"
 //===============================================================================

@@ -4,10 +4,7 @@
 //		 Based upon one I built during a university project, but the goal is to optimize and modernize things going forward.
 // auth: Aliyaan Zulfiqar
 //===============================================================================
-#include <dxgi1_3.h>
-#include <d3dcompiler.h>
-#include <vector>
-
+//#include "AetherPCH.h"
 
 #include "RendererDX11.h"
 #include "D3DUtils.h"

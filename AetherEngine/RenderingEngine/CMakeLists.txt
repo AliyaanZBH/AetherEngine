@@ -2,9 +2,24 @@
 # Set renderer-specific implementations
 #
 
+# Specify PCH files first
+#
+
+# Specify the precompiled header file
+set(PCH_HEADER "PCH/include/AetherPCH.h")
+
+# Specify the source file that will generate the .PCH binary
+set(PCH_SOURCE "PCH/AetherPCH.cpp")
+
+set(PCH_OUTPUT "${CMAKE_BINARY_DIR}/PCH") 
+
+
 # Specify the source files
 set(SRC
     
+    ${PCH_SOURCE}
+    PCH/AetherPCH.cpp
+
     Core/src/CoreApp.cpp
     
     Core/src/Log.cpp
@@ -14,6 +29,9 @@ set(SRC
 )
 
 set(INCLUDE
+
+    ${PCH_HEADER}
+    PCH/include/AetherPCH.h
 
     EntryPoint.h
 
@@ -40,7 +58,6 @@ set(INCLUDE
 
     # Third party includes
     ThirdParty/dx12Helper/include/d3dx12.h
-    
 )
 
 # Specify shaders
@@ -55,8 +72,31 @@ set_source_files_properties(Shaders/VertexShader.hlsl PROPERTIES ShaderType "vs"
 set_source_files_properties(Shaders/PixelShader.hlsl PROPERTIES ShaderType "ps")
 
 
-# Define the DLL
+# Define the DLL target
 add_library(AetherRenderer SHARED ${SRC} ${INCLUDE} ${HLSL_SHADER_FILES})
+
+# Enable PCH for Visual Studio
+if (MSVC)  # Check if we're on Visual Studio
+
+    target_precompile_headers(AetherRenderer PRIVATE ${PCH_HEADER})
+    
+    #target_sources(AetherRenderer PRIVATE ${PCH_SOURCE})  # Add the pch.cpp file to the target
+   # target_sources(AetherRenderer PRIVATE ${PCH_HEADER})  # Add the pch.h file to the target
+ 
+    # Ensure pch directory is included
+    #target_include_directories(AetherRenderer PRIVATE PCH/include)
+
+    # Create the precompiled header with /Yc
+  ## Set the "Create" option for the PCH file
+  #target_compile_options(AetherRenderer PRIVATE "/Yc${CMAKE_CURRENT_SOURCE_DIR}/${PCH_HEADER}")  
+  #
+  ## Use the precompiled header in all other source files with /Yu
+  #target_compile_options(AetherRenderer PRIVATE "/Yu${CMAKE_CURRENT_SOURCE_DIR}/${PCH_HEADER}")
+  
+    # Set the output directory for the PCH file
+    set_target_properties(AetherRenderer PROPERTIES PCH_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/PCH")
+
+endif()
 
 # Include directories for the DLL
 target_include_directories(AetherRenderer PRIVATE ${PROJECT_SOURCE_DIR}/include)

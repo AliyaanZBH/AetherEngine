@@ -3,8 +3,6 @@
 // desc: Interface for an abstract window, usable by GLFW, Win32, etc.
 // auth: Aliyaan Zulfiqar
 //===============================================================================
-#include <string>
-//===============================================================================
 
 class IWindow {
 public:

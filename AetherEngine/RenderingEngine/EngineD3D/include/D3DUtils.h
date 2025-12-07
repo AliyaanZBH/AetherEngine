@@ -3,22 +3,7 @@
 // desc: A collection of handy debug utilies for DirectX/WinAPI, chiefly the ability to get better debugging info from HResults!
 // auth: Aliyaan Zulfiqar
 //===============================================================================
-#if USE_DX11
-#include <d3d11.h>
-#endif
-
-#if USE_DX12
-#include <d3d12.h>
-#endif
-
-#include <stdio.h>
-
-#include <vector>
-#include <string>
-#include <fstream>
-#include <d3dcompiler.h>
-#include <cassert>
-
+//#include "PCH/AetherPCH.h"
 //===============================================================================
 
 
