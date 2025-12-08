@@ -104,7 +104,7 @@ target_link_libraries(AetherRenderer PRIVATE glfw)
 target_link_libraries(AetherRenderer PUBLIC spdlog::spdlog_header_only)
 
 
-# Define macro to ensure this project exports a DLL - this is how games can function as their own apps using our rendering code
+# Define macro to ensure this project exports a DLL - this will be undefined in the application and so will importing our DLL instead! See Core.h for implementation of this
 target_compile_definitions(AetherRenderer PRIVATE AETHER_BUILD_DLL)
 
 
