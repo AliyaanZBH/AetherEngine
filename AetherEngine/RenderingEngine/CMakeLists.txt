@@ -24,21 +24,24 @@ set(INCLUDE
     Core/include/Core.h
     Core/include/CoreApp.h
     Core/include/AetherUtils.h
-    Core/include/IRenderer.h
-    Core/include/IWindow.h
     Core/include/Log.h
 
+    # Interfaces
+    Core/include/IRenderer.h
+    Core/include/IWindow.h
+
+    # Window
     GLFW/include/WinManGLFW.h
 
-    # Renderers
+    # Rendering
     EngineD3D/include/D3DUtils.h
     EngineD3D/include/RendererDX11.h
+    EngineD3D/include/RendererDX12.h
 
     Events/include/Event.h
     Events/include/KeyEvent.h
     Events/include/MouseEvent.h
     Events/include/AppEvent.h
-    EngineD3D/include/RendererDX12.h
 
 
     # Third party includes
@@ -66,15 +69,16 @@ if (MSVC)  # Check if we're on Visual Studio
 endif()
 
 # Include directories for the DLL
-target_include_directories(AetherRenderer PRIVATE ${PROJECT_SOURCE_DIR}/include)
-target_include_directories(AetherRenderer PRIVATE include)
-target_include_directories(AetherRenderer PRIVATE EngineD3D/include)
-target_include_directories(AetherRenderer PRIVATE GLFW/include)
-target_include_directories(AetherRenderer PRIVATE Events/include)
-target_include_directories(AetherRenderer PRIVATE ThirdParty/dx12Helper/include)
-
-# Public so application can see it
-target_include_directories(AetherRenderer PUBLIC Core/include)
+target_include_directories(AetherRenderer
+                    PRIVATE 
+                            ${PROJECT_SOURCE_DIR}/include
+                            EngineD3D/include
+                            GLFW/include
+                            Events/include
+                            ThirdParty/dx12Helper/include
+                    PUBLIC
+                         Core/include # Public as application target needs to see it too
+)
 
 
 # Set source groups for VS2022 quality of life
@@ -100,12 +104,16 @@ target_compile_definitions(AetherRenderer PRIVATE AETHER_BUILD_DLL)
 #
 
 # Configuration compile definitions
-target_compile_definitions(AetherRenderer PRIVATE $<CONFIG:Debug> AETHER_DEBUG)
-target_compile_definitions(AetherRenderer PRIVATE $<CONFIG:Release> AETHER_RELEASE)
-target_compile_definitions(AetherRenderer PRIVATE $<CONFIG:Distribution> AETHER_DIST)
+target_compile_definitions(AetherRenderer PRIVATE 
+    $<CONFIG:Debug> AETHER_DEBUG
+    $<CONFIG:Release> AETHER_RELEASE
+    $<CONFIG:RelWithDebInfo> AETHER_RELEASE_DBG_INFO
+    $<CONFIG:Distribution> AETHER_DIST
+)
 
 # Enable optimisations when not in debug
-if (AETHER_RELEASE OR AETHER_DIST)
+#if (AETHER_RELEASE OR AETHER_DIST)
+if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug" )
         set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
 endif()
 
@@ -189,29 +197,38 @@ foreach(FILE ${HLSL_SHADER_FILES})
     
     get_source_file_property(shadertype ${FILE} ShaderType)
     get_source_file_property(shadermodel ${FILE} ShaderModel)
-
-    add_custom_command(TARGET AetherRenderer PRE_LINK
-                       COMMAND dxc.exe /nologo /E main /T ${shadertype}_${shadermodel} /Od /Zi /Fo ${CMAKE_CURRENT_BINARY_DIR}/${FILE_WE}.cso /Fd ${CMAKE_CURRENT_BINARY_DIR}/${FILE_WE}.pdb ${FILE}
-                       COMMENT "HLSL ${FILE}"
-                       WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-                       VERBATIM)
+                      
+    add_custom_command(
+        OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${FILE_WE}.cso
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        COMMAND dxc.exe /nologo /E main /T ${shadertype}_${shadermodel}
+                /Od /Zi /Fo ${CMAKE_CURRENT_BINARY_DIR}/${FILE_WE}.cso 
+                /Fd ${CMAKE_CURRENT_BINARY_DIR}/${FILE_WE}.pdb ${FILE}
+        DEPENDS ${FILE}
+        COMMENT "Compiling HLSL ${FILE}..."
+        COMMAND ${CMAKE_COMMAND} -E echo "Successfuly compiled shader!"
+        VERBATIM
+    )
 endforeach(FILE)
 
-# Make raw shader and CSO list public and visible to our EXE so that it can copy it post-build
-set_property(GLOBAL PROPERTY SHADER_FILES "${RAW_SHADER_FILES}")
-set_property(GLOBAL PROPERTY CSO_FILES "${CSO_SHADER_FILES}")
 
-# Copy CSOs to DLL folder in build step
-add_custom_command(TARGET AetherRenderer POST_BUILD
-                  COMMAND ${CMAKE_COMMAND} -E copy ${CSO_SHADER_FILES} $<TARGET_FILE_DIR:AetherRenderer>
-                  COMMAND_EXPAND_LISTS
-)
+# Create a target for shaders - using snake_case to denote that this is an intermediate target only
+add_custom_target(aether_shaders DEPENDS ${CSO_SHADER_FILES})
 
-set(DEST_DIR "$<TARGET_FILE_DIR:AetherRenderer>/Shaders")
-add_custom_command(TARGET AetherRenderer POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E make_directory ${DEST_DIR}
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        ${RAW_SHADER_FILES}               
-        ${DEST_DIR}
-        COMMAND_EXPAND_LISTS
+# Make renderer depend on shader compilation
+add_dependencies(AetherRenderer aether_shaders)
+
+# Deployment target (DLL + PDB + shaders)
+set(RUNTIME_DIR "$<TARGET_FILE_DIR:AetherRenderer>")
+set(SHADER_DEST "${RUNTIME_DIR}/Shaders")
+
+
+# Copy raw shaders and CSOs to bin folder in build step via another custom intermediate target
+add_custom_target(deploy_shaders ALL
+    DEPENDS AetherRenderer aether_shaders
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${SHADER_DEST}
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CSO_SHADER_FILES} ${SHADER_DEST} COMMAND_EXPAND_LISTS
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${RAW_SHADER_FILES} ${SHADER_DEST} COMMAND_EXPAND_LISTS
+    COMMENT "Deploying AetherEngine shaders..."
+    COMMAND ${CMAKE_COMMAND} -E echo "Engine shader files deployed!"
 )
