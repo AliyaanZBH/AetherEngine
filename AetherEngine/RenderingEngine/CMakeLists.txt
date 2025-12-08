@@ -86,9 +86,18 @@ source_group("src" FILES ${SRC})
 source_group("include" FILES ${INCLUDE})
 source_group("shaders" FILES ${HLSL_SHADER_FILES})
 
-# Third-party subdirectories
-add_subdirectory(ThirdParty/glfw)
-add_subdirectory(ThirdParty/spdlog)
+#
+# Third-party libraries and subdirectories
+#
+
+if(USE_GLFW)
+    add_subdirectory(ThirdParty/glfw EXCLUDE_FROM_ALL)  # EXCLUDE ensures we only build this subdirectory once!
+    target_link_libraries(AetherRenderer PRIVATE glfw)
+    # Set pre-processor macro in target
+    target_compile_definitions(AetherRenderer PRIVATE USE_GLFW)
+endif()
+
+add_subdirectory(ThirdParty/spdlog EXCLUDE_FROM_ALL)
 
 # Link third party modules to renderer
 target_link_libraries(AetherRenderer PRIVATE glfw)
@@ -131,12 +140,6 @@ if(WIN32)
     target_compile_definitions(AetherRenderer PUBLIC AETHER_PLATFORM_WINDOWS)
     target_compile_definitions(AetherRenderer PRIVATE USE_WIN32)
 endif()
-
-if(USE_GLFW)
-    # Set pre-processor macros
-    target_compile_definitions(AetherRenderer PRIVATE USE_GLFW)
-endif()
-
 
 
 #
