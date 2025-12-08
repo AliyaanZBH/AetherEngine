@@ -19,6 +19,8 @@ namespace Aether
     WindowGLFW::WindowGLFW(const WinData& winData)
     {
         AETHER_ASSERT(Initialize(winData));
+        // Don't forget to to set this winData for use later!
+        SetData(winData);
     }
 
     WindowGLFW::~WindowGLFW()

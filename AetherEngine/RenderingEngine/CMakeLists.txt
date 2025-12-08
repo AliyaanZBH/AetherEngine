@@ -102,6 +102,7 @@ target_compile_definitions(AetherRenderer PRIVATE AETHER_BUILD_DLL)
 # Configuration compile definitions
 target_compile_definitions(AetherRenderer PRIVATE $<CONFIG:Debug> AETHER_DEBUG)
 target_compile_definitions(AetherRenderer PRIVATE $<CONFIG:Release> AETHER_RELEASE)
+target_compile_definitions(AetherRenderer PRIVATE $<CONFIG:RelWithDebInfo> AETHER_RELEASE_DBG_INFO)
 target_compile_definitions(AetherRenderer PRIVATE $<CONFIG:Distribution> AETHER_DIST)
 
 # Enable optimisations when not in debug

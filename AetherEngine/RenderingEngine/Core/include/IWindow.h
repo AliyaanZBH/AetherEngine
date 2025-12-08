@@ -50,7 +50,13 @@ namespace Aether
 			return m_WinData;
 		}
 
-		// Setter for WinData struct - not filling it out fully for the time being
+		// Default copy sett for WinData struct
+		void SetData(const WinData& wd)
+		{
+			m_WinData = wd;
+		}
+
+		// Manual setter for WinData struct - not filling it out fully for the time being
 		void SetData(int width, int height, std::string name)
 		{
 			m_WinData.m_ClientWidth = width;

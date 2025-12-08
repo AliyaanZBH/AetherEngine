@@ -37,6 +37,7 @@ source_group("include" FILES ${INCLUDE})
 # Configuration compile definitions
 target_compile_definitions(AetherApp PRIVATE $<CONFIG:Debug> AETHER_DEBUG)
 target_compile_definitions(AetherApp PRIVATE $<CONFIG:Release> AETHER_RELEASE)
+target_compile_definitions(AetherApp PRIVATE $<CONFIG:RelWithDebInfo> AETHER_RELEASE_DBG_INFO)
 target_compile_definitions(AetherApp PRIVATE $<CONFIG:Distribution> AETHER_DIST)
 
 # Enable optimisations when not in debug
@@ -63,10 +64,16 @@ add_custom_command(TARGET AetherApp POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy
         $<TARGET_FILE:AetherRenderer>               # The path to the generated .dll
         $<TARGET_FILE_DIR:AetherApp>                # The directory where the .exe is located
-   COMMAND ${CMAKE_COMMAND} -E copy                 # Copy .PDB also!
-        $<TARGET_PDB_FILE:AetherRenderer>
-        $<TARGET_FILE_DIR:AetherApp>
-)       
+)
+
+ # Copy .PDB in debug!
+if (AETHER_DEBUG)
+    add_custom_command(TARGET AetherApp POST_BUILD
+       COMMAND ${CMAKE_COMMAND} -E copy                
+            $<TARGET_PDB_FILE:AetherRenderer>
+            $<TARGET_FILE_DIR:AetherApp>
+    ) 
+endif()
 
 # Also copy both raw and compiled shaders!
 get_property(cso_files GLOBAL PROPERTY CSO_FILES)
