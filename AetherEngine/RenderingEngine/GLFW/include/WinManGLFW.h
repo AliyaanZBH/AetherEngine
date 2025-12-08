@@ -9,28 +9,36 @@
 // Forward declare for renderer
 class IRenderer;
 
-
-// WinMan meaning Window Manager.
-class WinManGLFW : public IWindow
+// WinMan - Window Manager.
+namespace Aether
 {
-public:
-	bool Initialize(const WinData& winData) override;
-	bool WindowShouldClose() override;
-	void PollEvents() override
+	class WinManGLFW : public IWindow
 	{
-		glfwPollEvents();
-	}
+	public:
+		WinManGLFW() {}
+		WinManGLFW(const WinData& winData);
+		~WinManGLFW();
 
-	void SetEventCallback(const EventCallbackFn& callback) override {}
+		bool Initialize(const WinData& winData) override;
+		bool WindowShouldClose() override;
+		void PollEvents() override
+		{
+			glfwPollEvents();
+		}
 
-	void* GetNativeWindowHandle() const override
-	{
-		#ifdef _WIN32
-				return static_cast<void*>(glfwGetWin32Window(m_pWindow));
-		#else
-				return nullptr;  // Handle other platforms
-		#endif
-	}
-private:
-	GLFWwindow* m_pWindow;
+		void SetEventCallback(const EventCallbackFn& callback) override;
+
+		void Terminate();
+
+		void* GetNativeWindowHandle() const override
+		{
+#ifdef _WIN32
+			return static_cast<void*>(glfwGetWin32Window(m_pWindow));
+#else
+			return nullptr;  // Handle other platforms
+#endif
+		}
+	private:
+		GLFWwindow* m_pWindow;
+	};
 };
