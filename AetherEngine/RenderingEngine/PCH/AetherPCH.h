@@ -29,13 +29,16 @@
 	#include <Windows.h>
 	#include <wrl/client.h>
 
-	#include <dxgi1_3.h>
+	#include <DirectXMath.h>
 	#include <d3dcompiler.h>
 #ifdef USE_DX11
 	#include <d3d11.h>
+	#include <dxgi1_3.h>
 #endif
 #ifdef USE_DX12
 	#include <d3d12.h>
+	#include <dxgi1_4.h>
+	#include <d3dx12.h>
 #endif
 #endif
 

@@ -11,7 +11,7 @@ set(SRC
     Core/src/CoreApp.cpp
     
     Core/src/Log.cpp
-    GLFW/src/WinManGLFW.cpp
+    GLFW/src/WindowGLFW.cpp
     EngineD3D/src/RendererDX11.cpp
     EngineD3D/src/RendererDX12.cpp
 )
@@ -28,7 +28,7 @@ set(INCLUDE
     Core/include/IWindow.h
     Core/include/Log.h
 
-    GLFW/include/WinManGLFW.h
+    GLFW/include/WindowGLFW.h
 
     # Renderers
     EngineD3D/include/D3DUtils.h

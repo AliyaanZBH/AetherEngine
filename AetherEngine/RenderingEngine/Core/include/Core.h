@@ -1,8 +1,13 @@
 #pragma once
 //===============================================================================
-// desc: A collection of macros for DLL exporting
+// desc: A collection of key constants, typedefs and macros for debugging, DLL exporting, and other utilities
 // auth: Aliyaan Zulfiqar
 //===============================================================================
+
+typedef int AETHER_RESULT;	// For more useful error handling at low-level, can be used interchangeably with Windows HResult
+
+#define AETHER_OK 0
+#define AETHER_FAIL -1
 
 #ifdef AETHER_PLATFORM_WINDOWS
 	#ifdef AETHER_BUILD_DLL

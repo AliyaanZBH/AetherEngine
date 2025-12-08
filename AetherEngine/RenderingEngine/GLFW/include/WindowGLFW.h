@@ -12,14 +12,14 @@ class IRenderer;
 // WinMan - Window Manager.
 namespace Aether
 {
-	class WinManGLFW : public IWindow
+	class AETHER_API WindowGLFW : public IWindow
 	{
 	public:
-		WinManGLFW() {}
-		WinManGLFW(const WinData& winData);
-		~WinManGLFW();
+		WindowGLFW() {}
+		WindowGLFW(const WinData& winData);
+		~WindowGLFW();
 
-		bool Initialize(const WinData& winData) override;
+		AETHER_RESULT Initialize(const WinData& winData) override;
 		bool WindowShouldClose() override;
 		void PollEvents() override
 		{

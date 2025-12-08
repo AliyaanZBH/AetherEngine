@@ -7,11 +7,14 @@
 #include "AetherUtils.h"
 //===============================================================================
 
-class IRenderer {
-public:
-    virtual ~IRenderer() = default;
+namespace Aether
+{
+    class AETHER_API IRenderer {
+    public:
+        virtual ~IRenderer() = default;
 
-    virtual AETHER_RESULT Initialize(IWindow& window) = 0;
-    virtual void Render() = 0;
-    virtual void Terminate() = 0;
-};
+        virtual AETHER_RESULT Initialize(IWindow& window) = 0;
+        virtual void Render() = 0;
+        virtual void Terminate() = 0;
+    };
+}

@@ -7,7 +7,7 @@
 #include "IRenderer.h"
 
 #ifdef USE_GLFW
-#include "WinManGLFW.h"
+#include "WindowGLFW.h"
 #endif
 
 #ifdef USE_DX11
@@ -38,7 +38,7 @@ AETHER_RESULT Aether::Application::Run()
     // Set which type of window we are creating
     // Later in development, this will be read from a JSON config file so that the user can manually change it from a GUI inside the application!
 #ifdef USE_GLFW
-    window = std::make_unique<WinManGLFW>();
+    window = std::make_unique<WindowGLFW>();
 #elif defined(USE_WIN32)
     renderer = std::make_unique<WinManWin32>();
 #else
@@ -62,11 +62,11 @@ AETHER_RESULT Aether::Application::Run()
     int w = 800, h = 600;
     window->SetData(w, h, "Aether Engine");
 
-    // Now try and initiate window
-    if (!window->Initialize(window->GetData()))
-        assert(false);
-    // Init rendering API
-    AETHER_ASSERT(!renderer->Initialize(*window));
+    // Now try and initiate window - catch errors
+    AETHER_ASSERT(window->Initialize(window->GetData()))
+
+    // Init rendering API - catch errors again
+    AETHER_ASSERT(renderer->Initialize(*window));
 
     // TEST: Try out events
     WindowResizeEvent e(1920u, 1080u);

@@ -35,7 +35,7 @@ namespace Aether
 
 		virtual ~IWindow() = default;
 
-		virtual bool Initialize(const WinData& winData) = 0;
+		virtual AETHER_RESULT Initialize(const WinData& winData) = 0;
 		virtual bool WindowShouldClose() = 0;
 		virtual void PollEvents() = 0;
 

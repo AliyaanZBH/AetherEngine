@@ -2,7 +2,7 @@
 // desc: A manager class with a collection of handy utilies for GLFW windows, useful for both DX and Vulkan
 // auth: Aliyaan Zulfiqar
 //===============================================================================
-#include "WinManGLFW.h"
+#include "WindowGLFW.h"
 //===============================================================================
 
 namespace Aether
@@ -13,17 +13,17 @@ namespace Aether
             glfwSetWindowShouldClose(window, GLFW_TRUE);
     }
 
-    WinManGLFW::WinManGLFW(const WinData& winData)
+    WindowGLFW::WindowGLFW(const WinData& winData)
     {
         Initialize(winData);
     }
 
-    WinManGLFW::~WinManGLFW()
+    WindowGLFW::~WindowGLFW()
     {
         Terminate();
     }
 
-    bool WinManGLFW::Initialize(const WinData& winData)
+    AETHER_RESULT WindowGLFW::Initialize(const WinData& winData)
     {
         // Get GLFW setup for app window
         if (!glfwInit())
@@ -47,18 +47,18 @@ namespace Aether
         return true;
     }
 
-    bool WinManGLFW::WindowShouldClose()
+    bool WindowGLFW::WindowShouldClose()
     {
         // Return a flag that is set when the user attempts to close the window, but the window isn't actually closed yet.
         return glfwWindowShouldClose(m_pWindow);
     }
 
-    void WinManGLFW::SetEventCallback(const EventCallbackFn& callback)
+    void WindowGLFW::SetEventCallback(const EventCallbackFn& callback)
     {
 
     }
 
-    void WinManGLFW::Terminate()
+    void WindowGLFW::Terminate()
     {
         glfwDestroyWindow(m_pWindow);
         glfwTerminate();
