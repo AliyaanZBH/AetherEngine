@@ -36,7 +36,21 @@ option(USE_VULKAN "Build with Vulkan" OFF)
 include_directories(${PROJECT_SOURCE_DIR}/include)
 include_directories(${CMAKE_SOURCE_DIR}/include)
 
+# Set a unified folder for runtime binaries (DLLs, EXEs, PDBs)
+set(BIN_DIR ${CMAKE_BINARY_DIR}/bin)
 
-# Add main projects as indivudual subdirectories as they have their own CMakeLists file
+# All targets (DLL/EXE) will output here
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${BIN_DIR})
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${BIN_DIR})
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${BIN_DIR})  # For static libs from third-parties
+
+# Ensure multi-config support (Debug/Release)
+foreach(OUTPUT_CONFIG Debug Release RelWithDebInfo Distribution)
+    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_${OUTPUT_CONFIG} ${CMAKE_BINARY_DIR}/bin)
+    set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_${OUTPUT_CONFIG} ${CMAKE_BINARY_DIR}/bin)
+    set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${OUTPUT_CONFIG} ${CMAKE_BINARY_DIR}/bin)
+endforeach()
+
+# Add main projects as indivudual subdirectories as they have their own CMakeLists file. These will build in order, so engine DLL first then the app (which depends on the DLL!)
 add_subdirectory(RenderingEngine)
 add_subdirectory(EngineApplication)
