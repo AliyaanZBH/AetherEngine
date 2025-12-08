@@ -28,7 +28,7 @@ namespace Aether
 
 		void SetEventCallback(const EventCallbackFn& callback) override;
 
-		void Terminate();
+		void Terminate() override;
 
 		void* GetNativeWindowHandle() const override
 		{

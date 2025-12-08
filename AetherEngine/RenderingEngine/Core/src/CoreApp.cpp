@@ -84,6 +84,7 @@ AETHER_RESULT Aether::Application::Run()
 
     // Make sure we release our resources
     renderer->Terminate();
+    window->Terminate();
 
     // Return the OK!
     return AETHER_OK;

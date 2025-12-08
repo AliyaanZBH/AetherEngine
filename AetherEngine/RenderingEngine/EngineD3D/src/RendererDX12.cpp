@@ -247,11 +247,11 @@ namespace Aether
 
 
 		// Wait for GPU to safely finish final frames
-		for (int i = 0; i < m_kNumFrameBuffers; ++i)
-		{
-			m_FrameIndex = i;
-			Sync();
-		}
+		//for (int i = 0; i < m_kNumFrameBuffers; ++i)
+		//{
+		//	m_FrameIndex = i;
+		//	Sync();
+		//}
 
 		// Release and then delete everything
 		m_Device->Release();
