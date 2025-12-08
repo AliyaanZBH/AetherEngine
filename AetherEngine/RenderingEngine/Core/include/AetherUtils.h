@@ -52,12 +52,15 @@ inline void AetherError(AETHER_RESULT ar, const char* pFileStr, int lineNum, ...
 	__debugbreak();
 }
 
-#define AETHER_ASSERT(ret, ...)							\
-{													\
-		AETHER_RESULT ar = (ret);					\
-		if (ar != AETHER_OK)						\
-			AetherError(ar, __FILE__, __LINE__, __VA_ARGS__);	\
-}													\
+#define AETHER_ASSERT(ret, ...)									\
+{																\
+	AETHER_RESULT ar = AETHER_OK;								\
+	ar = (ret);													\
+	if (ar != AETHER_OK)										\
+	{															\
+		AetherError(ar, __FILE__, __LINE__, __VA_ARGS__);		\
+	}															\
+}																\
 
 #endif
 #else

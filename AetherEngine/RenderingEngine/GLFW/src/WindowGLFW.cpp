@@ -18,7 +18,7 @@ namespace Aether
 
     WindowGLFW::WindowGLFW(const WinData& winData)
     {
-        AETHER_ASSERT(Initialize(winData), "Failed to initalize GLFW.");
+        AETHER_ASSERT(Initialize(winData), "Failed to initalize GLFW properly.");
         // Don't forget to to set this winData for use later!
         SetData(winData);
     }
@@ -32,12 +32,11 @@ namespace Aether
     {
         AETHER_RESULT ar = AETHER_OK;
 
-        // Get GLFW setup for app windows - only do this once!
+        // Get GLFW setup for all our windows - only do this once!
         if (!s_bInitGLFW)
         {
-            if (!glfwInit())
-                assert(false && "Failed to initialize GLFW.");
-
+            ar = glfwInit() ? AETHER_OK : AETHER_FAIL;    // GLFW returns true or false, this doesn't map cleanly with our result so use a ternary to finagle it!
+            AETHER_ASSERT(ar, "Failed to initialize GLFW with glfwInit(). Do you have the library built?");
             s_bInitGLFW = true;
         }
         // Create a GLFW window without an OpenGL context
@@ -45,18 +44,17 @@ namespace Aether
        
         // TODO: Dynamic window size
 
-        m_pWindow = glfwCreateWindow(winData.m_ClientWidth, winData.m_ClientHeight, "Aether Engine", nullptr, nullptr);
+        m_pWindow = glfwCreateWindow(winData.m_ClientWidth, winData.m_ClientHeight, winData.m_Title.c_str(), nullptr, nullptr);
         if (m_pWindow == nullptr)
         {
-            assert(false && "Failed to create GLFW window.");
             glfwTerminate();
-            return false;
+            AETHER_ASSERT(AETHER_FAIL, "Failed to create GLFW window. Check window creation data.");
         }
 
         // Set callback function to handle inputs
         glfwSetKeyCallback(m_pWindow, key_callback);
 
-        return AETHER_FAIL;
+        return ar;
     }
 
     bool WindowGLFW::WindowShouldClose()

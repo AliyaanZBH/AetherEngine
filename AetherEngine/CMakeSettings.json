@@ -35,6 +35,11 @@
           "name": "USE_DX11",
           "value": "False",
           "type": "BOOL"
+        },
+        {
+          "name": "GLFW_BUILD_DOCS",
+          "value": "False",
+          "type": "BOOL"
         }
       ]
     },
