@@ -3,10 +3,13 @@
 // auth: Aliyaan Zulfiqar
 //===============================================================================
 #include "WindowGLFW.h"
+#include <AetherUtils.h>
 //===============================================================================
 
 namespace Aether
 {
+    static bool s_bInitGLFW = false;
+
     static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
     {
         if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
@@ -15,7 +18,7 @@ namespace Aether
 
     WindowGLFW::WindowGLFW(const WinData& winData)
     {
-        Initialize(winData);
+        AETHER_ASSERT(Initialize(winData));
     }
 
     WindowGLFW::~WindowGLFW()
@@ -25,12 +28,17 @@ namespace Aether
 
     AETHER_RESULT WindowGLFW::Initialize(const WinData& winData)
     {
-        // Get GLFW setup for app window
-        if (!glfwInit())
-            assert(false && "Failed to initialize GLFW.");
+        // Get GLFW setup for app windows - only do this once!
+        if (!s_bInitGLFW)
+        {
+            if (!glfwInit())
+                assert(false && "Failed to initialize GLFW.");
 
+            s_bInitGLFW = true;
+        }
         // Create a GLFW window without an OpenGL context
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+       
         // TODO: Dynamic window size
 
         m_pWindow = glfwCreateWindow(winData.m_ClientWidth, winData.m_ClientHeight, "Aether Engine", nullptr, nullptr);

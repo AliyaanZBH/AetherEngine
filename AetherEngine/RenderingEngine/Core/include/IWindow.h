@@ -19,7 +19,7 @@ namespace Aether
 		/*	HINSTANCE hAppInst = 0;
 			HWND      hMainWnd = 0;
 			HICON     hIcon = 0;*/
-			std::string m_MainWndCaption = "Aether Engine";
+			std::string m_Title = "Aether Engine";
 			int m_ClientWidth;
 			int m_ClientHeight;
 			bool m_bAppPaused = false;
@@ -55,7 +55,7 @@ namespace Aether
 		{
 			m_WinData.m_ClientWidth = width;
 			m_WinData.m_ClientHeight = height;
-			m_WinData.m_MainWndCaption = name;
+			m_WinData.m_Title = name;
 		}
 	};
 };

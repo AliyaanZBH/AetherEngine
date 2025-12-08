@@ -35,10 +35,17 @@ AETHER_RESULT Aether::Application::Run()
     std::unique_ptr<IWindow> window;
     std::unique_ptr<IRenderer> renderer;
 
-    // Set which type of window we are creating
-    // Later in development, this will be read from a JSON config file so that the user can manually change it from a GUI inside the application!
+    // Set which type of window we are creating and pass in some data for it
+    // Later in development, this will be read from a JSON config file so that the user can save and load settings, along with manually changing it from a GUI inside the application!
+    Aether::IWindow::WinData wd =
+    {
+        .m_ClientWidth = 800,
+        .m_ClientHeight = 600
+        /*.m_Title = "AetherApp"*/      // Default title is Aether Engine
+    };
+
 #ifdef USE_GLFW
-    window = std::make_unique<WindowGLFW>();
+    window = std::make_unique<WindowGLFW>(wd);      // Calls initialise and catches errors inside with assert
 #elif defined(USE_WIN32)
     renderer = std::make_unique<WinManWin32>();
 #else
@@ -58,14 +65,7 @@ AETHER_RESULT Aether::Application::Run()
     ret = AETHER_FAIL;
 #endif
 
-    // Set up winData struct. Again, this would be saved and loaded from a config file later in development
-    int w = 800, h = 600;
-    window->SetData(w, h, "Aether Engine");
-
-    // Now try and initiate window - catch errors
-    AETHER_ASSERT(window->Initialize(window->GetData()))
-
-    // Init rendering API - catch errors again
+    // Init rendering API - catch errors out here with assert
     AETHER_ASSERT(renderer->Initialize(*window));
 
     // TEST: Try out events
