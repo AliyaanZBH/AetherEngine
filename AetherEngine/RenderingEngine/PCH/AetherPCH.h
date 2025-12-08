@@ -16,6 +16,15 @@
 #include <sstream>
 #include <fstream>
 
+//
+//	Windows and Renderer libraries
+//
+
+#include <GLFW/glfw3.h>
+#define GLFW_EXPOSE_NATIVE_WIN32
+#define GLFW_EXPOSE_NATIVE_WGL
+#include <GLFW/glfw3native.h>
+
 #ifdef AETHER_PLATFORM_WINDOWS
 	#include <Windows.h>
 	#include <wrl/client.h>
@@ -29,3 +38,4 @@
 	#include <d3d12.h>
 #endif
 #endif
+

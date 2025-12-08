@@ -3,11 +3,6 @@
 // desc: A manager class with a collection of handy utilies for GLFW windows, useful for both DX and Vulkan
 // auth: Aliyaan Zulfiqar
 //===============================================================================
-#include <GLFW/glfw3.h>
-#define GLFW_EXPOSE_NATIVE_WIN32
-#define GLFW_EXPOSE_NATIVE_WGL
-#include <GLFW/glfw3native.h>
-
 #include "IWindow.h"
 //===============================================================================
 
@@ -25,6 +20,8 @@ public:
 	{
 		glfwPollEvents();
 	}
+
+	void SetEventCallback(const EventCallbackFn& callback) override {}
 
 	void* GetNativeWindowHandle() const override
 	{
