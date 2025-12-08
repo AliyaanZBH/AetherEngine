@@ -29,11 +29,11 @@ namespace Aether
 	enum EventCategory
 	{
 		None = 0,
-		Application = BIT(0),
-		Input		= BIT(1),
-		Mouse		= BIT(2),		// For movement and scrolling
-		Click		= BIT(3),		// For clicking LMB etc.
-		Keyboard    = BIT(4),
+		ApplicationEvent	= BIT(0),
+		Input				= BIT(1),
+		Mouse				= BIT(2),		// For movement and scrolling
+		Click				= BIT(3),		// For clicking LMB etc.
+		Keyboard			= BIT(4),
 	};
 
 	//

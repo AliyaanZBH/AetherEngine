@@ -3,8 +3,6 @@
 // auth: Aliyaan Zulfiqar
 //===============================================================================
 #include "CoreApp.h"
-#include "IWindow.h"
-#include "IRenderer.h"
 
 #ifdef USE_GLFW
 #include "WindowGLFW.h"
@@ -25,70 +23,99 @@
 #include "AppEvent.h"
 #include "Log.h"
 //===============================================================================
-
-AETHER_RESULT Aether::Application::Run()
+namespace Aether
 {
-    // A local instance that represents possible error codes.
-    AETHER_RESULT ret;
+//#define BIND_APP_FN(x) std::bind(&Application::x, this, std::placeholders::_1)
 
-    // Create unique, single instances of our key interfaces
-    std::unique_ptr<IWindow> window;
-    std::unique_ptr<IRenderer> renderer;
-
-    // Set which type of window we are creating and pass in some data for it
-    // Later in development, this will be read from a JSON config file so that the user can save and load settings, along with manually changing it from a GUI inside the application!
-    Aether::IWindow::WinData wd =
+    Application::Application()
     {
-        .m_ClientWidth = 800,
-        .m_ClientHeight = 600
-        /*.m_Title = "AetherApp"*/      // Default title is Aether Engine
-    };
+        // A local instance that represents possible error codes.
+        AETHER_RESULT ar = AETHER_OK;
 
-#ifdef USE_GLFW
-    window = std::make_unique<WindowGLFW>(wd);      // Calls initialise and catches errors inside with assert
-#elif defined(USE_WIN32)
-    renderer = std::make_unique<WinManWin32>();
-#else
+        // Set which type of window we are creating and pass in some data for it
+        // Later in development, this will be read from a JSON config file so that the user can save and load settings, along with manually changing it from a GUI inside the application!
+        IWindow::WinData wd =
+        {
+            .m_ClientWidth = 800,
+            .m_ClientHeight = 600
+            /*.m_Title = "AetherApp"*/      // Default title is Aether Engine
+        };
+
+    #ifdef USE_GLFW
+        m_Window = std::make_unique<WindowGLFW>(wd);      // Calls initialise and catches errors inside with assert
+    #elif defined(USE_WIN32)
+        m_Window = std::make_unique<WinManWin32>();
+    #else
     #error No window API defined. Please enable USE_GLFW or USE_WIN32."
-    ret = AETHER_FAIL;
-#endif
+        ar = AETHER_FAIL;
+    #endif
 
-    // Set the desired rendering API, based on the chosen macro.
-#ifdef USE_DX11
-    renderer = std::make_unique<RendererDX11>();
-#elif defined(USE_DX12)
-	renderer = std::make_unique<RendererDX12>();
-#elif defined(USE_VULKAN)
-    renderer = std::make_unique<RendererVulkan>();
-#else
+        // Set the desired rendering API, based on the chosen macro.
+    #ifdef USE_DX11
+        m_Renderer = std::make_unique<RendererDX11>();
+    #elif defined(USE_DX12)
+        m_Renderer = std::make_unique<RendererDX12>();
+    #elif defined(USE_VULKAN)
+        m_Renderer = std::make_unique<RendererVulkan>();
+    #else
     #error No rendering API defined. Please enable USE_DX11 or USE_VULKAN.
-    ret = AETHER_FAIL;
-#endif
+        ar = AETHER_FAIL;
+    #endif
 
-    // Init rendering API - catch errors out here with assert
-    AETHER_ASSERT(renderer->Initialize(*window));
+        // Bind event callback for our window
+        //m_Window->SetEventCallback(BIND_APP_FN(OnEvent));
+        //m_Window->SetEventCallback(std::bind(&Application::OnEvent, this, std::placeholders::_1));
+        //auto callback = std::bind(&Application::OnEvent, this, std::placeholders::_1);
 
-    // TEST: Try out events
-    WindowResizeEvent e(1920u, 1080u);
-    AETHER_TRACE(e);
+       // std::function<void(Event&)> callback = [this](Event& event) {
+       //     return this->OnEvent(event);
+       //     };
 
-    // The game loop!
-    while (!window->WindowShouldClose()) {
+       //IWindow::EventCallbackFn callback = [this](Event& event) {
+       //    return this->OnEvent(event);
+       //    };
 
-        // Handle window events here (e.g., using GLFW or another windowing library)
-        window->PollEvents();
-
-        // Render our lovely frame!
-        renderer->Render();
+        //m_Window->SetEventCallback(callback);
     }
 
-    printf("\n\n\n");
-    AETHER_CORE_INFO("Thanks for using Aether!\n");
 
-    // Make sure we release our resources
-    renderer->Terminate();
-    window->Terminate();
+    void Application::OnEvent(Event& event)
+    {
+        // Just print the event for now
+        AETHER_CORE_INFO("{0}", event);
+    }
 
-    // Return the OK!
-    return AETHER_OK;
-}
+    AETHER_RESULT Application::Run()
+    {
+        // A local instance that represents possible error codes.
+        AETHER_RESULT ar = AETHER_OK;
+
+        // Init rendering API - catch errors out here with assert
+        AETHER_ASSERT(m_Renderer->Initialize(*m_Window));
+
+        // TEST: Try out events
+        WindowResizeEvent e(1920u, 1080u);
+        AETHER_TRACE(e);
+
+        // The game loop!
+        while (!m_Window->WindowShouldClose()) {
+
+            // Handle window events here (e.g., using GLFW or another windowing library)
+            m_Window->PollEvents();
+
+            // Render our lovely frame!
+            m_Renderer->Render();
+        }
+
+        printf("\n\n\n");
+        AETHER_CORE_INFO("Thanks for using Aether!\n");
+
+        // Make sure we release our resources
+        m_Renderer->Terminate();
+        m_Window->Terminate();
+
+        // Return the OK!
+        return AETHER_OK;
+    }
+
+};

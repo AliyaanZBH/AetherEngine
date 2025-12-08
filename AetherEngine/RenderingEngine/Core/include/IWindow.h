@@ -12,13 +12,18 @@ namespace Aether
 {
 	class AETHER_API IWindow {
 	public:
-		// Nifty struct to access window data from the main process. Public so that the renderer can see this too
+		using EventCallbackFn = std::function<void(Event&)>;
+
+		// Nifty struct to setup and access window data. Public so that the renderer can see this too
 		struct WinData
 		{
 			// All windows apps have these handles
 		/*	HINSTANCE hAppInst = 0;
 			HWND      hMainWnd = 0;
 			HICON     hIcon = 0;*/
+
+			EventCallbackFn m_EventCallback;
+
 			std::string m_Title = "Aether Engine";
 			int m_ClientWidth;
 			int m_ClientHeight;
@@ -31,7 +36,6 @@ namespace Aether
 	protected:
 		WinData m_WinData;
 	public:
-		using EventCallbackFn = std::function<void(Event&)>;
 
 		virtual ~IWindow() = default;
 

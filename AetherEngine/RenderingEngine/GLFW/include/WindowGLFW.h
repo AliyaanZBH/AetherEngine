@@ -12,12 +12,11 @@ class IRenderer;
 // WinMan - Window Manager.
 namespace Aether
 {
-	class AETHER_API WindowGLFW : public IWindow
+	class WindowGLFW : public IWindow
 	{
 	public:
-		WindowGLFW() {}
 		WindowGLFW(const WinData& winData);
-		~WindowGLFW();
+		virtual ~WindowGLFW();
 
 		AETHER_RESULT Initialize(const WinData& winData) override;
 		bool WindowShouldClose() override;
@@ -26,7 +25,7 @@ namespace Aether
 			glfwPollEvents();
 		}
 
-		void SetEventCallback(const EventCallbackFn& callback) override;
+		inline void SetEventCallback(const EventCallbackFn& callback) override { m_WinData.m_EventCallback = callback; }
 
 		void Terminate() override;
 
@@ -40,5 +39,14 @@ namespace Aether
 		}
 	private:
 		GLFWwindow* m_pWindow;
+
+		//// Extension of WinData to handle this specific windows callback functions! Putting the callback function in the base win data struct breaks the std::bind function we use
+		//struct WinCallbackData
+		//{
+		//	WinData m_BaseWinData = {};
+		//	EventCallbackFn m_EventCallback;
+		//};
+
+		//WinCallbackData m_GLFWData;
 	};
 };
