@@ -82,6 +82,9 @@ AETHER_RESULT Aether::Application::Run()
         renderer->Render();
     }
 
+    printf("\n\n\n");
+    AETHER_CORE_INFO("Thanks for using Aether!\n");
+
     // Make sure we release our resources
     renderer->Terminate();
     window->Terminate();
