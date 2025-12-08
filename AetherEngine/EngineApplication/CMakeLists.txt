@@ -67,7 +67,7 @@ add_custom_command(TARGET AetherApp POST_BUILD
 )
 
  # Copy .PDB in debug!
-if (AETHER_DEBUG)
+if (AETHER_DEBUG OR AETHER_RELEASE_DBG_INFO)
     add_custom_command(TARGET AetherApp POST_BUILD
        COMMAND ${CMAKE_COMMAND} -E copy                
             $<TARGET_PDB_FILE:AetherRenderer>

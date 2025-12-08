@@ -18,7 +18,7 @@ namespace Aether
 
     WindowGLFW::WindowGLFW(const WinData& winData)
     {
-        AETHER_ASSERT(Initialize(winData));
+        AETHER_ASSERT(Initialize(winData), "Failed to initalize GLFW.");
         // Don't forget to to set this winData for use later!
         SetData(winData);
     }
@@ -30,6 +30,8 @@ namespace Aether
 
     AETHER_RESULT WindowGLFW::Initialize(const WinData& winData)
     {
+        AETHER_RESULT ar = AETHER_OK;
+
         // Get GLFW setup for app windows - only do this once!
         if (!s_bInitGLFW)
         {
@@ -54,7 +56,7 @@ namespace Aether
         // Set callback function to handle inputs
         glfwSetKeyCallback(m_pWindow, key_callback);
 
-        return true;
+        return AETHER_FAIL;
     }
 
     bool WindowGLFW::WindowShouldClose()

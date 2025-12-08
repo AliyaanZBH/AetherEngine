@@ -66,7 +66,7 @@ AETHER_RESULT Aether::Application::Run()
 #endif
 
     // Init rendering API - catch errors out here with assert
-    AETHER_ASSERT(renderer->Initialize(*window));
+    AETHER_ASSERT(!renderer->Initialize(*window));
 
     // TEST: Try out events
     WindowResizeEvent e(1920u, 1080u);
