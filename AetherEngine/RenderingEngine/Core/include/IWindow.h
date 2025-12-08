@@ -6,10 +6,11 @@
 #include "Core.h"
 //===============================================================================
 
-class Event;
 
 namespace Aether
 {
+	class Event;
+
 	class AETHER_API IWindow {
 	public:
 		using EventCallbackFn = std::function<void(Event&)>;

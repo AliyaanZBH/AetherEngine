@@ -25,7 +25,7 @@
 //===============================================================================
 namespace Aether
 {
-//#define BIND_APP_FN(x) std::bind(&Application::x, this, std::placeholders::_1)
+#define BIND_APP_FN(x) std::bind(&Application::x, this, std::placeholders::_1)
 
     Application::Application()
     {
@@ -63,19 +63,7 @@ namespace Aether
     #endif
 
         // Bind event callback for our window
-        //m_Window->SetEventCallback(BIND_APP_FN(OnEvent));
-        //m_Window->SetEventCallback(std::bind(&Application::OnEvent, this, std::placeholders::_1));
-        //auto callback = std::bind(&Application::OnEvent, this, std::placeholders::_1);
-
-       // std::function<void(Event&)> callback = [this](Event& event) {
-       //     return this->OnEvent(event);
-       //     };
-
-       //IWindow::EventCallbackFn callback = [this](Event& event) {
-       //    return this->OnEvent(event);
-       //    };
-
-        //m_Window->SetEventCallback(callback);
+        m_Window->SetEventCallback(BIND_APP_FN(OnEvent));
     }
 
 
