@@ -52,7 +52,10 @@ namespace Aether
         }
 
         // Set callback function to handle inputs
+        glfwMakeContextCurrent(m_pWindow);
+        glfwSetWindowUserPointer(m_pWindow, &m_WinData);
         glfwSetKeyCallback(m_pWindow, key_callback);
+
 
         return ar;
     }

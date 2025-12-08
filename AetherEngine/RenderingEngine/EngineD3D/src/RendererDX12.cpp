@@ -582,6 +582,7 @@ namespace Aether
 		indexData.SlicePitch = iBufferSize;
 		UpdateSubresources(m_CmdList.Get(), m_IndexBuffer.Get(), iBufferUploadHeap, 0, 0, 1, &indexData);
 		barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_IndexBuffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_INDEX_BUFFER);
+		m_CmdList->ResourceBarrier(1, &barrier);
 
 		// Execute immediately here to send our geo buffers up one time
 		m_CmdList->Close();
@@ -598,7 +599,6 @@ namespace Aether
 		m_VertBufView.StrideInBytes = sizeof(Vertex);
 		m_VertBufView.SizeInBytes = vBufferSize;
 
-		m_CmdList->ResourceBarrier(1, &barrier);
 		m_IdxBufView.BufferLocation = m_IndexBuffer->GetGPUVirtualAddress();
 		m_IdxBufView.Format = DXGI_FORMAT_R32_UINT; // 32-bit unsigned integer (this is what a dword is, double word, a word is 2 bytes)
 		m_IdxBufView.SizeInBytes = iBufferSize;
