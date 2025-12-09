@@ -9,7 +9,7 @@
 
 namespace Aether
 {
-	class AETHER_API RendererDX12 : public IRenderer
+	class RendererDX12 : public IRenderer
 	{
 	public:
 		// Main start up function
