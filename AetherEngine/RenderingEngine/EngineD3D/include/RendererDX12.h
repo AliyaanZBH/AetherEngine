@@ -4,129 +4,125 @@
 //		 Based upon one built for a short challenge, but the goal is to optimize and modernize things going forward.
 // auth: Aliyaan Zulfiqar
 //===============================================================================
-#include <d3d12.h>
-#include <dxgi1_4.h>
-#include <DirectXMath.h>
-
-#include <wrl/client.h>
-
 #include "IRenderer.h"
-#include "AetherUtils.h"
 //===============================================================================
 
-class RendererDX12 : public IRenderer
+namespace Aether
 {
-public:
-	// Main start up function
-	AETHER_RESULT Initialize(IWindow& window) override;
-	void Render() override;
-	void Terminate() override;
-
-
-	// Public accessors
-	//
-
-	// Get a handle to the GPU
-	const Microsoft::WRL::ComPtr<ID3D12Device>& GetDevice()				{ return m_Device; }
-
-private:
-
-	//
-	// Heavy lifting to start D3D12
-	//
-
-	//	A device is used to create resources, this essentially represents our GPU
-	AETHER_RESULT CreateDevice();
-
-	AETHER_RESULT CreatePipelines();
-
-	AETHER_RESULT CompileShaders();
-
-	AETHER_RESULT CreateInputLayoutAndPSO();
-
-	AETHER_RESULT CreateAndUploadGeo();
-
-	// Extra Methods to help with rendering
-	//
-
-	// Update command lists and clear the frame
-	AETHER_RESULT ClearFrame();
-
-	// Wait for previous frame to free the command list
-	AETHER_RESULT Sync();
-
-
-	// Temp Structs
-	//
-	struct Vertex
+	class AETHER_API RendererDX12 : public IRenderer
 	{
-		Vertex(float x, float y, float z, float r, float g, float b, float a) : pos(x, y, z), colour(r, g, b, a) {}
-		DirectX::XMFLOAT3 pos;
-		DirectX::XMFLOAT4 colour;
+	public:
+		// Main start up function
+		AETHER_RESULT Initialize(IWindow& window) override;
+		void Render() override;
+		void Terminate() override;
+
+
+		// Public accessors
+		//
+
+		// Get a handle to the GPU
+		const Microsoft::WRL::ComPtr<ID3D12Device>& GetDevice() { return m_Device; }
+
+	private:
+
+		//
+		// Heavy lifting to start D3D12
+		//
+
+		//	A device is used to create resources, this essentially represents our GPU
+		AETHER_RESULT CreateDevice();
+
+		AETHER_RESULT CreatePipelines();
+
+		AETHER_RESULT CompileShaders();
+
+		AETHER_RESULT CreateInputLayoutAndPSO();
+
+		AETHER_RESULT CreateAndUploadGeo();
+
+		// Extra Methods to help with rendering
+		//
+
+		// Update command lists and clear the frame
+		AETHER_RESULT ClearFrame();
+
+		// Wait for previous frame to free the command list
+		AETHER_RESULT Sync();
+
+
+		// Temp Structs
+		//
+		struct Vertex
+		{
+			Vertex(float x, float y, float z, float r, float g, float b, float a) : pos(x, y, z), colour(r, g, b, a) {}
+			DirectX::XMFLOAT3 pos;
+			DirectX::XMFLOAT4 colour;
+		};
+
+		// Private members to facilitate the above functions
+		//
+
+		static const UINT8 m_kNumFrameBuffers = 2u;
+		const float m_kClearColour[3] = { 0.1f, 0.2f, 1.0f };
+
+		// Main handle used to create resources and access D3D
+		Microsoft::WRL::ComPtr<IDXGIFactory2> m_DXGIFactory;
+		Microsoft::WRL::ComPtr<ID3D12Device> m_Device = nullptr;
+		Microsoft::WRL::ComPtr<IDXGISwapChain3> m_SwapChain = nullptr;
+
+		DXGI_SAMPLE_DESC m_SampleDesc;																					// Multi sampling info - need to store this so that it can be used in pipeline setup too
+
+		Microsoft::WRL::ComPtr<ID3D12CommandQueue> m_CmdQueue;															// Container for command lists//
+		Microsoft::WRL::ComPtr<ID3D12CommandAllocator> m_CmdAllocators[m_kNumFrameBuffers];								// Memory management for command lists, can use MT by having enough allocators per buffer per thread (forget MT for now, just single threaded and enough for double buffer)// Currently unused values that will be implemented soon
+		Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> m_CmdList;													// Actual command list to record draw calls into!//
+
+		Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_RTVHeap;															// Container for render targets// Position, height, width, min+max depth of the view we are rendering
+		Microsoft::WRL::ComPtr<ID3D12Resource> m_RenderTargets[m_kNumFrameBuffers];
+
+		Microsoft::WRL::ComPtr<ID3D12Resource> m_DepthStencilBuffer;													// Depth stencil!
+		Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_DSBHeap;
+
+		Microsoft::WRL::ComPtr<ID3D12Fence> m_Fence[m_kNumFrameBuffers];												// Sync object, use as many as we need. Simplest case, we only need them for the frame buffers
+		HANDLE m_FenceEvent;																							// Handle that is used when the fence is locked or unlocked
+		UINT64 m_FenceValue[m_kNumFrameBuffers];																		// Incremented every frame, each fence will have it's own value// Running in a window?
+
+		UINT64 m_FrameIndex;																							// Current frame index - used to tell what buffer we're on
+		UINT64 m_RTVDescripterSize;																						// Size of descriptors for our RTVS - these are the same size.
+
+
+		//
+		//	Window data!
+		//
+		Aether::IWindow::WinData m_WinData = {};
+
+		//
+		//	Drawing!
+		//
+
+
+		// PSO!
+		ID3D12PipelineState* m_PipelineStateObject;
+
+		ID3D12RootSignature* m_RootSig;
+
+
+		// Actual binary blob that is our compiled shader - one for verts and one for pixel
+		D3D12_SHADER_BYTECODE m_VS;
+		D3D12_SHADER_BYTECODE m_PS;
+
+		// Draw bounds stuff
+		D3D12_VIEWPORT m_Viewport;
+		D3D12_RECT m_Scissor;
+
+		// Our VB
+		Microsoft::WRL::ComPtr<ID3D12Resource> m_VertexBuffer;
+
+		// Structure that points to VB in GPU
+		D3D12_VERTEX_BUFFER_VIEW m_VertBufView;
+
+		// IB now too!
+		Microsoft::WRL::ComPtr<ID3D12Resource> m_IndexBuffer;
+		D3D12_INDEX_BUFFER_VIEW m_IdxBufView;
 	};
-
-	// Private members to facilitate the above functions
-	//
-	
-	static const UINT8 m_kNumFrameBuffers = 2u;
-	const float m_kClearColour[3] = { 0.1f, 0.2f, 1.0f };
-
-	// Main handle used to create resources and access D3D
-	Microsoft::WRL::ComPtr<IDXGIFactory2> m_DXGIFactory;
-	Microsoft::WRL::ComPtr<ID3D12Device> m_Device = nullptr;
-	Microsoft::WRL::ComPtr<IDXGISwapChain3> m_SwapChain = nullptr;
-
-	DXGI_SAMPLE_DESC m_SampleDesc;																					// Multi sampling info - need to store this so that it can be used in pipeline setup too
-
-	Microsoft::WRL::ComPtr<ID3D12CommandQueue> m_CmdQueue;															// Container for command lists//
-	Microsoft::WRL::ComPtr<ID3D12CommandAllocator> m_CmdAllocators[m_kNumFrameBuffers];								// Memory management for command lists, can use MT by having enough allocators per buffer per thread (forget MT for now, just single threaded and enough for double buffer)// Currently unused values that will be implemented soon
-	Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> m_CmdList;													// Actual command list to record draw calls into!//
-
-	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_RTVHeap;															// Container for render targets// Position, height, width, min+max depth of the view we are rendering
-	Microsoft::WRL::ComPtr<ID3D12Resource> m_RenderTargets[m_kNumFrameBuffers];
-
-	Microsoft::WRL::ComPtr<ID3D12Resource> m_DepthStencilBuffer;													// Depth stencil!
-	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_DSBHeap;
-
-	Microsoft::WRL::ComPtr<ID3D12Fence> m_Fence[m_kNumFrameBuffers];												// Sync object, use as many as we need. Simplest case, we only need them for the frame buffers
-	HANDLE m_FenceEvent;																							// Handle that is used when the fence is locked or unlocked
-	UINT64 m_FenceValue[m_kNumFrameBuffers];																		// Incremented every frame, each fence will have it's own value// Running in a window?
-
-	UINT64 m_FrameIndex;																							// Current frame index - used to tell what buffer we're on
-	UINT64 m_RTVDescripterSize;																						// Size of descriptors for our RTVS - these are the same size.
-
-
-	//
-	//	Window data!
-	//
-	IWindow::WinData m_WinData = {};
-
-	//
-	//	Drawing!
-	//
-
-
-	// PSO!
-	ID3D12PipelineState* m_PipelineStateObject;
-
-	ID3D12RootSignature* m_RootSig;
-
-
-	// Actual binary blob that is our compiled shader - one for verts and one for pixel
-	D3D12_SHADER_BYTECODE m_VS;
-	D3D12_SHADER_BYTECODE m_PS;
-
-	// Draw bounds stuff
-	D3D12_VIEWPORT m_Viewport;
-	D3D12_RECT m_Scissor;
-
-	// Our VB
-	Microsoft::WRL::ComPtr<ID3D12Resource> m_VertexBuffer;
-
-	// Structure that points to VB in GPU
-	D3D12_VERTEX_BUFFER_VIEW m_VertBufView;
-
-	// IB now too!
-	Microsoft::WRL::ComPtr<ID3D12Resource> m_IndexBuffer;
-	D3D12_INDEX_BUFFER_VIEW m_IdxBufView;
 };

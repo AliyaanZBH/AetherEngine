@@ -27,40 +27,44 @@ namespace Aether
 #endif
 		// Don't forget to implement the necessary static types, pass them in raw as the cast to EventType happens inside the macro and we also retain the utility to print the name as a string
 		EVENT_CLASS_TYPE(WindowResize)
-		EVENT_CLASS_CATEGORY(Application)
+		EVENT_CLASS_CATEGORY(ApplicationEvent)
 private:
 	uint16_t m_Width, m_Height;
 	};
 
 	class AETHER_API WindowCloseEvent : public Event
 	{
+	public:
 		WindowCloseEvent() {}
 
 		EVENT_CLASS_TYPE(WindowClose)
-		EVENT_CLASS_CATEGORY(Application)
+		EVENT_CLASS_CATEGORY(ApplicationEvent)
 	};
 
 	class AETHER_API AppTickEvent : public Event
 	{
+	public:
 		AppTickEvent() {}
 
 		EVENT_CLASS_TYPE(AppTick)
-		EVENT_CLASS_CATEGORY(Application)
+		EVENT_CLASS_CATEGORY(ApplicationEvent)
 	};
 
 	class AETHER_API AppUpdateEvent : public Event
 	{
+	public:
 		AppUpdateEvent() {}
 
 		EVENT_CLASS_TYPE(AppUpdate)
-		EVENT_CLASS_CATEGORY(Application)
+		EVENT_CLASS_CATEGORY(ApplicationEvent)
 	};
 
 	class AETHER_API AppRenderEvent : public Event
 	{
+	public:
 		AppRenderEvent() {}
 
 		EVENT_CLASS_TYPE(AppRender)
-		EVENT_CLASS_CATEGORY(Application)
+		EVENT_CLASS_CATEGORY(ApplicationEvent)
 	};
 }

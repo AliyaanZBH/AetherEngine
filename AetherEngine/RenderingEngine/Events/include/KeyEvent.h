@@ -52,7 +52,7 @@ namespace Aether
 	class AETHER_API KeyReleasedEvent : public KeyEvent
 	{
 	public:
-		KeyReleasedEvent(const KeyCode keycode)
+		KeyReleasedEvent(const int keycode)
 			: KeyEvent(keycode) {}
 
 		std::string ToString() const override
@@ -69,7 +69,7 @@ namespace Aether
 	class AETHER_API KeyTypedEvent : public KeyEvent
 	{
 	public:
-		KeyTypedEvent(const KeyCode keycode)
+		KeyTypedEvent(const int keycode)
 			: KeyEvent(keycode) {}
 
 		std::string ToString() const override

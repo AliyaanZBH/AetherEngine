@@ -11,7 +11,7 @@ set(SRC
     Core/src/CoreApp.cpp
     
     Core/src/Log.cpp
-    GLFW/src/WinManGLFW.cpp
+    GLFW/src/WindowGLFW.cpp
     EngineD3D/src/RendererDX11.cpp
     EngineD3D/src/RendererDX12.cpp
 )
@@ -25,20 +25,20 @@ set(INCLUDE
     Core/include/CoreApp.h
     Core/include/AetherUtils.h
     Core/include/Log.h
+    Core/include/Event.h
 
     # Interfaces
     Core/include/IRenderer.h
     Core/include/IWindow.h
 
-    # Window
-    GLFW/include/WinManGLFW.h
+    GLFW/include/WindowGLFW.h
 
     # Rendering
     EngineD3D/include/D3DUtils.h
     EngineD3D/include/RendererDX11.h
     EngineD3D/include/RendererDX12.h
 
-    Events/include/Event.h
+    # Events
     Events/include/KeyEvent.h
     Events/include/MouseEvent.h
     Events/include/AppEvent.h
@@ -77,7 +77,7 @@ target_include_directories(AetherRenderer
                             Events/include
                             ThirdParty/dx12Helper/include
                     PUBLIC
-                         Core/include # Public as application target needs to see it too
+                         Core/include # Public as application target needs to see these interfaces. Detailed implementations can remain private
 )
 
 
