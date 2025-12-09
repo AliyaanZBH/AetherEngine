@@ -18,7 +18,7 @@ namespace Aether
 	enum class EventType
 	{
 		None = 0,
-		KeyPressed, KeyReleased,
+		KeyPressed, KeyReleased, KeyTyped,
 		MouseMoved, MouseClicked, MouseClickReleased, MouseScrolled,
 		WindowClose, WindowMoved, WindowResize, WindowFocus, WindowLostFocus,
 		AppUpdate, AppRender, AppTick

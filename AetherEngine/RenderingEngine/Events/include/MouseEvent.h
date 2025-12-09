@@ -3,8 +3,6 @@
 // desc: This file handles mouse events such as Moving and Clicking
 // auth: Aliyaan Zulfiqar
 //===============================================================================
-#include <sstream>	// TODO: Move to PCH
-
 #include "Event.h"
 //===============================================================================
 

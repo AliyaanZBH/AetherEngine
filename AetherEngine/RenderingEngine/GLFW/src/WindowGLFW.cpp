@@ -3,18 +3,15 @@
 // auth: Aliyaan Zulfiqar
 //===============================================================================
 #include "WindowGLFW.h"
-#include <AetherUtils.h>
+#include "AetherUtils.h"
+#include "AppEvent.h"
+#include "KeyEvent.h"
+#include "MouseEvent.h"
 //===============================================================================
 
 namespace Aether
 {
     static bool s_bInitGLFW = false;
-
-    static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
-    {
-        if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
-            glfwSetWindowShouldClose(window, GLFW_TRUE);
-    }
 
     WindowGLFW::WindowGLFW(const WinData& winData)
     {
@@ -52,10 +49,97 @@ namespace Aether
             AETHER_ASSERT(AETHER_FAIL, "Failed to create GLFW window. Check window creation data.");
         }
 
-        // Set callback function to handle inputs
+        // Focus window
         glfwMakeContextCurrent(m_pWindow);
+
+        // Set User pointer which contains the callback function to handle events!
         glfwSetWindowUserPointer(m_pWindow, &m_WinData);
-        glfwSetKeyCallback(m_pWindow, key_callback);
+
+
+        //
+        //  Callback setup
+        //
+
+        // Window Resise
+        //
+        glfwSetWindowSizeCallback(m_pWindow, [](GLFWwindow* window, int width, int height)
+        {
+                // Pull out user data blob, cast it to our custom struct and then dereference
+                WinData& data = *(WinData*)glfwGetWindowUserPointer(window);
+
+                // Update sizes then create event  and dispatch via the callback member
+                data.m_ClientWidth = width;
+                data.m_ClientHeight = height;
+
+                WindowResizeEvent event(width, height);
+                data.m_EventCallback(event);
+
+        });
+        
+        // Key Callback
+        //
+        glfwSetKeyCallback(m_pWindow, [](GLFWwindow* window, int key, int scancode, int action, int mods)
+        {
+            // Pull out user data blob, cast it to our custom struct and then dereference
+            WinData& data = *(WinData*)glfwGetWindowUserPointer(window);
+
+            // Map GLFW input events to our own
+            switch (action)
+            {
+                case GLFW_PRESS:
+                {
+                    KeyPressedEvent event(key, 0);
+                    data.m_EventCallback(event);
+                    break;
+                }
+                case GLFW_RELEASE:
+                {
+                    KeyReleasedEvent event(key);
+                    data.m_EventCallback(event);
+                    break;
+                }
+                case GLFW_REPEAT:
+                {
+                    KeyPressedEvent event(key, 1);
+                    data.m_EventCallback(event);
+                    break;
+                }
+            }
+
+            // Also, close window if escape is the specific key pressed. Hardcoded for now
+            if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+                glfwSetWindowShouldClose(window, GLFW_TRUE);
+        });
+
+       // glfwSetMouseButtonCallback(m_pWindow, [](GLFWwindow* window, int button,int action, int mods)
+       // {
+       //     // Pull out user data blob, cast it to our custom struct and then dereference
+       //     WinData& data = *(WinData*)glfwGetWindowUserPointer(window);
+       //
+       //     // Map GLFW mouse events - these are actually the same as keyboard presses!
+       //     switch (action)
+       //     {
+       //         case GLFW_PRESS:
+       //         {
+       //             MouseEvent event(button);
+       //             data.m_EventCallback(event);
+       //             break;
+       //         }
+       //         case GLFW_RELEASE:
+       //         {
+       //             KeyReleasedEvent event(key);
+       //             data.m_EventCallback(event);
+       //             break;
+       //         }
+       //         case GLFW_REPEAT:
+       //         {
+       //             KeyPressedEvent event(key, 1);
+       //             data.m_EventCallback(event);
+       //             break;
+       //         }
+       //     }
+       // });
+        //glfwSetKeyCallback(m_pWindow, key_callback);
 
 
         return ar;
