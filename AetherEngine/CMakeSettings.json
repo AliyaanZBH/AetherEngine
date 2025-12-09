@@ -33,7 +33,7 @@
         },
         {
           "name": "USE_DX11",
-          "value": "True",
+          "value": "False",
           "type": "BOOL"
         },
         {
