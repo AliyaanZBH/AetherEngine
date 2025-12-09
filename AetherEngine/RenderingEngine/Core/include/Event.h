@@ -19,7 +19,7 @@ namespace Aether
 	{
 		None = 0,
 		KeyPressed, KeyReleased, KeyTyped,
-		MouseMoved, MouseClicked, MouseClickReleased, MouseScrolled,
+		MouseMove, MouseClick, MouseClickRelease, MouseScroll,
 		WindowClose, WindowMoved, WindowResize, WindowFocus, WindowLostFocus,
 		AppUpdate, AppRender, AppTick
 	};

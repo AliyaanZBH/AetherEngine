@@ -98,9 +98,8 @@ namespace Aether
         printf("\n\n\n");
         AETHER_CORE_INFO("Thanks for using Aether!\n");
 
-        // Make sure we release our resources
+        // Make sure we release our resources manually if they aren't already tied in the destructor - everything in here will get deleted and have those called so no need to call things twice!
         m_Renderer->Terminate();
-        m_Window->Terminate();
 
         // Return the OK!
         return AETHER_OK;

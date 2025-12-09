@@ -35,6 +35,8 @@ int main(int argc, char** argv)
 	auto game = Aether::CreateApplication();
 	// Run our game!
 	game->Run();
+
+	// This will call all the destructors and terminate functions!
 	delete game;
 	return 0;
 }
