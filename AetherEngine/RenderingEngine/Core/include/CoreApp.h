@@ -28,12 +28,19 @@ namespace Aether
 		void PushLayer(Layer* layer);
 		void PushOverlay(Layer* overlay);
 
+		inline Application& Get() { return *s_Instance; }
+		inline IWindow& GetWindow() { return *m_Window; }
+		inline IRenderer& GetRenderer() { return *m_Renderer; }
+
 	private:
 		std::unique_ptr<IWindow> m_Window;
 		std::unique_ptr<IRenderer> m_Renderer;
 
 		LayerStack m_LayerStack;
 		eRenderAPI m_CurrentRenderAPI = eRenderAPI::kOpenGL;
+
+		// Quick and dirty Singleton-esque implementation
+		static Application* s_Instance;
 	};
 
 	// External function to be defined in client applications (games)
