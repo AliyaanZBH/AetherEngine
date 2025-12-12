@@ -19,7 +19,7 @@ namespace Aether
 			assert(false, "Failed to initialize DirectX 11 device.");
 		// Retrieve the native window handle (HWND on Windows)
 
-		HWND hwnd = static_cast<HWND>(window.GetNativeWindowHandle());
+		HWND hwnd = static_cast<HWND>(window.GetWin32Handle());
 
 		// Create swapchain description based on the current window
 		DXGI_SWAP_CHAIN_DESC sd;

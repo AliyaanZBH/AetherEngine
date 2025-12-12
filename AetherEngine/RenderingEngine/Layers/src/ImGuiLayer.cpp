@@ -31,31 +31,35 @@ namespace Aether
 
         ImGui::StyleColorsDark();
 
+        gladLoadGL();
+        ImGui_ImplGlfw_InitForOpenGL(static_cast<GLFWwindow*>(Application::Get().GetWindow().GetNativeWindowHandle()), true);
+        ImGui_ImplOpenGL3_Init("#version 410");
+
         // Create appropriate backends
-        switch (m_CurrentRenderAPI)
-        {
-        case eRenderAPI::kOpenGL:
-        {
-            ImGui_ImplGlfw_InitForOpenGL(static_cast<GLFWwindow*>(Application::Get().GetWindow().GetNativeWindowHandle()), true);
-            ImGui_ImplOpenGL3_Init("#version 410");
-            break;
-        }
-        case eRenderAPI::kDX11:
-        {
-            //ImGui_ImplGlfw_InitForOther
-            //ImGui_ImplDX11_Init();
-            break;
-        }
-        case eRenderAPI::kDX12:
-        {
-            //ImGui_ImplDX12_Init();
-            break;
-        }
-        default:
-        {
-            AETHER_ASSERT(AETHER_FAIL, "No rendering backend for ImGui defined.")
-        }
-        };
+       //switch (m_CurrentRenderAPI)
+       //{
+       //case eRenderAPI::kOpenGL:
+       //{
+       //    ImGui_ImplGlfw_InitForOpenGL(static_cast<GLFWwindow*>(Application::Get().GetWindow().GetNativeWindowHandle()), true);
+       //    ImGui_ImplOpenGL3_Init("#version 410");
+       //    break;
+       //}
+       //case eRenderAPI::kDX11:
+       //{
+       //    //ImGui_ImplGlfw_InitForOther
+       //    //ImGui_ImplDX11_Init();
+       //    break;
+       //}
+       //case eRenderAPI::kDX12:
+       //{
+       //    //ImGui_ImplDX12_Init();
+       //    break;
+       //}
+       //default:
+       //{
+       //    AETHER_ASSERT(AETHER_FAIL, "No rendering backend for ImGui defined.")
+       //}
+       //};
 
     }
 
@@ -78,6 +82,8 @@ namespace Aether
         bool show = true;
         ImGui::ShowDemoWindow(&show);
 
+        glClearColor(0.2f, 0.7f, 0.9f, 1.f);
+        glClear(GL_COLOR_BUFFER_BIT);
 
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

@@ -27,9 +27,6 @@ namespace Aether
 		// Event callback
 		void OnEvent(Event& event);
 
-		ImGuiLayer* CreateImGuiLayer();
-
-
 		void PushLayer(Layer* layer);
 		void PushOverlay(Layer* overlay);
 

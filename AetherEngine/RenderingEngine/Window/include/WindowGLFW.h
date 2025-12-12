@@ -30,7 +30,7 @@ namespace Aether
 
 		void Terminate() override;
 
-		HWND GetWin32GLFWHandle() { return (glfwGetWin32Window(m_pWindow)); }
+		void* GetWin32Handle() const override { return (glfwGetWin32Window(m_pWindow)); }
 
 		void* GetNativeWindowHandle() const override
 		{
@@ -39,14 +39,5 @@ namespace Aether
 
 	private:
 		GLFWwindow* m_pWindow;
-
-		//// Extension of WinData to handle this specific windows callback functions! Putting the callback function in the base win data struct breaks the std::bind function we use
-		//struct WinCallbackData
-		//{
-		//	WinData m_BaseWinData = {};
-		//	EventCallbackFn m_EventCallback;
-		//};
-
-		//WinCallbackData m_GLFWData;
 	};
 };

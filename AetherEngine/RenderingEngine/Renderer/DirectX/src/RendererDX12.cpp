@@ -18,7 +18,7 @@ namespace Aether
 		AETHER_ASSERT(CreateDevice());
 
 		// Retrieve the native window handle (HWND on Windows) and data about the window for our swapchain
-		HWND hwnd = static_cast<HWND>(window.GetNativeWindowHandle());
+		HWND hwnd = static_cast<HWND>(window.GetWin32Handle());
 		m_WinData = window.GetData();
 
 

@@ -139,7 +139,6 @@ namespace Aether
 
             // Render our lovely frame!
             m_Renderer->Render();
-
         }
 
         printf("\n\n\n");
