@@ -1,3 +1,4 @@
+#include "CoreApp.h"
 //===============================================================================
 // desc: The core rendering app that facilitates DLL exporting for use in the main AetherApp
 // auth: Aliyaan Zulfiqar
@@ -66,11 +67,26 @@ namespace Aether
         m_Window->SetEventCallback(BIND_APP_FN(OnEvent));
     }
 
+    void Application::PushLayer(Layer* layer)
+    {
+        m_LayerStack.PushLayer(layer);
+        layer->OnAttach();
+    }
+
+    void Application::PushOverlay(Layer* overlay)
+    {
+        m_LayerStack.PushOverlay(overlay);
+        overlay->OnAttach();
+    }
+
 
     void Application::OnEvent(Event& event)
     {
         // Just print the event for now
-        AETHER_CORE_INFO("{0}", event);
+        AETHER_CORE_TRACE("{0}", event);
+
+        // Pass event to layer stack to ensure event fires on correct layer
+        m_LayerStack.HandleEvent(event);
     }
 
     AETHER_RESULT Application::Run()
@@ -90,6 +106,9 @@ namespace Aether
 
             // Handle window events here (e.g., using GLFW or another windowing library)
             m_Window->PollEvents();
+
+            // Update our layers! Eventually, the renderer will tie in to this aswell as it will render each layer
+            m_LayerStack.UpdateLayers();
 
             // Render our lovely frame!
             m_Renderer->Render();

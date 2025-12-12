@@ -8,10 +8,13 @@ set(PCH_HEADER "PCH/AetherPCH.h")
 # Specify the source files
 set(SRC
     
-    Core/src/CoreApp.cpp
-    
+    Core/src/CoreApp.cpp 
+
     Core/src/Log.cpp
+    Core/src/LayerStack.cpp
+
     GLFW/src/WindowGLFW.cpp
+    
     EngineD3D/src/RendererDX11.cpp
     EngineD3D/src/RendererDX12.cpp
 )
@@ -20,12 +23,15 @@ set(INCLUDE
 
     EntryPoint.h
 
+    # Core
     Core/include/Aether.h
     Core/include/Core.h
     Core/include/CoreApp.h
     Core/include/AetherUtils.h
     Core/include/Log.h
     Core/include/Event.h
+    Core/include/Layer.h
+    Core/include/LayerStack.h
 
     # Interfaces
     Core/include/IRenderer.h
@@ -43,6 +49,7 @@ set(INCLUDE
     Events/include/MouseEvent.h
     Events/include/AppEvent.h
 
+    # Layers
 
     # Third party includes
     ThirdParty/dx12Helper/include/d3dx12.h
@@ -75,6 +82,7 @@ target_include_directories(AetherRenderer
                             EngineD3D/include
                             GLFW/include
                             Events/include
+                            Layers/include
                             ThirdParty/dx12Helper/include
                     PUBLIC
                          Core/include # Public as application target needs to see these interfaces. Detailed implementations can remain private
@@ -119,13 +127,6 @@ target_compile_definitions(AetherRenderer PRIVATE
     $<CONFIG:RelWithDebInfo> AETHER_RELEASE_DBG_INFO
     $<CONFIG:Distribution> AETHER_DIST
 )
-
-# Enable optimisations when not in debug
-#if (AETHER_RELEASE OR AETHER_DIST)
-if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug" )
-        set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
-endif()
-
 
 #
 # Platform-specific configurations
