@@ -12,7 +12,7 @@ namespace Aether
 	{
 	public:
 		// Register category this event belongs to
-		EVENT_CLASS_CATEGORY(Mouse | Input)
+		EVENT_CLASS_CATEGORY(kMouse | kInput)
 	protected:
 		// Protected constructor so that only it and derived class can construct it.
 		// More of an abstract class
@@ -35,7 +35,7 @@ namespace Aether
 			return ss.str();
 		}
 
-		EVENT_CLASS_TYPE(MouseMove)
+		EVENT_CLASS_TYPE(kMouseMove)
 	private:
 		// Represents a position on the window
 		float m_MouseX, m_MouseY;
@@ -57,7 +57,7 @@ namespace Aether
 			return ss.str();
 		}
 
-		EVENT_CLASS_TYPE(MouseScroll)
+		EVENT_CLASS_TYPE(kMouseScroll)
 	private:
 		float m_ScrollX, m_ScrollY;
 	};
@@ -86,7 +86,7 @@ namespace Aether
 			return ss.str();
 		}
 
-		EVENT_CLASS_TYPE(MouseClick)
+		EVENT_CLASS_TYPE(kMouseClick)
 	};
 
 	class AETHER_API MouseClickReleaseEvent : public MouseButtonEvent
@@ -102,6 +102,6 @@ namespace Aether
 			return ss.str();
 		}
 
-		EVENT_CLASS_TYPE(MouseClickRelease)
+		EVENT_CLASS_TYPE(kMouseClickRelease)
 	};
 }

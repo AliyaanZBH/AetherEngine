@@ -33,6 +33,7 @@ namespace Aether
 		std::unique_ptr<IRenderer> m_Renderer;
 
 		LayerStack m_LayerStack;
+		eRenderAPI m_CurrentRenderAPI = eRenderAPI::kOpenGL;
 	};
 
 	// External function to be defined in client applications (games)

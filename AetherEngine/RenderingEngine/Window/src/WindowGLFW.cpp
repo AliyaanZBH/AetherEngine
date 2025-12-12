@@ -41,6 +41,8 @@ namespace Aether
             ar = glfwInit() ? AETHER_OK : AETHER_FAIL;    // GLFW returns true or false, this doesn't map cleanly with our result so use a ternary to finagle it!
             AETHER_ASSERT(ar, "Failed to initialize GLFW with glfwInit(). Do you have the library built?");
 
+            glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
             // Set error callback to catch those errors!
             glfwSetErrorCallback(GLFWErrorCallback);
 

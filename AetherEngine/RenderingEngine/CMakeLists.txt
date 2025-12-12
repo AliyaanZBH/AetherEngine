@@ -13,10 +13,11 @@ set(SRC
     Core/src/Log.cpp
     Core/src/LayerStack.cpp
 
-    GLFW/src/WindowGLFW.cpp
+    Window/src/WindowGLFW.cpp
     
-    EngineD3D/src/RendererDX11.cpp
-    EngineD3D/src/RendererDX12.cpp
+    Renderer/DirectX/src/RendererDX11.cpp
+    Renderer/DirectX/src/RendererDX12.cpp
+    Renderer/OpenGL/src/RendererOpenGL.cpp
 )
 
 set(INCLUDE
@@ -37,12 +38,13 @@ set(INCLUDE
     Core/include/IRenderer.h
     Core/include/IWindow.h
 
-    GLFW/include/WindowGLFW.h
+    Window/include/WindowGLFW.h
 
     # Rendering
-    EngineD3D/include/D3DUtils.h
-    EngineD3D/include/RendererDX11.h
-    EngineD3D/include/RendererDX12.h
+    Renderer/DirectX/include/D3DUtils.h
+    Renderer/DirectX/include/RendererDX11.h
+    Renderer/DirectX/include/RendererDX12.h
+    Renderer/OpenGL/include/RendererOpenGL.h
 
     # Events
     Events/include/KeyEvent.h
@@ -79,8 +81,9 @@ endif()
 target_include_directories(AetherRenderer
                     PRIVATE 
                             ${PROJECT_SOURCE_DIR}/include
-                            EngineD3D/include
-                            GLFW/include
+                            Window/include
+                            Renderer/DirectX/include
+                            Renderer/OpenGL/include
                             Events/include
                             Layers/include
                             ThirdParty/dx12Helper/include
@@ -95,7 +98,7 @@ source_group("include" FILES ${INCLUDE})
 source_group("shaders" FILES ${HLSL_SHADER_FILES})
 
 #
-# Third-party libraries and subdirectories
+# Third-party libraries and subdirectories (subdirectories only for projects that contain a CMakeLists file)
 #
 
 if(USE_GLFW)
@@ -106,9 +109,11 @@ if(USE_GLFW)
 endif()
 
 add_subdirectory(ThirdParty/spdlog EXCLUDE_FROM_ALL)
+add_subdirectory(ThirdParty/glad)
 
 # Link third party modules to renderer
 target_link_libraries(AetherRenderer PRIVATE glfw)
+target_link_libraries(AetherRenderer PRIVATE glad)
 target_link_libraries(AetherRenderer PUBLIC spdlog::spdlog_header_only)
 
 
@@ -147,20 +152,20 @@ endif()
 # Direct X
 #
 
-if(WIN32 AND (USE_DX11 OR USE_DX12))
+if(WIN32 AND (BUILD_DX11 OR BUILD_DX12))
     # Find DirectX common libraries
     find_package(DXGI REQUIRED)
     find_package(D3DCompiler REQUIRED)
     find_package(DXGUID REQUIRED)
 
     # Find specific feature level package, link and set macro in our renderer
-    if (USE_DX11)
+    if (BUILD_DX11)
         find_package(D3D11 REQUIRED)
         target_link_libraries(AetherRenderer PRIVATE D3D11::D3D11 DXGI::DXGI D3DCompiler::D3DCompiler)
         target_compile_definitions(AetherRenderer PUBLIC USE_DX11)
     endif()
     
-    if(USE_DX12)
+    if(BUILD_DX12)
         find_package(D3D12 REQUIRED)
         target_link_libraries(AetherRenderer PRIVATE D3D12::D3D12 DXGI::DXGI D3DCompiler::D3DCompiler DXGUID::DXGUID)   # Note the need for DXGUID here
         target_compile_definitions(AetherRenderer PUBLIC USE_DX12)
@@ -169,8 +174,12 @@ endif()
 
 
 #
-# Vulkan
+# Open GL & Vulkan
 #
+
+if(BUILD_OPENGL)
+    target_compile_definitions(AetherRenderer PRIVATE USE_OPENGL)
+endif()
 
 if(USE_VULKAN)
     find_package(Vulkan REQUIRED)

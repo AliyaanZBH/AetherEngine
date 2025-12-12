@@ -20,10 +20,18 @@
 //	Windows and Renderer libraries
 //
 
+// Need to include glad before GLFW ... OR ELSE!
+#ifdef USE_OPENGL
+#include <glad/glad.h>
+#include <KHR/khrplatform.h>
+#endif
+
 #include <GLFW/glfw3.h>
 #define GLFW_EXPOSE_NATIVE_WIN32
 #define GLFW_EXPOSE_NATIVE_WGL
 #include <GLFW/glfw3native.h>
+
+
 
 #ifdef AETHER_PLATFORM_WINDOWS
 	#include <Windows.h>
