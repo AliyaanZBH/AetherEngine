@@ -16,9 +16,12 @@
 #include <sstream>
 #include <fstream>
 
+
 //
 //	Windows and Renderer libraries
 //
+
+#include "imgui.h"
 
 // Need to include glad before GLFW ... OR ELSE!
 #ifdef USE_OPENGL
@@ -30,7 +33,6 @@
 #define GLFW_EXPOSE_NATIVE_WIN32
 #define GLFW_EXPOSE_NATIVE_WGL
 #include <GLFW/glfw3native.h>
-
 
 
 #ifdef AETHER_PLATFORM_WINDOWS
