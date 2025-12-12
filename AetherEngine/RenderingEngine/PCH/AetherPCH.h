@@ -25,6 +25,11 @@
 #define GLFW_EXPOSE_NATIVE_WGL
 #include <GLFW/glfw3native.h>
 
+#ifdef USE_OPENGL
+#include <glad/glad.h>
+#include <KHR/khrplatform.h>
+#endif
+
 #ifdef AETHER_PLATFORM_WINDOWS
 	#include <Windows.h>
 	#include <wrl/client.h>

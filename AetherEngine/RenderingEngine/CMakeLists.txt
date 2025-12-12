@@ -13,10 +13,10 @@ set(SRC
     Core/src/Log.cpp
     Core/src/LayerStack.cpp
 
-    GLFW/src/WindowGLFW.cpp
+    Window/src/WindowGLFW.cpp
     
-    EngineD3D/src/RendererDX11.cpp
-    EngineD3D/src/RendererDX12.cpp
+    Renderer/src/RendererDX11.cpp
+    Renderer/src/RendererDX12.cpp
 )
 
 set(INCLUDE
@@ -37,12 +37,12 @@ set(INCLUDE
     Core/include/IRenderer.h
     Core/include/IWindow.h
 
-    GLFW/include/WindowGLFW.h
+    Window/include/WindowGLFW.h
 
     # Rendering
-    EngineD3D/include/D3DUtils.h
-    EngineD3D/include/RendererDX11.h
-    EngineD3D/include/RendererDX12.h
+    Renderer/include/D3DUtils.h
+    Renderer/include/RendererDX11.h
+    Renderer/include/RendererDX12.h
 
     # Events
     Events/include/KeyEvent.h
@@ -79,8 +79,8 @@ endif()
 target_include_directories(AetherRenderer
                     PRIVATE 
                             ${PROJECT_SOURCE_DIR}/include
-                            EngineD3D/include
-                            GLFW/include
+                            Renderer/include
+                            Window/include
                             Events/include
                             Layers/include
                             ThirdParty/dx12Helper/include
@@ -95,7 +95,7 @@ source_group("include" FILES ${INCLUDE})
 source_group("shaders" FILES ${HLSL_SHADER_FILES})
 
 #
-# Third-party libraries and subdirectories
+# Third-party libraries and subdirectories (subdirectories only for projects that contain a CMakeLists file)
 #
 
 if(USE_GLFW)
@@ -106,9 +106,11 @@ if(USE_GLFW)
 endif()
 
 add_subdirectory(ThirdParty/spdlog EXCLUDE_FROM_ALL)
+add_subdirectory(ThirdParty/glad)
 
 # Link third party modules to renderer
 target_link_libraries(AetherRenderer PRIVATE glfw)
+target_link_libraries(AetherRenderer PRIVATE glad opengl32)
 target_link_libraries(AetherRenderer PUBLIC spdlog::spdlog_header_only)
 
 
@@ -169,8 +171,12 @@ endif()
 
 
 #
-# Vulkan
+# Open GL & Vulkan
 #
+
+if(USE_OPENGL)
+    target_compile_definitions(AetherRenderer PRIVATE USE_OPENGL)
+endif()
 
 if(USE_VULKAN)
     find_package(Vulkan REQUIRED)

@@ -5,7 +5,7 @@ cmake_minimum_required(VERSION 3.16)
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/modules" ${CMAKE_MODULE_PATH})
 
 # Project name and version
-project(AetherEngine VERSION 0.1.0 LANGUAGES CXX)
+project(AetherEngine VERSION 0.1.0 LANGUAGES C CXX)
 
 # Set the C++ standard
 set(CMAKE_CXX_STANDARD 20)
@@ -26,6 +26,10 @@ set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} /MD /O2")
 option(USE_GLFW "Create windows with GLFW" ON)
 # Option to build with WIN32 API (default ON for Windows, currently set to off as development is focused on GLFW)
 option(USE_WIN32 "Create windows with WIN32" OFF)
+
+
+# Option to build with OpenGL
+option(USE_OPENGL "Build with OpenGL (and GLAD)" OFF)
 
 # Option to build with DX11
 option(USE_DX11 "Build with DirectX 11" OFF)
