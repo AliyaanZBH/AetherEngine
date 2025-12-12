@@ -9,6 +9,10 @@
 #include "WindowGLFW.h"
 #endif
 
+#ifdef USE_OPENGL
+#include "RendererOpenGL.h"
+#endif
+
 #ifdef USE_DX11
 #include "RendererDX11.h"
 #endif
@@ -51,17 +55,30 @@ namespace Aether
         ar = AETHER_FAIL;
     #endif
 
-        // Set the desired rendering API, based on the chosen macro.
-    #ifdef USE_DX11
-        m_Renderer = std::make_unique<RendererDX11>();
-    #elif defined(USE_DX12)
-        m_Renderer = std::make_unique<RendererDX12>();
-    #elif defined(USE_VULKAN)
-        m_Renderer = std::make_unique<RendererVulkan>();
-    #else
-    #error No rendering API defined. Please enable USE_DX11 or USE_VULKAN.
-        ar = AETHER_FAIL;
-    #endif
+        // Set the desired rendering API, based on the chosen runtime enum. 
+        switch (m_CurrentRenderAPI)
+        {
+            case eRenderAPI::kOpenGL:
+            {
+                m_Renderer = std::make_unique<RendererOpenGL>();
+                break;
+            }
+            case eRenderAPI::kDX11:
+            {
+                m_Renderer = std::make_unique<RendererDX11>();
+                break;
+            }
+            case eRenderAPI::kDX12:
+            {
+                m_Renderer = std::make_unique<RendererDX12>();
+                break;
+            }
+            default:
+            {
+                ar = AETHER_FAIL;
+                AETHER_ASSERT(ar, "No rendering API defined. Please enable one of the `USE_X` arguments and select a valid desired rendering API.")
+            }
+        }
 
         // Bind event callback for our window
         m_Window->SetEventCallback(BIND_APP_FN(OnEvent));

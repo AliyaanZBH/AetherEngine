@@ -17,4 +17,11 @@ namespace Aether
         virtual void Render() = 0;
         virtual void Terminate() = 0;
     };
+
+    enum class eRenderAPI
+    {
+        kOpenGL,
+        kDX11,
+        kDX12
+    };
 }

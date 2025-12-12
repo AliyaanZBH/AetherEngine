@@ -15,8 +15,9 @@ set(SRC
 
     Window/src/WindowGLFW.cpp
     
-    Renderer/src/RendererDX11.cpp
-    Renderer/src/RendererDX12.cpp
+    Renderer/DirectX/src/RendererDX11.cpp
+    Renderer/DirectX/src/RendererDX12.cpp
+    Renderer/OpenGL/src/RendererOpenGL.cpp
 )
 
 set(INCLUDE
@@ -40,9 +41,10 @@ set(INCLUDE
     Window/include/WindowGLFW.h
 
     # Rendering
-    Renderer/include/D3DUtils.h
-    Renderer/include/RendererDX11.h
-    Renderer/include/RendererDX12.h
+    Renderer/DirectX/include/D3DUtils.h
+    Renderer/DirectX/include/RendererDX11.h
+    Renderer/DirectX/include/RendererDX12.h
+    Renderer/OpenGL/include/RendererOpenGL.h
 
     # Events
     Events/include/KeyEvent.h
@@ -79,8 +81,9 @@ endif()
 target_include_directories(AetherRenderer
                     PRIVATE 
                             ${PROJECT_SOURCE_DIR}/include
-                            Renderer/include
                             Window/include
+                            Renderer/DirectX/include
+                            Renderer/OpenGL/include
                             Events/include
                             Layers/include
                             ThirdParty/dx12Helper/include
@@ -110,7 +113,7 @@ add_subdirectory(ThirdParty/glad)
 
 # Link third party modules to renderer
 target_link_libraries(AetherRenderer PRIVATE glfw)
-target_link_libraries(AetherRenderer PRIVATE glad opengl32)
+target_link_libraries(AetherRenderer PRIVATE glad)
 target_link_libraries(AetherRenderer PUBLIC spdlog::spdlog_header_only)
 
 
@@ -149,20 +152,20 @@ endif()
 # Direct X
 #
 
-if(WIN32 AND (USE_DX11 OR USE_DX12))
+if(WIN32 AND (BUILD_DX11 OR BUILD_DX12))
     # Find DirectX common libraries
     find_package(DXGI REQUIRED)
     find_package(D3DCompiler REQUIRED)
     find_package(DXGUID REQUIRED)
 
     # Find specific feature level package, link and set macro in our renderer
-    if (USE_DX11)
+    if (BUILD_DX11)
         find_package(D3D11 REQUIRED)
         target_link_libraries(AetherRenderer PRIVATE D3D11::D3D11 DXGI::DXGI D3DCompiler::D3DCompiler)
         target_compile_definitions(AetherRenderer PUBLIC USE_DX11)
     endif()
     
-    if(USE_DX12)
+    if(BUILD_DX12)
         find_package(D3D12 REQUIRED)
         target_link_libraries(AetherRenderer PRIVATE D3D12::D3D12 DXGI::DXGI D3DCompiler::D3DCompiler DXGUID::DXGUID)   # Note the need for DXGUID here
         target_compile_definitions(AetherRenderer PUBLIC USE_DX12)
@@ -174,7 +177,7 @@ endif()
 # Open GL & Vulkan
 #
 
-if(USE_OPENGL)
+if(BUILD_OPENGL)
     target_compile_definitions(AetherRenderer PRIVATE USE_OPENGL)
 endif()
 

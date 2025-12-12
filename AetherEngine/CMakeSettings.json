@@ -28,7 +28,7 @@
         },
         {
           "name": "USE_DX12",
-          "value": "True",
+          "value": "False",
           "type": "BOOL"
         },
         {

@@ -14,25 +14,25 @@ namespace Aether
 	//
 
 	// What events we have in our engine and our application
-	enum class EventType
+	enum class eEventType
 	{
 		None = 0,
-		KeyPressed, KeyReleased, KeyTyped,
-		MouseMove, MouseClick, MouseClickRelease, MouseScroll,
-		WindowClose, WindowMoved, WindowResize, WindowFocus, WindowLostFocus,
-		AppUpdate, AppRender, AppTick
+		kKeyPressed, kKeyReleased, kKeyTyped,
+		kMouseMove, kMouseClick, kMouseClickRelease, kMouseScroll,
+		kWindowClose, kWindowMoved, kWindowResize, kWindowFocus, kWindowLostFocus,
+		kAppUpdate, kAppRender, kAppTick
 	};
 
 	// Helps with filtering events, for example when ordering our event queue
 	// Using a bit field as events can fall under multiple categories
-	enum EventCategory
+	enum eEventCategory
 	{
-		None = 0,
-		ApplicationEvent	= BIT(0),
-		Input				= BIT(1),
-		Mouse				= BIT(2),		// For movement and scrolling
-		Click				= BIT(3),		// For clicking LMB etc.
-		Keyboard			= BIT(4),
+		kNone = 0,
+		kApplicationEvent	= BIT(0),
+		kInput				= BIT(1),
+		kMouse				= BIT(2),		// For movement and scrolling
+		kClick				= BIT(3),		// For clicking LMB etc.
+		kKeyboard			= BIT(4),
 	};
 
 	//
@@ -40,8 +40,8 @@ namespace Aether
 	//
 
 	// The static types are here so that we can read key events without being tied to a specific instance of the event class.
-#define EVENT_CLASS_TYPE(type)				static EventType GetStaticType()				{ return EventType::##type; }	\
-											virtual EventType GetEventType() const override { return GetStaticType(); }		\
+#define EVENT_CLASS_TYPE(type)				static eEventType GetStaticType()				{ return eEventType::##type; }	\
+											virtual eEventType GetEventType() const override { return GetStaticType(); }		\
 											virtual const char* GetName()    const override { return #type; }
 
 #define EVENT_CLASS_CATEGORY(category)		virtual int GetCategories()		 const override { return category; }
@@ -56,7 +56,7 @@ namespace Aether
 		friend class EventDispatcher;
 	public:
 		// Must be implemented by all events, use above macros to save time!
-		virtual EventType GetEventType() const = 0;
+		virtual eEventType GetEventType() const = 0;
 		virtual int GetCategories()	  const = 0;
 		virtual const char* GetName() const = 0;
 
@@ -64,7 +64,7 @@ namespace Aether
 		virtual std::string ToString() const { return GetName(); }
 
 		// Helper to check what if a given event falls under a specific category
-		inline bool FallsUnderCategory(EventCategory cat)
+		inline bool FallsUnderCategory(eEventCategory cat)
 		{
 			// Nifty line that returns the bitfield of categories and uses "&" to compare if the given bit is within
 			return GetCategories() & cat;

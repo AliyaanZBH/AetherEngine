@@ -16,7 +16,7 @@ namespace Aether
 		inline int GetKeyCode()	  const  { return m_KeyCode; }
 
 		// Setup category for all events that inherit from this
-		EVENT_CLASS_CATEGORY(Keyboard | Input)
+		EVENT_CLASS_CATEGORY(kKeyboard | kInput)
 	protected:
 		// Protected constructor so that only it and derived class can construct it.
 		// More of an abstract class
@@ -43,7 +43,7 @@ namespace Aether
 		}
 
 		// Define the type within the event system
-		EVENT_CLASS_TYPE(KeyPressed)
+		EVENT_CLASS_TYPE(kKeyPressed)
 	private:
 		// Flag that tracks if a given input is being held
 		bool m_bRepeat;
@@ -62,7 +62,7 @@ namespace Aether
 			return ss.str();
 		}
 
-		EVENT_CLASS_TYPE(KeyReleased)
+		EVENT_CLASS_TYPE(kKeyReleased)
 	};
 
 	// Used for typing - e.g. allowing players or devs to name an object in their application
@@ -79,6 +79,6 @@ namespace Aether
 			return ss.str();
 		}
 
-		EVENT_CLASS_TYPE(KeyTyped)
+		EVENT_CLASS_TYPE(kKeyTyped)
 	};
 }

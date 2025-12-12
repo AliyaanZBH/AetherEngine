@@ -23,22 +23,26 @@ set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} /MD /O2")
 
 
 # Option to build with GLFW
-option(USE_GLFW "Create windows with GLFW" ON)
+option(USE_GLFW "Create windows with GLFW" ON)   # GLFW runs everywhere so we can default this to on!
 # Option to build with WIN32 API (default ON for Windows, currently set to off as development is focused on GLFW)
 option(USE_WIN32 "Create windows with WIN32" OFF)
 
 
 # Option to build with OpenGL
-option(USE_OPENGL "Build with OpenGL (and GLAD)" OFF)
+option(BUILD_OPENGL "Build with OpenGL (and GLAD)" ON)        # OpenGL runs everywhere so we can default this to on!
+option(USE_OPENGL "Compile with OpenGL renderer" ON)
 
 # Option to build with DX11
-option(USE_DX11 "Build with DirectX 11" OFF)
+option(BUILD_DX11 "Build with DirectX 11" ON)
+option(USE_DX11 "Compile with DX11 renderer" OFF)
 
 # Option to build with DX12 (default ON for Windows)
-option(USE_DX12 "Build with DirectX 12" ON)
+option(BUILD_DX12 "Build with DirectX 12" ON)
+option(USE_DX12 "Compile with DX12 renderer" OFF)
 
 # Option to build with Vulkan (default OFF, but ON for Linux)
-option(USE_VULKAN "Build with Vulkan" OFF)
+option(BUILD_VULKAN "Build with Vulkan" OFF)
+option(USE_VULKAN "Compile with Vulkan renderer" OFF)
 
 
 # Include directories
