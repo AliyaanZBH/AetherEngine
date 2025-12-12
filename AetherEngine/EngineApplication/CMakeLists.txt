@@ -43,14 +43,6 @@ target_compile_definitions(AetherApp PRIVATE
     $<CONFIG:Distribution> AETHER_DIST
 )
 
-#if (AETHER_RELEASE OR AETHER_DIST)
-# Enable optimisations when not in debug
-if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
-    message("Setting optimisation flags")
-    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
-endif()
-
-
 # Also explicitly add the DLL as dependency - this ensures that when running the exe, the DLL gets recompiled too :)
 add_dependencies(AetherApp AetherRenderer)
 # Also add the deploy target! This ensures the command that copies the files happens every time!

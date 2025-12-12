@@ -16,6 +16,11 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # Setup build configs
 set(CMAKE_CONFIGURATION_TYPES "Debug;Release;RelWithDebInfo " CACHE STRING "" FORCE)
 
+# Global compiler options
+set(CMAKE_CXX_FLAGS_DEBUG          "${CMAKE_CXX_FLAGS_DEBUG} /MDd")
+set(CMAKE_CXX_FLAGS_RELEASE        "${CMAKE_CXX_FLAGS_RELEASE} /MD /O2")
+set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} /MD /O2")
+
 
 # Option to build with GLFW
 option(USE_GLFW "Create windows with GLFW" ON)

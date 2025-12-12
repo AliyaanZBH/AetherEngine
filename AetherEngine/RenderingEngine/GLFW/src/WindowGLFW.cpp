@@ -24,7 +24,6 @@ namespace Aether
         AETHER_ASSERT(Initialize(winData), "Failed to initalize GLFW properly.");
         // Don't forget to to set this winData for use later!
         SetData(winData);
-//        m_GLFWData.m_BaseWinData = winData;
     }
 
     WindowGLFW::~WindowGLFW()

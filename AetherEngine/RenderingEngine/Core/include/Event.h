@@ -3,7 +3,6 @@
 // desc: The main file that ties the whole Event System together
 // auth: Aliyaan Zulfiqar
 //===============================================================================
-
 #include "Core.h"
 //===============================================================================
 
@@ -70,8 +69,11 @@ namespace Aether
 			// Nifty line that returns the bitfield of categories and uses "&" to compare if the given bit is within
 			return GetCategories() & cat;
 		}
+
+		inline bool CheckIfHandled() { return m_bEventHandled; }
+
 	protected:
-		bool m_EventHandled = false;
+		bool m_bEventHandled = false;
 	};
 
 	// Dispatches events, correctly getting the event function for each type of event
@@ -92,7 +94,7 @@ namespace Aether
 			if (m_Event.GetEventType() == T::GetStaticType())
 			{
 				// Fire event and store result in the handled flag
-				m_Event.m_EventHandled = func(*(T*)&m_Event);				// Ugly looking line but it does this: 
+				m_Event.m_bEventHandled = func(*(T*)&m_Event);				// Ugly looking line but it does this: 
 																				//	*(T*)&m_Event casts the m_Event reference from an Event to T. 
 																				//	The order of operations is& then(T*) then * .
 																				// 	First, & m_Event gets the memory address of of m_Event (now it's type Event*).

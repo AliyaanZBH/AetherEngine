@@ -32,7 +32,7 @@ int main(int argc, char** argv)
 	AETHER_TRACE("This game is called: {0}", name);
 
 	// Register this client application with the core Aether engine
-	auto game = Aether::CreateApplication();
+	Aether::Application* game = Aether::CreateApplication();
 	// Run our game!
 	game->Run();
 
