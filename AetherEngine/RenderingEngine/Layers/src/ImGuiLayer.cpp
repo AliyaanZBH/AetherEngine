@@ -3,42 +3,88 @@
 // auth: Aliyaan Zulfiqar
 //===============================================================================
 #include "ImGuiLayer.h"
+#include <CoreApp.h>
 //===============================================================================
 
-Aether::ImGuiLayer::ImGuiLayer()
-	: Layer("ImGui Layer")
+namespace Aether
 {
+    ImGuiLayer::ImGuiLayer(eRenderAPI backend)
+        : m_CurrentRenderAPI(backend), Layer("ImGui Layer")
+    {
+    }
 
-}
+    ImGuiLayer::~ImGuiLayer()
+    {
+    }
 
-Aether::ImGuiLayer::~ImGuiLayer()
-{
-}
+    void ImGuiLayer::OnAttach()
+    {
+        // Setup ImGui Context
+        ImGui::CreateContext();
+        ImGuiIO& io = ImGui::GetIO();
+        io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;       // Enable Keyboard Controls
+        //io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+       // io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;           // Enable Docking
+      //  io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;         // Enable Multi-Viewport / Platform Windows
+        //io.ConfigFlags |= ImGuiConfigFlags_ViewportsNoTaskBarIcons;
+        //io.ConfigFlags |= ImGuiConfigFlags_ViewportsNoMerge;
 
-void Aether::ImGuiLayer::OnAttach()
-{
-	// Setup ImGui Context
-	ImGui::CreateContext();
-	ImGuiIO& io = ImGui::GetIO(); (void)io;
-	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;       // Enable Keyboard Controls
-	//io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
-	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;           // Enable Docking
-	io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;         // Enable Multi-Viewport / Platform Windows
-	//io.ConfigFlags |= ImGuiConfigFlags_ViewportsNoTaskBarIcons;
-	//io.ConfigFlags |= ImGuiConfigFlags_ViewportsNoMerge;
+        ImGui::StyleColorsDark();
 
-	ImGui::StyleColorsDark();
+        // Create appropriate backends
+        switch (m_CurrentRenderAPI)
+        {
+        case eRenderAPI::kOpenGL:
+        {
+            ImGui_ImplGlfw_InitForOpenGL(static_cast<GLFWwindow*>(Application::Get().GetWindow().GetNativeWindowHandle()), true);
+            ImGui_ImplOpenGL3_Init("#version 410");
+            break;
+        }
+        case eRenderAPI::kDX11:
+        {
+            //ImGui_ImplGlfw_InitForOther
+            //ImGui_ImplDX11_Init();
+            break;
+        }
+        case eRenderAPI::kDX12:
+        {
+            //ImGui_ImplDX12_Init();
+            break;
+        }
+        default:
+        {
+            AETHER_ASSERT(AETHER_FAIL, "No rendering backend for ImGui defined.")
+        }
+        };
 
-}
+    }
 
-void Aether::ImGuiLayer::OnDetach()
-{
-}
+    void ImGuiLayer::OnDetach()
+    {
+    }
 
-void Aether::ImGuiLayer::OnUpdate()
-{
-}
+    void ImGuiLayer::OnUpdate()
+    {
 
-void Aether::ImGuiLayer::OnEvent(Event& event)
-{
+        ImGuiIO& io = ImGui::GetIO();
+        io.DisplaySize = ImVec2((float)Application::Get().GetWindow().GetWidth(), (float)Application::Get().GetWindow().GetHeight());
+        io.DeltaTime = (float)glfwGetTime();
+
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+
+
+        bool show = true;
+        ImGui::ShowDemoWindow(&show);
+
+
+        ImGui::Render();
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+    }
+
+    void ImGuiLayer::OnEvent(Event& event)
+    {
+    }
 }

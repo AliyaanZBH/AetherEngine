@@ -9,7 +9,9 @@ AETHER_RESULT Aether::RendererOpenGL::Initialize(IWindow& window)
 {
 	AETHER_RESULT ar = AETHER_OK;
 	ar = gladLoadGL();
-	return ar;
+
+	// Glad returns 1 on success, we use 0
+	return ar - 1;
 }
 
 void Aether::RendererOpenGL::Render()

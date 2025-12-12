@@ -22,6 +22,8 @@
 //
 
 #include "imgui.h"
+#include <imgui_impl_glfw.h>
+#include <imgui_impl_opengl3.h>
 
 // Need to include glad before GLFW ... OR ELSE!
 #ifdef USE_OPENGL
@@ -44,11 +46,13 @@
 #ifdef USE_DX11
 	#include <d3d11.h>
 	#include <dxgi1_3.h>
+	#include <imgui_impl_dx11.h>
 #endif
 #ifdef USE_DX12
 	#include <d3d12.h>
 	#include <dxgi1_4.h>
 	#include <d3dx12.h>
+	#include <imgui_impl_dx12.h>
 #endif
 #endif
 

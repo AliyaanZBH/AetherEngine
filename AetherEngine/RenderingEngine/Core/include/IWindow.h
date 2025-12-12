@@ -50,7 +50,10 @@ namespace Aether
 		// This will return a native handle (e.g., HWND for Win32 or a window handle for GLFW)
 		virtual void* GetNativeWindowHandle() const = 0;
 
-		// Accessor for WinData struct
+		inline int GetWidth() { return m_WinData.m_ClientWidth; }
+		inline int GetHeight() { return m_WinData.m_ClientHeight; }
+
+		// Accessor for full WinData struct
 		const WinData& GetData() const
 		{
 			return m_WinData;

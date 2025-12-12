@@ -13,6 +13,8 @@
 
 namespace Aether
 {
+	class ImGuiLayer;
+
 	class AETHER_API Application
 	{
 	public:
@@ -25,10 +27,13 @@ namespace Aether
 		// Event callback
 		void OnEvent(Event& event);
 
+		ImGuiLayer* CreateImGuiLayer();
+
+
 		void PushLayer(Layer* layer);
 		void PushOverlay(Layer* overlay);
 
-		inline Application& Get() { return *s_Instance; }
+		inline static Application& Get() { return *s_Instance; }
 		inline IWindow& GetWindow() { return *m_Window; }
 		inline IRenderer& GetRenderer() { return *m_Renderer; }
 
@@ -36,8 +41,11 @@ namespace Aether
 		std::unique_ptr<IWindow> m_Window;
 		std::unique_ptr<IRenderer> m_Renderer;
 
+		//std::unique_ptr<ImGuiLayer> m_ImGuiLayer;
+		ImGuiLayer* m_ImGuiLayer;
+
 		LayerStack m_LayerStack;
-		eRenderAPI m_CurrentRenderAPI = eRenderAPI::kOpenGL;
+		eRenderAPI m_CurrentRenderAPI = eRenderAPI::kDX11;
 
 		// Quick and dirty Singleton-esque implementation
 		static Application* s_Instance;

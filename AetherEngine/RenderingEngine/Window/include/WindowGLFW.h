@@ -23,20 +23,20 @@ namespace Aether
 		void PollEvents() override
 		{
 			glfwPollEvents();
+			glfwSwapBuffers(m_pWindow);
 		}
 
 		inline void SetEventCallback(const EventCallbackFn& callback) override { m_WinData.m_EventCallback = callback; }
 
 		void Terminate() override;
 
+		HWND GetWin32GLFWHandle() { return (glfwGetWin32Window(m_pWindow)); }
+
 		void* GetNativeWindowHandle() const override
 		{
-#ifdef _WIN32
-			return static_cast<void*>(glfwGetWin32Window(m_pWindow));
-#else
-			return nullptr;  // Handle other platforms
-#endif
+			return m_pWindow; // Handle other platforms
 		}
+
 	private:
 		GLFWwindow* m_pWindow;
 

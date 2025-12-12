@@ -4,6 +4,7 @@
 // auth: Aliyaan Zulfiqar
 //===============================================================================
 #include "CoreApp.h"
+#include "Log.h"
 
 #ifdef USE_GLFW
 #include "WindowGLFW.h"
@@ -26,16 +27,22 @@
 #endif
 
 #include "AppEvent.h"
-#include "Log.h"
+#include "ImGuiLayer.h"
 //===============================================================================
 namespace Aether
 {
 #define BIND_APP_FN(x) std::bind(&Application::x, this, std::placeholders::_1)
 
+    Application* Application::s_Instance = nullptr;
+
     Application::Application()
     {
         // A local instance that represents possible error codes.
         AETHER_RESULT ar = AETHER_OK;
+        
+        if (s_Instance != nullptr)
+            AETHER_ASSERT(AETHER_FAIL, "An instance of the application is already running!")
+        s_Instance = this;
 
         // Set which type of window we are creating and pass in some data for it
         // Later in development, this will be read from a JSON config file so that the user can save and load settings, along with manually changing it from a GUI inside the application!
@@ -80,6 +87,10 @@ namespace Aether
             }
         }
 
+        // Setup ImGui backend for the renderer
+        //m_ImGuiLayer = std::make_unique<ImGuiLayer>(m_CurrentRenderAPI);
+        m_ImGuiLayer = new ImGuiLayer(m_CurrentRenderAPI);
+
         // Bind event callback for our window
         m_Window->SetEventCallback(BIND_APP_FN(OnEvent));
     }
@@ -114,9 +125,8 @@ namespace Aether
         // Init rendering API - catch errors out here with assert
         AETHER_ASSERT(m_Renderer->Initialize(*m_Window));
 
-        // TEST: Try out events
-        WindowResizeEvent e(1920u, 1080u);
-        AETHER_TRACE(e);
+       // Push the ImGui Layer into the stack
+        PushOverlay(m_ImGuiLayer);
 
         // The game loop!
         while (!m_Window->WindowShouldClose()) {
@@ -129,6 +139,7 @@ namespace Aether
 
             // Render our lovely frame!
             m_Renderer->Render();
+
         }
 
         printf("\n\n\n");

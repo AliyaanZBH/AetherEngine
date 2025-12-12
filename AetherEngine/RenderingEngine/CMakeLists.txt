@@ -122,12 +122,13 @@ target_link_libraries(AetherRenderer PUBLIC spdlog::spdlog_header_only)
 
 # ImGui requires a bit of extra linking due to multiple backends
 add_subdirectory(ThirdParty/imgui-1.92.5)
-target_link_libraries(AetherRenderer PRIVATE
+target_link_libraries(AetherRenderer PUBLIC
     imgui
+    imgui_backend_glfw
+    imgui_backend_gl3
     imgui_backend_win32
     imgui_backend_dx11
-    imgui_backend_gl3
-    imgui_backend_glfw
+    imgui_backend_dx12
 )
 
 
