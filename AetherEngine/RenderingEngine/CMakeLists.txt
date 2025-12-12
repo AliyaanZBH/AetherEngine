@@ -18,6 +18,8 @@ set(SRC
     Renderer/DirectX/src/RendererDX11.cpp
     Renderer/DirectX/src/RendererDX12.cpp
     Renderer/OpenGL/src/RendererOpenGL.cpp
+
+    Layers/src/ImGuiLayer.cpp
 )
 
 set(INCLUDE
@@ -52,10 +54,12 @@ set(INCLUDE
     Events/include/AppEvent.h
 
     # Layers
+    Layers/include/ImGuiLayer.h
 
-    # Third party includes
+
+    # Miscellaneous third-party includes
     ThirdParty/dx12Helper/include/d3dx12.h
-)
+ )
 
 # Specify shaders
 set(HLSL_SHADER_FILES
