@@ -16,6 +16,7 @@ namespace Aether
 		AETHER_RESULT Initialize(IWindow& window) override;
 		void ClearFrame() override;
 		void Render() override;
+		void Resize(int newWidth, int newHeight) override;
 		void Terminate() override;
 		void* GetNativeDevice() override { return m_Device.Get(); }
 		void* GetNativeContext() override { return 0; }
@@ -38,6 +39,10 @@ namespace Aether
 		//	A device is used to create resources, this essentially represents our GPU
 		AETHER_RESULT CreateDevice();
 
+		AETHER_RESULT CreateRenderTargets();
+		
+		AETHER_RESULT CreateDepthStencil();
+
 		AETHER_RESULT CreatePipelines();
 
 		AETHER_RESULT CompileShaders();
@@ -48,6 +53,8 @@ namespace Aether
 
 		// Extra Methods to help with rendering
 		//
+
+		AETHER_RESULT CleanupRenderBuffers();
 
 		// Update command lists and clear the frame
 		AETHER_RESULT ClearAndSyncFrame();
@@ -183,5 +190,8 @@ namespace Aether
 		// IB now too!
 		Microsoft::WRL::ComPtr<ID3D12Resource> m_IndexBuffer;
 		D3D12_INDEX_BUFFER_VIEW m_IdxBufView;
+
+		bool m_bNeedsResize = false;
+
 	};
 };

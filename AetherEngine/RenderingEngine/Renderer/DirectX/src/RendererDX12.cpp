@@ -73,35 +73,12 @@ namespace Aether
 
 		//
 		//
-		//  RTV Descriptor Heaps
+		//  RTV Descriptor Heaps and Targets themselves
 		// 
 		//
 
-
-		D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};
-		rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
-		rtvHeapDesc.NumDescriptors = m_kNumFrameBuffers;
-		rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;        // Back buffer won't ever be shaded directly, so no need to be visible!
-
-		AETHER_HR_ASSERT(m_Device->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&m_RTVHeap)));
-
-		// Get the size of a descriptor in this heap (this is a rtv heap, so only rtv descriptors should be stored in it.
-		m_RTVDescripterSize = m_Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-
-		// Get handle to the first descriptor in the descriptor heap.
-		CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_RTVHeap->GetCPUDescriptorHandleForHeapStart());
-
-		// Create a RTV for each buffer
-		for (int i = 0; i < m_kNumFrameBuffers; ++i)
-		{
-
-			AETHER_HR_ASSERT(m_SwapChain->GetBuffer(i, IID_PPV_ARGS(&m_RenderTargets[i])));
-
-			m_Device->CreateRenderTargetView(m_RenderTargets[i].Get(), nullptr, rtvHandle);
-
-			// Increment the rtv handle by the rtv descriptor size we got above
-			rtvHandle.Offset(1, m_RTVDescripterSize);
-		}
+		// Re-usable helper function to create the RTVs
+		AETHER_ASSERT(CreateRenderTargets());
 		 
 
 		//
@@ -141,42 +118,7 @@ namespace Aether
 		//
 		//
 
-		// Start with the heap
-		D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc = {};
-		dsvHeapDesc.NumDescriptors = 1;
-		dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
-		dsvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-		AETHER_HR_ASSERT(m_Device->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(&m_DSBHeap)));
-		m_DSBHeap->SetName(L"DSB Heap");
-
-		// Now the view
-		D3D12_DEPTH_STENCIL_VIEW_DESC depthStencilDesc = {};
-		depthStencilDesc.Format = m_kDSVFormat;
-		depthStencilDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
-		depthStencilDesc.Flags = D3D12_DSV_FLAG_NONE;
-
-		// Optimised clear value struct
-		D3D12_CLEAR_VALUE depthOptimizedClearValue = {};
-		depthOptimizedClearValue.Format = m_kDSVFormat;
-		depthOptimizedClearValue.DepthStencil.Depth = 1.0f;
-		depthOptimizedClearValue.DepthStencil.Stencil = 0;
-
-		// Now finalise resource and create the object!
-		CD3DX12_HEAP_PROPERTIES defaultHeapProp = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
-		CD3DX12_RESOURCE_DESC defaultResourceDesc = CD3DX12_RESOURCE_DESC::Tex2D(m_kDSVFormat, m_WinData.m_ClientWidth, m_WinData.m_ClientHeight, 1, 0, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL);
-		AETHER_HR_ASSERT(m_Device->CreateCommittedResource(
-			&defaultHeapProp,
-			D3D12_HEAP_FLAG_NONE,
-			&defaultResourceDesc,
-			D3D12_RESOURCE_STATE_DEPTH_WRITE,
-			&depthOptimizedClearValue,
-			IID_PPV_ARGS(&m_DepthStencilBuffer)
-		));
-
-		m_DepthStencilBuffer->SetName(L"Depth Stencil Buffer");
-
-		// Now create view on device!
-		m_Device->CreateDepthStencilView(m_DepthStencilBuffer.Get(), &depthStencilDesc, m_DSBHeap->GetCPUDescriptorHandleForHeapStart());
+		AETHER_ASSERT(CreateDepthStencil());
 
 		//
 		//
@@ -272,10 +214,114 @@ namespace Aether
 		m_CmdQueue->ExecuteCommandLists(1, ppCmdLists);
 
 		// Signal our fence to help with syncing!
-		AETHER_HR_ASSERT(m_CmdQueue->Signal(m_Fence[m_FrameIndex].Get(), m_FenceValue[m_FrameIndex]));
+		//AETHER_HR_ASSERT(m_CmdQueue->Signal(m_Fence[m_FrameIndex].Get(), m_FenceValue[m_FrameIndex]));
 
 		// Backbuffer is ready to present, show us that frame!
-		AETHER_HR_ASSERT(m_SwapChain->Present(0, 0));
+		AETHER_HR_ASSERT(m_SwapChain->Present(1, 0));
+
+		// Signal again cos... MicroSoft I guess??
+		AETHER_HR_ASSERT(m_CmdQueue->Signal(m_Fence[m_FrameIndex].Get(), m_FenceValue[m_FrameIndex]));
+
+	}
+
+	void RendererDX12::Resize(int newWidth, int newHeight)
+	{
+		// Update stored windata values and set flag so that we resize at a safe point in our render pipeline.
+		m_WinData.m_ClientWidth = newWidth;
+		m_WinData.m_ClientHeight = newHeight;
+		m_bNeedsResize = true;
+	}
+
+	AETHER_RESULT RendererDX12::CreateRenderTargets()
+	{
+
+		D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};
+		rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
+		rtvHeapDesc.NumDescriptors = m_kNumFrameBuffers;
+		rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;        // Back buffer won't ever be shaded directly, so no need to be visible!
+
+		AETHER_HR_ASSERT(m_Device->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&m_RTVHeap)));
+
+		// Get the size of a descriptor in this heap (this is a rtv heap, so only rtv descriptors should be stored in it.
+		m_RTVDescripterSize = m_Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+
+		// Get handle to the first descriptor in the descriptor heap.
+		CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_RTVHeap->GetCPUDescriptorHandleForHeapStart());
+
+		// Create a RTV for each buffer
+		for (int i = 0; i < m_kNumFrameBuffers; ++i)
+		{
+
+			AETHER_HR_ASSERT(m_SwapChain->GetBuffer(i, IID_PPV_ARGS(&m_RenderTargets[i])));
+
+			m_Device->CreateRenderTargetView(m_RenderTargets[i].Get(), nullptr, rtvHandle);
+			// Increment the rtv handle by the rtv descriptor size we got above
+			rtvHandle.Offset(1, m_RTVDescripterSize);
+		}
+
+		return AETHER_OK;
+	}
+
+	AETHER_RESULT RendererDX12::CreateDepthStencil()
+	{
+		// Start with the heap
+		D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc = {};
+		dsvHeapDesc.NumDescriptors = 1;
+		dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
+		dsvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+		AETHER_HR_ASSERT(m_Device->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(&m_DSBHeap)));
+		m_DSBHeap->SetName(L"DSB Heap");
+
+		// Now the view
+		D3D12_DEPTH_STENCIL_VIEW_DESC depthStencilDesc = {};
+		depthStencilDesc.Format = m_kDSVFormat;
+		depthStencilDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
+		depthStencilDesc.Flags = D3D12_DSV_FLAG_NONE;
+
+		// Optimised clear value struct
+		D3D12_CLEAR_VALUE depthOptimizedClearValue = {};
+		depthOptimizedClearValue.Format = m_kDSVFormat;
+		depthOptimizedClearValue.DepthStencil.Depth = 1.0f;
+		depthOptimizedClearValue.DepthStencil.Stencil = 0;
+
+		// Now finalise resource and create the object!
+		CD3DX12_HEAP_PROPERTIES defaultHeapProp = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
+		CD3DX12_RESOURCE_DESC defaultResourceDesc = CD3DX12_RESOURCE_DESC::Tex2D(m_kDSVFormat, m_WinData.m_ClientWidth, m_WinData.m_ClientHeight, 1, 0, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL);
+		AETHER_HR_ASSERT(m_Device->CreateCommittedResource(
+			&defaultHeapProp,
+			D3D12_HEAP_FLAG_NONE,
+			&defaultResourceDesc,
+			D3D12_RESOURCE_STATE_DEPTH_WRITE,
+			&depthOptimizedClearValue,
+			IID_PPV_ARGS(&m_DepthStencilBuffer)
+		));
+
+		m_DepthStencilBuffer->SetName(L"Depth Stencil Buffer");
+
+		// Now create view on device!
+		m_Device->CreateDepthStencilView(m_DepthStencilBuffer.Get(), &depthStencilDesc, m_DSBHeap->GetCPUDescriptorHandleForHeapStart());
+
+		return AETHER_OK;
+	}
+
+
+	AETHER_RESULT RendererDX12::CleanupRenderBuffers()
+	{
+		// Reset current RT only
+		//AETHER_HR_ASSERT(m_RenderTargets[m_FrameIndex].Reset());
+		for (int i = 0; i < m_kNumFrameBuffers; ++i)
+		{
+			AETHER_HR_ASSERT(m_RenderTargets[i].Reset());
+		}
+
+		// Also reset the heap!
+		AETHER_HR_ASSERT(m_RTVHeap.Reset());
+
+		// Repeat for DSV and SRV
+		AETHER_HR_ASSERT(m_DepthStencilBuffer.Reset());
+		AETHER_HR_ASSERT(m_DSBHeap.Reset());
+
+		return AETHER_OK;
 	}
 
 	void RendererDX12::ClearFrame()
@@ -503,7 +549,7 @@ namespace Aether
 		psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);   // Lazy default init, good enough for triangle!
 		psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);             // Lazy default init, good enough for triangle!
 		psoDesc.DepthStencilState = dsDesc;                                 // Depth buffer enable!
-		psoDesc.DSVFormat = m_kDSVFormat;                          // Depth buffer format!
+		psoDesc.DSVFormat = m_kDSVFormat;									// Depth buffer format!
 		psoDesc.NumRenderTargets = 1;
 
 		// Create the PSO
@@ -664,11 +710,29 @@ namespace Aether
 		// Make sure the command list is free before resetting
 		Sync();
 
+		// Check if we need to resize!
+		if (m_bNeedsResize)
+		{
+
+			// Cleanly release all current buffers
+			CleanupRenderBuffers();
+			DXGI_SWAP_CHAIN_DESC1 desc = {};
+			m_SwapChain->GetDesc1(&desc);
+			AETHER_HR_ASSERT(m_SwapChain->ResizeBuffers(m_kNumFrameBuffers, m_WinData.m_ClientWidth, m_WinData.m_ClientHeight, desc.Format, desc.Flags));
+
+			// Rebuild buffers at this new size
+			AETHER_ASSERT(CreateRenderTargets());
+			AETHER_ASSERT(CreateDepthStencil());
+
+			m_bNeedsResize = false;
+		}
+
 		// Clear allocator
 		AETHER_HR_ASSERT(m_CmdAllocators[m_FrameIndex]->Reset());
 
 		// Clear list and prep for recording.
 		AETHER_HR_ASSERT(m_CmdList->Reset(m_CmdAllocators[m_FrameIndex].Get(), m_PipelineStateObject));
+
 
 		// Begin recording - we're just clearing the frame for now
 		//
@@ -678,6 +742,8 @@ namespace Aether
 		// Get a temp barrier to safely transition
 		CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_RenderTargets[m_FrameIndex].Get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
 		m_CmdList->ResourceBarrier(1, &barrier);
+
+
 
 		// Get handle to RTV this frame, so that we can set it as the RT
 		CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_RTVHeap->GetCPUDescriptorHandleForHeapStart(), m_FrameIndex, m_RTVDescripterSize);

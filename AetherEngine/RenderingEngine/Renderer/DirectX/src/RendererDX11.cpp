@@ -7,6 +7,7 @@
 
 #include "RendererDX11.h"
 #include "D3DUtils.h"
+#include "RendererDX12.h"
 //===============================================================================
 
 namespace Aether
@@ -43,6 +44,11 @@ namespace Aether
 	{
 		// Present the frame
 		m_pSwapChain->Present(1, 0);
+	}
+
+	void RendererDX11::Resize(int newWidth, int newHeight)
+	{
+		OnResize_Default(newWidth, newHeight);
 	}
 
 	void RendererDX11::ClearFrame()

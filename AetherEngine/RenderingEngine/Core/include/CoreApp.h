@@ -14,6 +14,7 @@
 namespace Aether
 {
 	class ImGuiLayer;
+	class WindowResizeEvent;
 
 	class AETHER_API Application
 	{
@@ -35,6 +36,9 @@ namespace Aether
 		inline IRenderer& GetRenderer() { return *m_Renderer; }
 
 	private:
+
+		bool OnWindowResize(WindowResizeEvent& e);
+
 		std::unique_ptr<IWindow> m_Window;
 		std::unique_ptr<IRenderer> m_Renderer;
 

@@ -113,11 +113,24 @@ namespace Aether
         overlay->OnAttach();
     }
 
+    bool Application::OnWindowResize(WindowResizeEvent& e)
+    {
+		// Let the renderer handle it's specific steps for resizing (recreating buffers, contexts, etc.)
+        m_Renderer->Resize(e.GetWidth(),e.GetHeight());
+        return true;
+    }
+
 
     void Application::OnEvent(Event& event)
     {
         // Just print the event for now
         AETHER_CORE_TRACE("{0}", event);
+
+        // Handle window resize in DirectX
+        EventDispatcher dispatcher(event);
+
+        // This magic function does a bit of type checking to ensure that only the correct event gets dispatched
+        dispatcher.Dispatch<WindowResizeEvent>(BIND_APP_FN(OnWindowResize));
 
         // Pass event to layer stack to ensure event fires on correct layer
         m_LayerStack.HandleEvent(event);
