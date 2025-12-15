@@ -18,6 +18,9 @@ namespace Aether
 		void* GetNativeDevice() override { return 0; }
 		void* GetNativeContext() override { return 0; }
 
+		void InitImGui() override;
+		void RenderImGui() override;
+
 	private:
 		GLFWwindow* m_pWindow;
 	};

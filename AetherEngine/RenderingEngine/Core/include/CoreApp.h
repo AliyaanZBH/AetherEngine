@@ -13,7 +13,7 @@
 
 namespace Aether
 {
-	class ImGuiBaseLayer;
+	class ImGuiLayer;
 
 	class AETHER_API Application
 	{
@@ -39,7 +39,7 @@ namespace Aether
 		std::unique_ptr<IRenderer> m_Renderer;
 
 		//std::unique_ptr<ImGuiLayer> m_ImGuiLayer;
-		ImGuiBaseLayer* m_ImGuiLayer = nullptr;
+		ImGuiLayer* m_ImGuiLayer = nullptr;
 
 		LayerStack m_LayerStack;
 		eRenderAPI m_CurrentRenderAPI = eRenderAPI::kDX12;

@@ -20,6 +20,8 @@ namespace Aether
 		void* GetNativeDevice() override { return m_pD3DDevice.Get(); }
 		void* GetNativeContext() override { return m_pD3DImmediateContext.Get(); }
 
+		void InitImGui() override;
+		void RenderImGui() override;
 
 		// Is the screen/window square or letterbox or?
 		float GetAspectRatio();

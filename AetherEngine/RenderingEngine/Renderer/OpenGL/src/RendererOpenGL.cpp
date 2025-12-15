@@ -29,3 +29,21 @@ void Aether::RendererOpenGL::ClearFrame()
 void Aether::RendererOpenGL::Terminate()
 {
 }
+
+void Aether::RendererOpenGL::InitImGui()
+{
+	ImGui_ImplOpenGL3_Init("#version 410");
+}
+
+void Aether::RendererOpenGL::RenderImGui()
+{
+	ImGui_ImplOpenGL3_NewFrame();
+	ImGui_ImplGlfw_NewFrame();
+	ImGui::NewFrame();
+
+	bool show = true;
+	ImGui::ShowDemoWindow(&show);
+
+	ImGui::Render();
+	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+}

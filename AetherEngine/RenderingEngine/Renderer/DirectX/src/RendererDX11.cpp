@@ -79,6 +79,25 @@ namespace Aether
 		AETHER_HR_ASSERT(pD3DDebug->ReportLiveDeviceObjects(D3D11_RLDO_SUMMARY));
 	}
 
+	void RendererDX11::InitImGui()
+	{
+		ImGui_ImplDX11_Init(m_pD3DDevice.Get(), m_pD3DImmediateContext.Get());
+	}
+
+	void RendererDX11::RenderImGui()
+	{
+
+		ImGui_ImplDX11_NewFrame();
+		ImGui_ImplGlfw_NewFrame();
+		ImGui::NewFrame();
+
+		bool show = true;
+		ImGui::ShowDemoWindow(&show);
+
+		ImGui::Render();
+		ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+	}
+
 
 	bool RendererDX11::CreateDevice()
 	{

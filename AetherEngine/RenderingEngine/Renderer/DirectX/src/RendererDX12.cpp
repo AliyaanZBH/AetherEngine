@@ -10,7 +10,6 @@
 //===============================================================================
 namespace Aether
 {
-
 	AETHER_RESULT RendererDX12::Initialize(IWindow& window)
 	{
 		AETHER_RESULT ar = AETHER_OK;
@@ -44,7 +43,7 @@ namespace Aether
 		DXGI_MODE_DESC backBufferDesc = {};
 		backBufferDesc.Width = m_WinData.m_ClientWidth;
 		backBufferDesc.Height = m_WinData.m_ClientHeight;
-		backBufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM; // format of the buffer (rgba 32 bits, 8 bits for each chanel)
+		backBufferDesc.Format = m_kRTVFormat; // format of the buffer (rgba 32 bits, 8 bits for each chanel)
 
 		// We are not multi-sampling, so we set the count to 1 (we need at least one sample of course)
 		m_SampleDesc.Count = 1;
@@ -103,6 +102,21 @@ namespace Aether
 			// Increment the rtv handle by the rtv descriptor size we got above
 			rtvHandle.Offset(1, m_RTVDescripterSize);
 		}
+		 
+
+		//
+		//
+		//  SRV Descriptor Heaps
+		// 
+		//
+
+		D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
+        srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+        srvHeapDesc.NumDescriptors = m_kSRVHeapSize;
+        srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+        AETHER_HR_ASSERT(m_Device->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&m_SRVHeap)))
+        m_SRVHeapAllocator.Create(m_Device.Get(), m_SRVHeap.Get());
+    
 
 
 		//
@@ -137,19 +151,19 @@ namespace Aether
 
 		// Now the view
 		D3D12_DEPTH_STENCIL_VIEW_DESC depthStencilDesc = {};
-		depthStencilDesc.Format = DXGI_FORMAT_D32_FLOAT;
+		depthStencilDesc.Format = m_kDSVFormat;
 		depthStencilDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
 		depthStencilDesc.Flags = D3D12_DSV_FLAG_NONE;
 
 		// Optimised clear value struct
 		D3D12_CLEAR_VALUE depthOptimizedClearValue = {};
-		depthOptimizedClearValue.Format = DXGI_FORMAT_D32_FLOAT;
+		depthOptimizedClearValue.Format = m_kDSVFormat;
 		depthOptimizedClearValue.DepthStencil.Depth = 1.0f;
 		depthOptimizedClearValue.DepthStencil.Stencil = 0;
 
 		// Now finalise resource and create the object!
 		CD3DX12_HEAP_PROPERTIES defaultHeapProp = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
-		CD3DX12_RESOURCE_DESC defaultResourceDesc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_D32_FLOAT, m_WinData.m_ClientWidth, m_WinData.m_ClientHeight, 1, 0, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL);
+		CD3DX12_RESOURCE_DESC defaultResourceDesc = CD3DX12_RESOURCE_DESC::Tex2D(m_kDSVFormat, m_WinData.m_ClientWidth, m_WinData.m_ClientHeight, 1, 0, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL);
 		AETHER_HR_ASSERT(m_Device->CreateCommittedResource(
 			&defaultHeapProp,
 			D3D12_HEAP_FLAG_NONE,
@@ -192,6 +206,35 @@ namespace Aether
 		return ar;
 	}
 
+	void RendererDX12::InitImGui()
+	{
+		ImGui_ImplDX12_InitInfo init_info = {};
+		init_info.Device = m_Device.Get();
+		init_info.CommandQueue = m_CmdQueue.Get();
+		init_info.NumFramesInFlight = m_kNumFrameBuffers;
+		init_info.RTVFormat = m_kRTVFormat;
+		init_info.DSVFormat = m_kDSVFormat;
+		init_info.SrvDescriptorHeap = m_SRVHeap.Get();
+		init_info.SrvDescriptorAllocFn = [](ImGui_ImplDX12_InitInfo*, D3D12_CPU_DESCRIPTOR_HANDLE* out_cpu_handle, D3D12_GPU_DESCRIPTOR_HANDLE* out_gpu_handle) { return m_SRVHeapAllocator.Alloc(out_cpu_handle, out_gpu_handle); };
+		init_info.SrvDescriptorFreeFn = [](ImGui_ImplDX12_InitInfo*, D3D12_CPU_DESCRIPTOR_HANDLE cpu_handle, D3D12_GPU_DESCRIPTOR_HANDLE gpu_handle) { return m_SRVHeapAllocator.Free(cpu_handle, gpu_handle); };
+		ImGui_ImplDX12_Init(&init_info);
+	}
+
+	void RendererDX12::RenderImGui()
+	{
+		ImGui_ImplDX12_NewFrame();
+		ImGui_ImplGlfw_NewFrame();
+		ImGui::NewFrame();
+
+		bool show = true;
+		ImGui::ShowDemoWindow(&show);
+
+		ImGui::Render();
+		ID3D12DescriptorHeap* pSrvHeaps[] = { m_SRVHeap.Get() };
+		m_CmdList->SetDescriptorHeaps(1, pSrvHeaps);
+		//ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), m_CmdList.Get());		/// Defer this to the just after we submit the rest of our geometry!
+	}
+
 	void RendererDX12::Render()
 	{
 		AETHER_RESULT ar = AETHER_OK;
@@ -211,6 +254,9 @@ namespace Aether
 		m_CmdList->IASetIndexBuffer(&m_IdxBufView);                                 // Set IB
 		m_CmdList->DrawIndexedInstanced(6, 1, 0, 0, 0);                             // Draw 2 triangles (draw 1 instance of 2 triangles)
 		m_CmdList->DrawIndexedInstanced(6, 1, 0, 4, 0);                             // Draw second quad
+
+		// Render imGui on top of all of this!
+		ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), m_CmdList.Get());
 
 		// Now we've finished drawing, get the RT ready to present again. 
 		CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_RenderTargets[m_FrameIndex].Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
@@ -451,13 +497,13 @@ namespace Aether
 		psoDesc.VS = m_VS;
 		psoDesc.PS = m_PS;
 		psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-		psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
+		psoDesc.RTVFormats[0] = m_kRTVFormat;
 		psoDesc.SampleDesc = m_SampleDesc;                                  // Same sample desc as swapchain
 		psoDesc.SampleMask = 0xf;                                           // Point sampling
 		psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);   // Lazy default init, good enough for triangle!
 		psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);             // Lazy default init, good enough for triangle!
 		psoDesc.DepthStencilState = dsDesc;                                 // Depth buffer enable!
-		psoDesc.DSVFormat = DXGI_FORMAT_D32_FLOAT;                          // Depth buffer format!
+		psoDesc.DSVFormat = m_kDSVFormat;                          // Depth buffer format!
 		psoDesc.NumRenderTargets = 1;
 
 		// Create the PSO

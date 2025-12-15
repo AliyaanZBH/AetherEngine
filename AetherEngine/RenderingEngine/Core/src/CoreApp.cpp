@@ -12,12 +12,10 @@
 
 #ifdef USE_OPENGL
 #include "RendererOpenGL.h"
-#include "ImGuiLayerOpenGL.h"
 #endif
 
 #ifdef USE_DX11
 #include "RendererDX11.h"
-#include "ImGuiLayerDX11.h"
 #endif
 
 #ifdef USE_DX12
@@ -29,6 +27,7 @@
 #endif
 
 #include "AppEvent.h"
+#include "ImGuiLayer.h"
 //===============================================================================
 namespace Aether
 {
@@ -69,21 +68,17 @@ namespace Aether
             case eRenderAPI::kOpenGL:
             {
                 m_Renderer = std::make_unique<RendererOpenGL>();
-				// Setup ImGui backend for the renderer too
-				m_ImGuiLayer = new ImGuiLayerOpenGL(m_CurrentRenderAPI);
+
                 break;
             }
             case eRenderAPI::kDX11:
             {
                 m_Renderer = std::make_unique<RendererDX11>();
-				m_ImGuiLayer = new ImGuiLayerDX11(m_CurrentRenderAPI);
                 break;
             }
             case eRenderAPI::kDX12:
             {
                 m_Renderer = std::make_unique<RendererDX12>();
-                // skip Imgui in DX12 for now
-				//m_ImGuiLayer = new ImGuiLayerDX12(m_CurrentRenderAPI);
                 break;
             }
             default:
@@ -96,10 +91,11 @@ namespace Aether
 		// Init rendering API - catch errors out here with assert
 		AETHER_ASSERT(m_Renderer->Initialize(*m_Window));
 
-        // Push ImGui layer if it was created properly
-        if (m_ImGuiLayer != nullptr)
-			// Push the ImGui Layer into the stack
-			PushOverlay(m_ImGuiLayer);
+		// Setup ImGui layer for the renderer too
+		m_ImGuiLayer = new ImGuiLayer(m_CurrentRenderAPI);
+
+		// Push the ImGui layer into the stack at the overlay point
+		PushOverlay(m_ImGuiLayer);
 
         // Bind event callback for our window
         m_Window->SetEventCallback(BIND_APP_FN(OnEvent));

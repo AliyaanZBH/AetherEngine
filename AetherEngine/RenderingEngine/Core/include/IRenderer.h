@@ -19,6 +19,10 @@ namespace Aether
         virtual void Terminate() = 0;
         virtual void* GetNativeDevice() = 0;
         virtual void* GetNativeContext() = 0;
+
+        // To be called by ImGui layer
+        virtual void InitImGui() = 0;
+        virtual void RenderImGui() = 0;
     };
 
     enum class eRenderAPI
