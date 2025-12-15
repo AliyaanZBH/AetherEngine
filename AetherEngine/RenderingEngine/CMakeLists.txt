@@ -18,6 +18,8 @@ set(SRC
     Renderer/DirectX/src/RendererDX11.cpp
     Renderer/DirectX/src/RendererDX12.cpp
     Renderer/OpenGL/src/RendererOpenGL.cpp
+
+    Layers/src/ImGuiLayer.cpp
 )
 
 set(INCLUDE
@@ -52,10 +54,12 @@ set(INCLUDE
     Events/include/AppEvent.h
 
     # Layers
+    Layers/include/ImGuiLayer.h
 
-    # Third party includes
+
+    # Miscellaneous third-party includes
     ThirdParty/dx12Helper/include/d3dx12.h
-)
+ )
 
 # Specify shaders
 set(HLSL_SHADER_FILES
@@ -115,6 +119,17 @@ add_subdirectory(ThirdParty/glad)
 target_link_libraries(AetherRenderer PRIVATE glfw)
 target_link_libraries(AetherRenderer PRIVATE glad)
 target_link_libraries(AetherRenderer PUBLIC spdlog::spdlog_header_only)
+
+# ImGui requires a bit of extra linking due to multiple backends
+add_subdirectory(ThirdParty/imgui-1.92.5)
+target_link_libraries(AetherRenderer PUBLIC
+    imgui
+    imgui_backend_glfw
+    imgui_backend_gl3
+    imgui_backend_win32
+    imgui_backend_dx11
+    imgui_backend_dx12
+)
 
 
 # Define macro to ensure this project exports a DLL - this will be undefined in the application and so will importing our DLL instead! See Core.h for implementation of this

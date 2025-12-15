@@ -11,7 +11,7 @@ public:
 	DemoLayer()
 		: Layer("Demo") {}
 
-	void OnUpdate() override { AETHER_INFO("Demo Layer :: Update"); }
+	//void OnUpdate() override { AETHER_INFO("Demo Layer :: Update"); }
 	void OnEvent(Aether::Event& event) override { AETHER_TRACE("{0}", event); }
 };
 

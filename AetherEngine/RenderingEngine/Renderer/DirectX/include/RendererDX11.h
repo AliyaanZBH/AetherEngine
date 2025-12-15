@@ -15,14 +15,14 @@ namespace Aether
 		// Main start up function
 		AETHER_RESULT Initialize(IWindow& window) override;
 		void Render() override;
+		void Resize(int newWidth, int newHeight) override;
+		void ClearFrame() override;
 		void Terminate() override;
+		void* GetNativeDevice() override { return m_pD3DDevice.Get(); }
+		void* GetNativeContext() override { return m_pD3DImmediateContext.Get(); }
 
-		// Is the screen/window square or letterbox or?
-		float GetAspectRatio();
-
-		// All rendering takes place inbetween these 2 function calls
-		//void BeginRender(const DirectX::SimpleMath::Vector4& colour);
-		void EndRender();
+		void InitImGui() override;
+		void RenderImGui() override;
 
 		// Default minimum behaviour when ALT+ENTER or drag or resize
 		// Parameters are new width and height of window
@@ -37,14 +37,6 @@ namespace Aether
 			else*/
 			OnResize_Default(sw, sh);;
 		}
-
-		void SetOnResize(void(*pOnResize)(int, int, RendererDX11&))
-		{
-			m_pOnResize = pOnResize;
-		}
-
-		void InitInputAssembler(ID3D11InputLayout* pInputLayout, ID3D11Buffer* pVBuffer, UINT szVertex, ID3D11Buffer* pIBuffer,
-			D3D_PRIMITIVE_TOPOLOGY topology = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 		//
 		// Public accessors
@@ -81,20 +73,8 @@ namespace Aether
 		bool CreateRenderTargets();
 		void CreateDepthStencilBufferAndView(D3D11_TEXTURE2D_DESC& dsd);
 
-		// Bind the render target view and depth/stencil view to the pipeline.
-		void BindRenderTargetViewAndDepthStencilView();
-
-		// Buffers in the swap chain must match the screen resolution
-		void ResizeSwapChain(int screenWidth, int screenHeight);
-
 		// The kind of depth stencil we want
-		void CreateDepthStencilDescription(D3D11_TEXTURE2D_DESC& dsd, int screenWidth, int screenHeight, bool msaa, int count, int maxQuality);
-
-		// Viewport dimensions need updating when the window changes size
-		void SetViewportDimensions(int screenWidth, int screenHeight);
-
-		// Can this gpu support 4x sampling
-		void CheckMultiSamplingSupport(UINT& quality4xMsaa);
+		void CreateDepthStencilDescription(D3D11_TEXTURE2D_DESC& dsd, int screenWidth, int screenHeight, bool msaa, int count, int maxQuality);;
 
 		// Create the wrap sampler 
 		void CreateWrapSampler(Microsoft::WRL::ComPtr<ID3D11SamplerState>& pSampler);
@@ -133,11 +113,6 @@ namespace Aether
 
 		// Position, height, width, min+max depth of the view we are rendering
 		D3D11_VIEWPORT m_ScreenViewport;
-
-		// A function to call when we ALT+ENTER or drag the window
-		// Two parameters are width/height of the new window and this
-		void(*m_pOnResize)(int, int, RendererDX11&) = nullptr;
-
 
 		// Running in a window?
 		bool m_Windowed = false;

@@ -10,7 +10,6 @@
 //===============================================================================
 namespace Aether
 {
-
 	AETHER_RESULT RendererDX12::Initialize(IWindow& window)
 	{
 		AETHER_RESULT ar = AETHER_OK;
@@ -18,7 +17,7 @@ namespace Aether
 		AETHER_ASSERT(CreateDevice());
 
 		// Retrieve the native window handle (HWND on Windows) and data about the window for our swapchain
-		HWND hwnd = static_cast<HWND>(window.GetNativeWindowHandle());
+		HWND hwnd = static_cast<HWND>(window.GetWin32Handle());
 		m_WinData = window.GetData();
 
 
@@ -44,7 +43,7 @@ namespace Aether
 		DXGI_MODE_DESC backBufferDesc = {};
 		backBufferDesc.Width = m_WinData.m_ClientWidth;
 		backBufferDesc.Height = m_WinData.m_ClientHeight;
-		backBufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM; // format of the buffer (rgba 32 bits, 8 bits for each chanel)
+		backBufferDesc.Format = m_kRTVFormat; // format of the buffer (rgba 32 bits, 8 bits for each chanel)
 
 		// We are not multi-sampling, so we set the count to 1 (we need at least one sample of course)
 		m_SampleDesc.Count = 1;
@@ -69,40 +68,32 @@ namespace Aether
 
 		m_SwapChain = static_cast<IDXGISwapChain3*>(tempSwapChain);
 
-		m_FrameIndex = m_SwapChain->GetCurrentBackBufferIndex();
+		m_FrameContextIndex = m_SwapChain->GetCurrentBackBufferIndex();
 
 
 		//
 		//
-		//  RTV Descriptor Heaps
+		//  RTV Descriptor Heaps and Targets themselves
 		// 
 		//
 
+		// Re-usable helper function to create the RTVs
+		AETHER_ASSERT(CreateRenderTargets());
+		 
 
-		D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};
-		rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
-		rtvHeapDesc.NumDescriptors = m_kNumFrameBuffers;
-		rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;        // Back buffer won't ever be shaded directly, so no need to be visible!
+		//
+		//
+		//  SRV Descriptor Heaps
+		// 
+		//
 
-		AETHER_HR_ASSERT(m_Device->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&m_RTVHeap)));
-
-		// Get the size of a descriptor in this heap (this is a rtv heap, so only rtv descriptors should be stored in it.
-		m_RTVDescripterSize = m_Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-
-		// Get handle to the first descriptor in the descriptor heap.
-		CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_RTVHeap->GetCPUDescriptorHandleForHeapStart());
-
-		// Create a RTV for each buffer
-		for (int i = 0; i < m_kNumFrameBuffers; ++i)
-		{
-
-			AETHER_HR_ASSERT(m_SwapChain->GetBuffer(i, IID_PPV_ARGS(&m_RenderTargets[i])));
-
-			m_Device->CreateRenderTargetView(m_RenderTargets[i].Get(), nullptr, rtvHandle);
-
-			// Increment the rtv handle by the rtv descriptor size we got above
-			rtvHandle.Offset(1, m_RTVDescripterSize);
-		}
+		D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
+        srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+        srvHeapDesc.NumDescriptors = m_kSRVHeapSize;
+        srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+        AETHER_HR_ASSERT(m_Device->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&m_SRVHeap)))
+        m_SRVHeapAllocator.Create(m_Device.Get(), m_SRVHeap.Get());
+    
 
 
 		//
@@ -127,42 +118,7 @@ namespace Aether
 		//
 		//
 
-		// Start with the heap
-		D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc = {};
-		dsvHeapDesc.NumDescriptors = 1;
-		dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
-		dsvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-		AETHER_HR_ASSERT(m_Device->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(&m_DSBHeap)));
-		m_DSBHeap->SetName(L"DSB Heap");
-
-		// Now the view
-		D3D12_DEPTH_STENCIL_VIEW_DESC depthStencilDesc = {};
-		depthStencilDesc.Format = DXGI_FORMAT_D32_FLOAT;
-		depthStencilDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
-		depthStencilDesc.Flags = D3D12_DSV_FLAG_NONE;
-
-		// Optimised clear value struct
-		D3D12_CLEAR_VALUE depthOptimizedClearValue = {};
-		depthOptimizedClearValue.Format = DXGI_FORMAT_D32_FLOAT;
-		depthOptimizedClearValue.DepthStencil.Depth = 1.0f;
-		depthOptimizedClearValue.DepthStencil.Stencil = 0;
-
-		// Now finalise resource and create the object!
-		CD3DX12_HEAP_PROPERTIES defaultHeapProp = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
-		CD3DX12_RESOURCE_DESC defaultResourceDesc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_D32_FLOAT, m_WinData.m_ClientWidth, m_WinData.m_ClientHeight, 1, 0, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL);
-		AETHER_HR_ASSERT(m_Device->CreateCommittedResource(
-			&defaultHeapProp,
-			D3D12_HEAP_FLAG_NONE,
-			&defaultResourceDesc,
-			D3D12_RESOURCE_STATE_DEPTH_WRITE,
-			&depthOptimizedClearValue,
-			IID_PPV_ARGS(&m_DepthStencilBuffer)
-		));
-
-		m_DepthStencilBuffer->SetName(L"Depth Stencil Buffer");
-
-		// Now create view on device!
-		m_Device->CreateDepthStencilView(m_DepthStencilBuffer.Get(), &depthStencilDesc, m_DSBHeap->GetCPUDescriptorHandleForHeapStart());
+		AETHER_ASSERT(CreateDepthStencil());
 
 		//
 		//
@@ -171,13 +127,11 @@ namespace Aether
 		//
 		//
 
-		for (int i = 0; i < m_kNumFrameBuffers; ++i)
-		{
-			AETHER_HR_ASSERT(m_Device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_Fence[i])));
-
-			// Init fences to 0
-			m_FenceValue[i] = 0;
-		}
+		AETHER_HR_ASSERT(m_Device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_Fence)));
+		
+		// Init fence values to 0
+		m_FenceValue[0] = 0;
+		m_FenceValue[1] = 0;
 
 		// Now create event, we can re-use this for both fences
 		m_FenceEvent = CreateEvent(NULL, false, false, NULL);
@@ -192,12 +146,37 @@ namespace Aether
 		return ar;
 	}
 
+	void RendererDX12::InitImGui()
+	{
+		ImGui_ImplDX12_InitInfo init_info = {};
+		init_info.Device = m_Device.Get();
+		init_info.CommandQueue = m_CmdQueue.Get();
+		init_info.NumFramesInFlight = m_kNumFrameBuffers;
+		init_info.RTVFormat = m_kRTVFormat;
+		init_info.DSVFormat = m_kDSVFormat;
+		init_info.SrvDescriptorHeap = m_SRVHeap.Get();
+		init_info.SrvDescriptorAllocFn = [](ImGui_ImplDX12_InitInfo*, D3D12_CPU_DESCRIPTOR_HANDLE* out_cpu_handle, D3D12_GPU_DESCRIPTOR_HANDLE* out_gpu_handle) { return m_SRVHeapAllocator.Alloc(out_cpu_handle, out_gpu_handle); };
+		init_info.SrvDescriptorFreeFn = [](ImGui_ImplDX12_InitInfo*, D3D12_CPU_DESCRIPTOR_HANDLE cpu_handle, D3D12_GPU_DESCRIPTOR_HANDLE gpu_handle) { return m_SRVHeapAllocator.Free(cpu_handle, gpu_handle); };
+		ImGui_ImplDX12_Init(&init_info);
+	}
+
+	void RendererDX12::RenderImGui()
+	{
+		ImGui_ImplDX12_NewFrame();
+		ImGui_ImplGlfw_NewFrame();
+		ImGui::NewFrame();
+
+		bool show = true;
+		ImGui::ShowDemoWindow(&show);
+
+		ImGui::Render();
+		ID3D12DescriptorHeap* pSrvHeaps[] = { m_SRVHeap.Get() };
+		m_CmdList->SetDescriptorHeaps(1, pSrvHeaps);
+	}
+
 	void RendererDX12::Render()
 	{
 		AETHER_RESULT ar = AETHER_OK;
-
-		// Begin every render by first clearing the frame
-		AETHER_ASSERT(ClearFrame());
 
 		// Draw something! Simple triangle for now
 
@@ -212,8 +191,11 @@ namespace Aether
 		m_CmdList->DrawIndexedInstanced(6, 1, 0, 0, 0);                             // Draw 2 triangles (draw 1 instance of 2 triangles)
 		m_CmdList->DrawIndexedInstanced(6, 1, 0, 4, 0);                             // Draw second quad
 
+		// Render imGui on top of all of this!
+		ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), m_CmdList.Get());
+
 		// Now we've finished drawing, get the RT ready to present again. 
-		CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_RenderTargets[m_FrameIndex].Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+		CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_RenderTargets[m_BackBufferIndex].Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
 		m_CmdList->ResourceBarrier(1, &barrier);
 
 		// Close cmdlist
@@ -225,11 +207,135 @@ namespace Aether
 		// Execute them
 		m_CmdQueue->ExecuteCommandLists(1, ppCmdLists);
 
-		// Signal our fence to help with syncing!
-		AETHER_HR_ASSERT(m_CmdQueue->Signal(m_Fence[m_FrameIndex].Get(), m_FenceValue[m_FrameIndex]));
-
 		// Backbuffer is ready to present, show us that frame!
-		AETHER_HR_ASSERT(m_SwapChain->Present(0, 0));
+		AETHER_HR_ASSERT(m_SwapChain->Present(1, 0));
+
+		// Signal fence for THIS CPU frame
+		m_FenceValue[m_FrameContextIndex] = ++m_GlobalFenceValue;
+		AETHER_HR_ASSERT(m_CmdQueue->Signal(m_Fence.Get(), m_FenceValue[m_FrameContextIndex]));
+
+
+	}
+
+	void RendererDX12::Resize(int newWidth, int newHeight)
+	{
+		// Update stored windata values and set flag so that we resize at a safe point in our render pipeline.
+		m_WinData.m_ClientWidth = newWidth;
+		m_WinData.m_ClientHeight = newHeight;
+		m_bNeedsResize = true;
+	}
+
+	AETHER_RESULT RendererDX12::CreateRenderTargets()
+	{
+
+		D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};
+		rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
+		rtvHeapDesc.NumDescriptors = m_kNumFrameBuffers;
+		rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;        // Back buffer won't ever be shaded directly, so no need to be visible!
+
+		AETHER_HR_ASSERT(m_Device->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&m_RTVHeap)));
+
+		// Get the size of a descriptor in this heap (this is a rtv heap, so only rtv descriptors should be stored in it.
+		m_RTVDescripterSize = m_Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+
+		// Get handle to the first descriptor in the descriptor heap.
+		CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_RTVHeap->GetCPUDescriptorHandleForHeapStart());
+
+		// Create a RTV for each buffer
+		for (int i = 0; i < m_kNumFrameBuffers; ++i)
+		{
+
+			AETHER_HR_ASSERT(m_SwapChain->GetBuffer(i, IID_PPV_ARGS(&m_RenderTargets[i])));
+
+			m_Device->CreateRenderTargetView(m_RenderTargets[i].Get(), nullptr, rtvHandle);
+			// Increment the rtv handle by the rtv descriptor size we got above
+			rtvHandle.Offset(1, m_RTVDescripterSize);
+		}
+
+		return AETHER_OK;
+	}
+
+	AETHER_RESULT RendererDX12::CreateDepthStencil()
+	{
+		// Start with the heap
+		D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc = {};
+		dsvHeapDesc.NumDescriptors = 1;
+		dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
+		dsvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+		AETHER_HR_ASSERT(m_Device->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(&m_DSBHeap)));
+		m_DSBHeap->SetName(L"DSB Heap");
+
+		// Now the view
+		D3D12_DEPTH_STENCIL_VIEW_DESC depthStencilDesc = {};
+		depthStencilDesc.Format = m_kDSVFormat;
+		depthStencilDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
+		depthStencilDesc.Flags = D3D12_DSV_FLAG_NONE;
+
+		// Optimised clear value struct
+		D3D12_CLEAR_VALUE depthOptimizedClearValue = {};
+		depthOptimizedClearValue.Format = m_kDSVFormat;
+		depthOptimizedClearValue.DepthStencil.Depth = 1.0f;
+		depthOptimizedClearValue.DepthStencil.Stencil = 0;
+
+		// Now finalise resource and create the object!
+		CD3DX12_HEAP_PROPERTIES defaultHeapProp = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
+		CD3DX12_RESOURCE_DESC defaultResourceDesc = CD3DX12_RESOURCE_DESC::Tex2D(m_kDSVFormat, m_WinData.m_ClientWidth, m_WinData.m_ClientHeight, 1, 0, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL);
+		AETHER_HR_ASSERT(m_Device->CreateCommittedResource(
+			&defaultHeapProp,
+			D3D12_HEAP_FLAG_NONE,
+			&defaultResourceDesc,
+			D3D12_RESOURCE_STATE_DEPTH_WRITE,
+			&depthOptimizedClearValue,
+			IID_PPV_ARGS(&m_DepthStencilBuffer)
+		));
+
+		m_DepthStencilBuffer->SetName(L"Depth Stencil Buffer");
+
+		// Now create view on device!
+		m_Device->CreateDepthStencilView(m_DepthStencilBuffer.Get(), &depthStencilDesc, m_DSBHeap->GetCPUDescriptorHandleForHeapStart());
+
+		return AETHER_OK;
+	}
+
+
+	AETHER_RESULT RendererDX12::CleanupRenderBuffers()
+	{
+		// Reset current RT only
+		//AETHER_HR_ASSERT(m_RenderTargets[m_FrameContextIndex].Reset());
+		for (int i = 0; i < m_kNumFrameBuffers; ++i)
+		{
+			AETHER_HR_ASSERT(m_RenderTargets[i].Reset());
+		}
+
+		// Also reset the heap!
+		AETHER_HR_ASSERT(m_RTVHeap.Reset());
+
+		// Repeat for DSV and SRV
+		AETHER_HR_ASSERT(m_DepthStencilBuffer.Reset());
+		AETHER_HR_ASSERT(m_DSBHeap.Reset());
+
+		return AETHER_OK;
+	}
+
+	AETHER_RESULT RendererDX12::UpdateViewportAndScissor()
+	{
+		m_Viewport.TopLeftX = 0;
+		m_Viewport.TopLeftY = 0;
+		m_Viewport.Width = m_WinData.m_ClientWidth;
+		m_Viewport.Height = m_WinData.m_ClientHeight;
+		m_Viewport.MinDepth = 0.0f;
+		m_Viewport.MaxDepth = 1.0f;
+
+		m_Scissor.left = 0;
+		m_Scissor.top = 0;
+		m_Scissor.right = m_WinData.m_ClientWidth;
+		m_Scissor.bottom = m_WinData.m_ClientHeight;
+		return AETHER_OK;
+	}
+
+	void RendererDX12::ClearFrame()
+	{
+		ClearAndSyncFrame();
 	}
 
 	void RendererDX12::Terminate()
@@ -249,7 +355,7 @@ namespace Aether
 		// Wait for GPU to safely finish final frames
 		//for (int i = 0; i < m_kNumFrameBuffers; ++i)
 		//{
-		//	m_FrameIndex = i;
+		//	m_FrameContextIndex = i;
 		//	Sync();
 		//}
 
@@ -342,18 +448,8 @@ namespace Aether
 
 		AETHER_ASSERT(CreateAndUploadGeo());
 
-		// Last bit of additional setup - define our viewport and scissor rects
-		m_Viewport.TopLeftX = 0;
-		m_Viewport.TopLeftY = 0;
-		m_Viewport.Width = m_WinData.m_ClientWidth;
-		m_Viewport.Height = m_WinData.m_ClientHeight;
-		m_Viewport.MinDepth = 0.0f;
-		m_Viewport.MaxDepth = 1.0f;
-
-		m_Scissor.left = 0;
-		m_Scissor.top = 0;
-		m_Scissor.right = m_WinData.m_ClientWidth;
-		m_Scissor.bottom = m_WinData.m_ClientHeight;
+		// Last bit of additional setup - define our viewport and scissor rects. This needs re-calling on resize!
+		UpdateViewportAndScissor();
 
 		return ar;
 	}
@@ -446,13 +542,13 @@ namespace Aether
 		psoDesc.VS = m_VS;
 		psoDesc.PS = m_PS;
 		psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-		psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
+		psoDesc.RTVFormats[0] = m_kRTVFormat;
 		psoDesc.SampleDesc = m_SampleDesc;                                  // Same sample desc as swapchain
 		psoDesc.SampleMask = 0xf;                                           // Point sampling
 		psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);   // Lazy default init, good enough for triangle!
 		psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);             // Lazy default init, good enough for triangle!
 		psoDesc.DepthStencilState = dsDesc;                                 // Depth buffer enable!
-		psoDesc.DSVFormat = DXGI_FORMAT_D32_FLOAT;                          // Depth buffer format!
+		psoDesc.DSVFormat = m_kDSVFormat;									// Depth buffer format!
 		psoDesc.NumRenderTargets = 1;
 
 		// Create the PSO
@@ -587,12 +683,15 @@ namespace Aether
 		// Execute immediately here to send our geo buffers up one time
 		m_CmdList->Close();
 		ID3D12CommandList* ppCmdLists[] = { m_CmdList.Get() };
-		m_CmdQueue->ExecuteCommandLists(_countof(ppCmdLists), ppCmdLists);
+		m_CmdQueue->ExecuteCommandLists(1, ppCmdLists);
 
-		// Update fence value and signal here too
-		m_FenceValue[m_FrameIndex]++;
-		AETHER_HR_ASSERT(m_CmdQueue->Signal(m_Fence[m_FrameIndex].Get(), m_FenceValue[m_FrameIndex]));
+		// Signal once
+		const UINT64 uploadFence = ++m_GlobalFenceValue;
+		AETHER_HR_ASSERT(m_CmdQueue->Signal(m_Fence.Get(), uploadFence));
 
+		// Wait once
+		AETHER_HR_ASSERT(m_Fence->SetEventOnCompletion(uploadFence, m_FenceEvent));
+		WaitForSingleObject(m_FenceEvent, INFINITE);
 
 		// Finally, create VB and IB views for geo.
 		m_VertBufView.BufferLocation = m_VertexBuffer->GetGPUVirtualAddress();
@@ -606,30 +705,54 @@ namespace Aether
 		return ar;
 	}
 
-	AETHER_RESULT RendererDX12::ClearFrame()
+	AETHER_RESULT RendererDX12::ClearAndSyncFrame()
 	{
 		AETHER_RESULT ar = AETHER_OK;
 
 		// Make sure the command list is free before resetting
-		Sync();
+		BeginFrame();
+
+		// Check if we need to resize!
+		if (m_bNeedsResize)
+		{
+			// Wait for GPU to properly flush, it may still be processing the last frame and hasn't flipped yet
+			WaitForGPU();
+
+			// Cleanly release all current buffers
+			CleanupRenderBuffers();
+
+			// Actually rezie the swapchain
+			DXGI_SWAP_CHAIN_DESC1 desc = {};
+			m_SwapChain->GetDesc1(&desc);
+			AETHER_HR_ASSERT(m_SwapChain->ResizeBuffers(m_kNumFrameBuffers, m_WinData.m_ClientWidth, m_WinData.m_ClientHeight, desc.Format, desc.Flags));
+
+			// Rebuild buffers at this new size
+			AETHER_ASSERT(CreateRenderTargets());
+			AETHER_ASSERT(CreateDepthStencil());
+
+			m_bNeedsResize = false;
+		}
 
 		// Clear allocator
-		AETHER_HR_ASSERT(m_CmdAllocators[m_FrameIndex]->Reset());
+		AETHER_HR_ASSERT(m_CmdAllocators[m_FrameContextIndex]->Reset());
 
 		// Clear list and prep for recording.
-		AETHER_HR_ASSERT(m_CmdList->Reset(m_CmdAllocators[m_FrameIndex].Get(), m_PipelineStateObject));
+		AETHER_HR_ASSERT(m_CmdList->Reset(m_CmdAllocators[m_FrameContextIndex].Get(), m_PipelineStateObject));
+
 
 		// Begin recording - we're just clearing the frame for now
 		//
 
 		// Transition current backbuffer RT into state ready for drawing onto (or outputting onto, technically)
-		//
+		m_BackBufferIndex = m_SwapChain->GetCurrentBackBufferIndex();
 		// Get a temp barrier to safely transition
-		CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_RenderTargets[m_FrameIndex].Get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+		CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_RenderTargets[m_BackBufferIndex].Get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
 		m_CmdList->ResourceBarrier(1, &barrier);
 
+
+
 		// Get handle to RTV this frame, so that we can set it as the RT
-		CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_RTVHeap->GetCPUDescriptorHandleForHeapStart(), m_FrameIndex, m_RTVDescripterSize);
+		CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_RTVHeap->GetCPUDescriptorHandleForHeapStart(), m_BackBufferIndex, m_RTVDescripterSize);
 
 
 		// Get our DSB!
@@ -648,27 +771,34 @@ namespace Aether
 		return ar;
 	}
 
-	AETHER_RESULT RendererDX12::Sync()
+	AETHER_RESULT RendererDX12::BeginFrame()
 	{
 		AETHER_RESULT ar = AETHER_OK;
 
-		// Swap index for our backbuffer
-		m_FrameIndex = m_SwapChain->GetCurrentBackBufferIndex();
+		// Advance CPU frame context
+		m_FrameContextIndex = (m_FrameContextIndex + 1) % m_kNumFrameBuffers;
 
 		// Check fenceValue - it will have updated if the GPU has finished executing
-		if (m_Fence[m_FrameIndex]->GetCompletedValue() < m_FenceValue[m_FrameIndex])
+		if (m_Fence->GetCompletedValue() < m_FenceValue[m_FrameContextIndex])
 		{
 			// Create the fence event for when the value updates
-			AETHER_HR_ASSERT(m_Fence[m_FrameIndex]->SetEventOnCompletion(m_FenceValue[m_FrameIndex], m_FenceEvent));
+			AETHER_HR_ASSERT(m_Fence->SetEventOnCompletion(m_FenceValue[m_FrameContextIndex], m_FenceEvent));
 
 			// Wait here until the event is triggered
 			WaitForSingleObject(m_FenceEvent, INFINITE);
 
 		}
 
-		// Increment for next frame
-		m_FenceValue[m_FrameIndex]++;
 		return ar;
+	}
+
+	AETHER_RESULT RendererDX12::WaitForGPU()
+	{
+		const UINT64 fence = ++m_GlobalFenceValue;
+		m_CmdQueue->Signal(m_Fence.Get(), fence);
+		AETHER_HR_ASSERT(m_Fence->SetEventOnCompletion(fence, m_FenceEvent));
+		WaitForSingleObject(m_FenceEvent, INFINITE);
+		return AETHER_OK;
 	}
 };
 #endif

@@ -47,10 +47,16 @@ namespace Aether
 
 		virtual void SetEventCallback(const EventCallbackFn& callback) = 0;
 
-		// This will return a native handle (e.g., HWND for Win32 or a window handle for GLFW)
+		// This will return a native handle (HWND on Windows or a GLFW window handle on Linux)
 		virtual void* GetNativeWindowHandle() const = 0;
 
-		// Accessor for WinData struct
+		// Extra function to get a win32 handle regardless, allowing for GLFW + Direct X on Windows
+		virtual void* GetWin32Handle() const = 0;
+
+		inline int GetWidth() { return m_WinData.m_ClientWidth; }
+		inline int GetHeight() { return m_WinData.m_ClientHeight; }
+
+		// Accessor for full WinData struct
 		const WinData& GetData() const
 		{
 			return m_WinData;

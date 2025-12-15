@@ -4,6 +4,7 @@
 // auth: Aliyaan Zulfiqar
 //===============================================================================
 #include "CoreApp.h"
+#include "Log.h"
 
 #ifdef USE_GLFW
 #include "WindowGLFW.h"
@@ -26,16 +27,22 @@
 #endif
 
 #include "AppEvent.h"
-#include "Log.h"
+#include "ImGuiLayer.h"
 //===============================================================================
 namespace Aether
 {
 #define BIND_APP_FN(x) std::bind(&Application::x, this, std::placeholders::_1)
 
+    Application* Application::s_Instance = nullptr;
+
     Application::Application()
     {
         // A local instance that represents possible error codes.
         AETHER_RESULT ar = AETHER_OK;
+        
+        if (s_Instance != nullptr)
+            AETHER_ASSERT(AETHER_FAIL, "An instance of the application is already running!")
+        s_Instance = this;
 
         // Set which type of window we are creating and pass in some data for it
         // Later in development, this will be read from a JSON config file so that the user can save and load settings, along with manually changing it from a GUI inside the application!
@@ -61,6 +68,7 @@ namespace Aether
             case eRenderAPI::kOpenGL:
             {
                 m_Renderer = std::make_unique<RendererOpenGL>();
+
                 break;
             }
             case eRenderAPI::kDX11:
@@ -80,6 +88,15 @@ namespace Aether
             }
         }
 
+		// Init rendering API - catch errors out here with assert
+		AETHER_ASSERT(m_Renderer->Initialize(*m_Window));
+
+		// Setup ImGui layer for the renderer too
+		m_ImGuiLayer = new ImGuiLayer(m_CurrentRenderAPI);
+
+		// Push the ImGui layer into the stack at the overlay point
+		PushOverlay(m_ImGuiLayer);
+
         // Bind event callback for our window
         m_Window->SetEventCallback(BIND_APP_FN(OnEvent));
     }
@@ -96,11 +113,24 @@ namespace Aether
         overlay->OnAttach();
     }
 
+    bool Application::OnWindowResize(WindowResizeEvent& e)
+    {
+		// Let the renderer handle it's specific steps for resizing (recreating buffers, contexts, etc.)
+        m_Renderer->Resize(e.GetWidth(),e.GetHeight());
+        return true;
+    }
+
 
     void Application::OnEvent(Event& event)
     {
         // Just print the event for now
         AETHER_CORE_TRACE("{0}", event);
+
+        // Handle window resize in DirectX
+        EventDispatcher dispatcher(event);
+
+        // This magic function does a bit of type checking to ensure that only the correct event gets dispatched
+        dispatcher.Dispatch<WindowResizeEvent>(BIND_APP_FN(OnWindowResize));
 
         // Pass event to layer stack to ensure event fires on correct layer
         m_LayerStack.HandleEvent(event);
@@ -111,23 +141,20 @@ namespace Aether
         // A local instance that represents possible error codes.
         AETHER_RESULT ar = AETHER_OK;
 
-        // Init rendering API - catch errors out here with assert
-        AETHER_ASSERT(m_Renderer->Initialize(*m_Window));
-
-        // TEST: Try out events
-        WindowResizeEvent e(1920u, 1080u);
-        AETHER_TRACE(e);
-
         // The game loop!
-        while (!m_Window->WindowShouldClose()) {
+        while (!m_Window->WindowShouldClose())
+        {
+
+            // Clear frame!
+            m_Renderer->ClearFrame();
 
             // Handle window events here (e.g., using GLFW or another windowing library)
             m_Window->PollEvents();
 
-            // Update our layers! Eventually, the renderer will tie in to this aswell as it will render each layer
+            // Update our layers! Eventually, the renderer will tie in to this aswell as it will render each layer. ImGui renders here too, which is why clear frame earlier!
             m_LayerStack.UpdateLayers();
 
-            // Render our lovely frame!
+            // Render our finished lovely frame!
             m_Renderer->Render();
         }
 

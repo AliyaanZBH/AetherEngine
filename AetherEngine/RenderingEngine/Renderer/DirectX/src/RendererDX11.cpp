@@ -7,6 +7,7 @@
 
 #include "RendererDX11.h"
 #include "D3DUtils.h"
+#include "RendererDX12.h"
 //===============================================================================
 
 namespace Aether
@@ -19,7 +20,7 @@ namespace Aether
 			assert(false, "Failed to initialize DirectX 11 device.");
 		// Retrieve the native window handle (HWND on Windows)
 
-		HWND hwnd = static_cast<HWND>(window.GetNativeWindowHandle());
+		HWND hwnd = static_cast<HWND>(window.GetWin32Handle());
 
 		// Create swapchain description based on the current window
 		DXGI_SWAP_CHAIN_DESC sd;
@@ -41,12 +42,21 @@ namespace Aether
 
 	void RendererDX11::Render()
 	{
+		// Present the frame
+		m_pSwapChain->Present(1, 0);
+	}
+
+	void RendererDX11::Resize(int newWidth, int newHeight)
+	{
+		OnResize_Default(newWidth, newHeight);
+	}
+
+	void RendererDX11::ClearFrame()
+	{
 		// Clear the back buffer
 		float clearColor[4] = { 1.f, 0.3f, 0.0f, 1.0f };
 		m_pD3DImmediateContext->ClearRenderTargetView(m_pRenderTargetView.Get(), clearColor);
 
-		// Present the frame
-		m_pSwapChain->Present(1, 0);
 	}
 
 	void RendererDX11::Terminate()
@@ -73,6 +83,25 @@ namespace Aether
 		ID3D11Debug* pD3DDebug;
 		AETHER_HR_ASSERT(m_pD3DDevice->QueryInterface(__uuidof(ID3D11Debug), reinterpret_cast<void**>(&pD3DDebug)));
 		AETHER_HR_ASSERT(pD3DDebug->ReportLiveDeviceObjects(D3D11_RLDO_SUMMARY));
+	}
+
+	void RendererDX11::InitImGui()
+	{
+		ImGui_ImplDX11_Init(m_pD3DDevice.Get(), m_pD3DImmediateContext.Get());
+	}
+
+	void RendererDX11::RenderImGui()
+	{
+
+		ImGui_ImplDX11_NewFrame();
+		ImGui_ImplGlfw_NewFrame();
+		ImGui::NewFrame();
+
+		bool show = true;
+		ImGui::ShowDemoWindow(&show);
+
+		ImGui::Render();
+		ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 	}
 
 
