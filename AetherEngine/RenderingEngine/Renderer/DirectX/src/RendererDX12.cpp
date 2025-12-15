@@ -196,8 +196,8 @@ namespace Aether
 	{
 		AETHER_RESULT ar = AETHER_OK;
 
-		// Begin every render by first clearing the frame
-		AETHER_ASSERT(ClearAndSyncFrame());
+		//  this is now done outside the render function to allow space for ImGui
+		//AETHER_ASSERT(ClearAndSyncFrame());
 
 		// Draw something! Simple triangle for now
 

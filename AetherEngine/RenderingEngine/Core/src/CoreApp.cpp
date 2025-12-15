@@ -72,18 +72,23 @@ namespace Aether
 				// Setup ImGui backend for the renderer too
 				m_ImGuiLayer = new ImGuiLayerOpenGL(m_CurrentRenderAPI);
 
+				// Push the ImGui Layer into the stack
+				PushOverlay(m_ImGuiLayer);
                 break;
             }
             case eRenderAPI::kDX11:
             {
                 m_Renderer = std::make_unique<RendererDX11>();
 				m_ImGuiLayer = new ImGuiLayerDX11(m_CurrentRenderAPI);
+				PushOverlay(m_ImGuiLayer);
                 break;
             }
             case eRenderAPI::kDX12:
             {
                 m_Renderer = std::make_unique<RendererDX12>();
+                // skip Imgui in DX12 for now
 				//m_ImGuiLayer = new ImGuiLayerDX12(m_CurrentRenderAPI);
+                // PushOverlay(m_ImGuiLayer);
                 break;
             }
             default:
@@ -126,9 +131,6 @@ namespace Aether
 
         // Init rendering API - catch errors out here with assert
         AETHER_ASSERT(m_Renderer->Initialize(*m_Window));
-
-       // Push the ImGui Layer into the stack
-        PushOverlay(m_ImGuiLayer);
 
         // The game loop!
         while (!m_Window->WindowShouldClose())
