@@ -71,16 +71,12 @@ namespace Aether
                 m_Renderer = std::make_unique<RendererOpenGL>();
 				// Setup ImGui backend for the renderer too
 				m_ImGuiLayer = new ImGuiLayerOpenGL(m_CurrentRenderAPI);
-
-				// Push the ImGui Layer into the stack
-				PushOverlay(m_ImGuiLayer);
                 break;
             }
             case eRenderAPI::kDX11:
             {
                 m_Renderer = std::make_unique<RendererDX11>();
 				m_ImGuiLayer = new ImGuiLayerDX11(m_CurrentRenderAPI);
-				PushOverlay(m_ImGuiLayer);
                 break;
             }
             case eRenderAPI::kDX12:
@@ -88,7 +84,6 @@ namespace Aether
                 m_Renderer = std::make_unique<RendererDX12>();
                 // skip Imgui in DX12 for now
 				//m_ImGuiLayer = new ImGuiLayerDX12(m_CurrentRenderAPI);
-                // PushOverlay(m_ImGuiLayer);
                 break;
             }
             default:
@@ -97,6 +92,14 @@ namespace Aether
                 AETHER_ASSERT(ar, "No rendering API defined. Please enable one of the `USE_X` arguments and select a valid desired rendering API.")
             }
         }
+
+		// Init rendering API - catch errors out here with assert
+		AETHER_ASSERT(m_Renderer->Initialize(*m_Window));
+
+        // Push ImGui layer if it was created properly
+        if (m_ImGuiLayer != nullptr)
+			// Push the ImGui Layer into the stack
+			PushOverlay(m_ImGuiLayer);
 
         // Bind event callback for our window
         m_Window->SetEventCallback(BIND_APP_FN(OnEvent));
@@ -128,9 +131,6 @@ namespace Aether
     {
         // A local instance that represents possible error codes.
         AETHER_RESULT ar = AETHER_OK;
-
-        // Init rendering API - catch errors out here with assert
-        AETHER_ASSERT(m_Renderer->Initialize(*m_Window));
 
         // The game loop!
         while (!m_Window->WindowShouldClose())
