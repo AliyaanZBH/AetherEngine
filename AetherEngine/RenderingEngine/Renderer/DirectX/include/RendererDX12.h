@@ -56,11 +56,16 @@ namespace Aether
 
 		AETHER_RESULT CleanupRenderBuffers();
 
+		AETHER_RESULT UpdateViewportAndScissor();
+
 		// Update command lists and clear the frame
 		AETHER_RESULT ClearAndSyncFrame();
 
-		// Wait for previous frame to free the command list
-		AETHER_RESULT Sync();
+		// Ensure the CPU frame is no longer in use by the GPU to free the command list
+		AETHER_RESULT BeginFrame();
+
+		// Wait for all submitted work to finish, fully flushing the GPU
+		AETHER_RESULT WaitForGPU();
 
 
 		//
@@ -147,14 +152,17 @@ namespace Aether
 		Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_DSBHeap;
 
 		Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_SRVHeap;															// SRVs!
-		static inline ImGuiExampleDescriptorHeapAllocator m_SRVHeapAllocator;													// SRVs allocator - currently using the stock ImGui example one
+		static inline ImGuiExampleDescriptorHeapAllocator m_SRVHeapAllocator;											// SRVs allocator - currently using the stock ImGui example one
 
-		Microsoft::WRL::ComPtr<ID3D12Fence> m_Fence[m_kNumFrameBuffers];												// Sync object, use as many as we need. Simplest case, we only need them for the frame buffers
+		Microsoft::WRL::ComPtr<ID3D12Fence> m_Fence;																	// Sync object, only using one to simplify sync between CPU and GPU
 		HANDLE m_FenceEvent;																							// Handle that is used when the fence is locked or unlocked
-		UINT64 m_FenceValue[m_kNumFrameBuffers];																		// Incremented every frame, each fence will have it's own value// Running in a window?
+		UINT64 m_FenceValue[m_kNumFrameBuffers];																		// Incremented every frame, each command allocator needs it's own fence
+		UINT64 m_GlobalFenceValue = 0;																					// Global value to keep everything in check
+		UINT8 m_FrameContextIndex = 0;																					// Current frame context index - used for syncing and is different to the back buffer index
 
-		UINT64 m_FrameIndex;																							// Current frame index - used to tell what buffer we're on
 		UINT64 m_RTVDescripterSize;																						// Size of descriptors for our RTVS - these are the same size.
+		UINT64 m_GlobalFrameCount = 0;																					// Frame count - how many we rendered so far?
+		UINT8 m_BackBufferIndex = 0;																					// Either 0 or 1, points to the current back buffer we're writing to
 
 
 		//

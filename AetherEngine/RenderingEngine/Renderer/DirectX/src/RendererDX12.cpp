@@ -68,7 +68,7 @@ namespace Aether
 
 		m_SwapChain = static_cast<IDXGISwapChain3*>(tempSwapChain);
 
-		m_FrameIndex = m_SwapChain->GetCurrentBackBufferIndex();
+		m_FrameContextIndex = m_SwapChain->GetCurrentBackBufferIndex();
 
 
 		//
@@ -127,13 +127,11 @@ namespace Aether
 		//
 		//
 
-		for (int i = 0; i < m_kNumFrameBuffers; ++i)
-		{
-			AETHER_HR_ASSERT(m_Device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_Fence[i])));
-
-			// Init fences to 0
-			m_FenceValue[i] = 0;
-		}
+		AETHER_HR_ASSERT(m_Device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_Fence)));
+		
+		// Init fence values to 0
+		m_FenceValue[0] = 0;
+		m_FenceValue[1] = 0;
 
 		// Now create event, we can re-use this for both fences
 		m_FenceEvent = CreateEvent(NULL, false, false, NULL);
@@ -174,15 +172,11 @@ namespace Aether
 		ImGui::Render();
 		ID3D12DescriptorHeap* pSrvHeaps[] = { m_SRVHeap.Get() };
 		m_CmdList->SetDescriptorHeaps(1, pSrvHeaps);
-		//ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), m_CmdList.Get());		/// Defer this to the just after we submit the rest of our geometry!
 	}
 
 	void RendererDX12::Render()
 	{
 		AETHER_RESULT ar = AETHER_OK;
-
-		//  this is now done outside the render function to allow space for ImGui
-		//AETHER_ASSERT(ClearAndSyncFrame());
 
 		// Draw something! Simple triangle for now
 
@@ -201,7 +195,7 @@ namespace Aether
 		ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), m_CmdList.Get());
 
 		// Now we've finished drawing, get the RT ready to present again. 
-		CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_RenderTargets[m_FrameIndex].Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+		CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_RenderTargets[m_BackBufferIndex].Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
 		m_CmdList->ResourceBarrier(1, &barrier);
 
 		// Close cmdlist
@@ -213,14 +207,13 @@ namespace Aether
 		// Execute them
 		m_CmdQueue->ExecuteCommandLists(1, ppCmdLists);
 
-		// Signal our fence to help with syncing!
-		//AETHER_HR_ASSERT(m_CmdQueue->Signal(m_Fence[m_FrameIndex].Get(), m_FenceValue[m_FrameIndex]));
-
 		// Backbuffer is ready to present, show us that frame!
 		AETHER_HR_ASSERT(m_SwapChain->Present(1, 0));
 
-		// Signal again cos... MicroSoft I guess??
-		AETHER_HR_ASSERT(m_CmdQueue->Signal(m_Fence[m_FrameIndex].Get(), m_FenceValue[m_FrameIndex]));
+		// Signal fence for THIS CPU frame
+		m_FenceValue[m_FrameContextIndex] = ++m_GlobalFenceValue;
+		AETHER_HR_ASSERT(m_CmdQueue->Signal(m_Fence.Get(), m_FenceValue[m_FrameContextIndex]));
+
 
 	}
 
@@ -308,7 +301,7 @@ namespace Aether
 	AETHER_RESULT RendererDX12::CleanupRenderBuffers()
 	{
 		// Reset current RT only
-		//AETHER_HR_ASSERT(m_RenderTargets[m_FrameIndex].Reset());
+		//AETHER_HR_ASSERT(m_RenderTargets[m_FrameContextIndex].Reset());
 		for (int i = 0; i < m_kNumFrameBuffers; ++i)
 		{
 			AETHER_HR_ASSERT(m_RenderTargets[i].Reset());
@@ -321,6 +314,22 @@ namespace Aether
 		AETHER_HR_ASSERT(m_DepthStencilBuffer.Reset());
 		AETHER_HR_ASSERT(m_DSBHeap.Reset());
 
+		return AETHER_OK;
+	}
+
+	AETHER_RESULT RendererDX12::UpdateViewportAndScissor()
+	{
+		m_Viewport.TopLeftX = 0;
+		m_Viewport.TopLeftY = 0;
+		m_Viewport.Width = m_WinData.m_ClientWidth;
+		m_Viewport.Height = m_WinData.m_ClientHeight;
+		m_Viewport.MinDepth = 0.0f;
+		m_Viewport.MaxDepth = 1.0f;
+
+		m_Scissor.left = 0;
+		m_Scissor.top = 0;
+		m_Scissor.right = m_WinData.m_ClientWidth;
+		m_Scissor.bottom = m_WinData.m_ClientHeight;
 		return AETHER_OK;
 	}
 
@@ -346,7 +355,7 @@ namespace Aether
 		// Wait for GPU to safely finish final frames
 		//for (int i = 0; i < m_kNumFrameBuffers; ++i)
 		//{
-		//	m_FrameIndex = i;
+		//	m_FrameContextIndex = i;
 		//	Sync();
 		//}
 
@@ -439,18 +448,8 @@ namespace Aether
 
 		AETHER_ASSERT(CreateAndUploadGeo());
 
-		// Last bit of additional setup - define our viewport and scissor rects
-		m_Viewport.TopLeftX = 0;
-		m_Viewport.TopLeftY = 0;
-		m_Viewport.Width = m_WinData.m_ClientWidth;
-		m_Viewport.Height = m_WinData.m_ClientHeight;
-		m_Viewport.MinDepth = 0.0f;
-		m_Viewport.MaxDepth = 1.0f;
-
-		m_Scissor.left = 0;
-		m_Scissor.top = 0;
-		m_Scissor.right = m_WinData.m_ClientWidth;
-		m_Scissor.bottom = m_WinData.m_ClientHeight;
+		// Last bit of additional setup - define our viewport and scissor rects. This needs re-calling on resize!
+		UpdateViewportAndScissor();
 
 		return ar;
 	}
@@ -684,12 +683,15 @@ namespace Aether
 		// Execute immediately here to send our geo buffers up one time
 		m_CmdList->Close();
 		ID3D12CommandList* ppCmdLists[] = { m_CmdList.Get() };
-		m_CmdQueue->ExecuteCommandLists(_countof(ppCmdLists), ppCmdLists);
+		m_CmdQueue->ExecuteCommandLists(1, ppCmdLists);
 
-		// Update fence value and signal here too
-		m_FenceValue[m_FrameIndex]++;
-		AETHER_HR_ASSERT(m_CmdQueue->Signal(m_Fence[m_FrameIndex].Get(), m_FenceValue[m_FrameIndex]));
+		// Signal once
+		const UINT64 uploadFence = ++m_GlobalFenceValue;
+		AETHER_HR_ASSERT(m_CmdQueue->Signal(m_Fence.Get(), uploadFence));
 
+		// Wait once
+		AETHER_HR_ASSERT(m_Fence->SetEventOnCompletion(uploadFence, m_FenceEvent));
+		WaitForSingleObject(m_FenceEvent, INFINITE);
 
 		// Finally, create VB and IB views for geo.
 		m_VertBufView.BufferLocation = m_VertexBuffer->GetGPUVirtualAddress();
@@ -708,14 +710,18 @@ namespace Aether
 		AETHER_RESULT ar = AETHER_OK;
 
 		// Make sure the command list is free before resetting
-		Sync();
+		BeginFrame();
 
 		// Check if we need to resize!
 		if (m_bNeedsResize)
 		{
+			// Wait for GPU to properly flush, it may still be processing the last frame and hasn't flipped yet
+			WaitForGPU();
 
 			// Cleanly release all current buffers
 			CleanupRenderBuffers();
+
+			// Actually rezie the swapchain
 			DXGI_SWAP_CHAIN_DESC1 desc = {};
 			m_SwapChain->GetDesc1(&desc);
 			AETHER_HR_ASSERT(m_SwapChain->ResizeBuffers(m_kNumFrameBuffers, m_WinData.m_ClientWidth, m_WinData.m_ClientHeight, desc.Format, desc.Flags));
@@ -728,25 +734,25 @@ namespace Aether
 		}
 
 		// Clear allocator
-		AETHER_HR_ASSERT(m_CmdAllocators[m_FrameIndex]->Reset());
+		AETHER_HR_ASSERT(m_CmdAllocators[m_FrameContextIndex]->Reset());
 
 		// Clear list and prep for recording.
-		AETHER_HR_ASSERT(m_CmdList->Reset(m_CmdAllocators[m_FrameIndex].Get(), m_PipelineStateObject));
+		AETHER_HR_ASSERT(m_CmdList->Reset(m_CmdAllocators[m_FrameContextIndex].Get(), m_PipelineStateObject));
 
 
 		// Begin recording - we're just clearing the frame for now
 		//
 
 		// Transition current backbuffer RT into state ready for drawing onto (or outputting onto, technically)
-		//
+		m_BackBufferIndex = m_SwapChain->GetCurrentBackBufferIndex();
 		// Get a temp barrier to safely transition
-		CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_RenderTargets[m_FrameIndex].Get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+		CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_RenderTargets[m_BackBufferIndex].Get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
 		m_CmdList->ResourceBarrier(1, &barrier);
 
 
 
 		// Get handle to RTV this frame, so that we can set it as the RT
-		CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_RTVHeap->GetCPUDescriptorHandleForHeapStart(), m_FrameIndex, m_RTVDescripterSize);
+		CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_RTVHeap->GetCPUDescriptorHandleForHeapStart(), m_BackBufferIndex, m_RTVDescripterSize);
 
 
 		// Get our DSB!
@@ -765,27 +771,34 @@ namespace Aether
 		return ar;
 	}
 
-	AETHER_RESULT RendererDX12::Sync()
+	AETHER_RESULT RendererDX12::BeginFrame()
 	{
 		AETHER_RESULT ar = AETHER_OK;
 
-		// Swap index for our backbuffer
-		m_FrameIndex = m_SwapChain->GetCurrentBackBufferIndex();
+		// Advance CPU frame context
+		m_FrameContextIndex = (m_FrameContextIndex + 1) % m_kNumFrameBuffers;
 
 		// Check fenceValue - it will have updated if the GPU has finished executing
-		if (m_Fence[m_FrameIndex]->GetCompletedValue() < m_FenceValue[m_FrameIndex])
+		if (m_Fence->GetCompletedValue() < m_FenceValue[m_FrameContextIndex])
 		{
 			// Create the fence event for when the value updates
-			AETHER_HR_ASSERT(m_Fence[m_FrameIndex]->SetEventOnCompletion(m_FenceValue[m_FrameIndex], m_FenceEvent));
+			AETHER_HR_ASSERT(m_Fence->SetEventOnCompletion(m_FenceValue[m_FrameContextIndex], m_FenceEvent));
 
 			// Wait here until the event is triggered
 			WaitForSingleObject(m_FenceEvent, INFINITE);
 
 		}
 
-		// Increment for next frame
-		m_FenceValue[m_FrameIndex]++;
 		return ar;
+	}
+
+	AETHER_RESULT RendererDX12::WaitForGPU()
+	{
+		const UINT64 fence = ++m_GlobalFenceValue;
+		m_CmdQueue->Signal(m_Fence.Get(), fence);
+		AETHER_HR_ASSERT(m_Fence->SetEventOnCompletion(fence, m_FenceEvent));
+		WaitForSingleObject(m_FenceEvent, INFINITE);
+		return AETHER_OK;
 	}
 };
 #endif
