@@ -1,27 +1,22 @@
 #pragma once
 //===============================================================================
-// desc: ImGui layer for clean separation within the engine
+// desc: Dedicated ImGui layer for OpenGL
 // auth: Aliyaan Zulfiqar
 //===============================================================================
-#include "Layer.h"
-#include "IRenderer.h"
+#include "ImGuiBaseLayer.h"
 //===============================================================================
 
 namespace Aether
 {
-	class AETHER_API ImGuiLayer : public Layer
+	class AETHER_API ImGuiLayerOpenGL : public ImGuiBaseLayer
 	{
 	public:
-		ImGuiLayer(eRenderAPI backend);
-		~ImGuiLayer();
-
-		void UpdateRenderAPI(eRenderAPI newBackend) { m_CurrentRenderAPI = newBackend; }
+		ImGuiLayerOpenGL(eRenderAPI backend);
+		~ImGuiLayerOpenGL();
 
 		void OnAttach();
 		void OnDetach();
 		void OnUpdate();
 		void OnEvent(Event& event);
-	private:
-		eRenderAPI m_CurrentRenderAPI;
 	};
 };

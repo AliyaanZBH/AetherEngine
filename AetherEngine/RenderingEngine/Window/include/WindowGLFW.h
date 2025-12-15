@@ -23,7 +23,6 @@ namespace Aether
 		void PollEvents() override
 		{
 			glfwPollEvents();
-			glfwSwapBuffers(m_pWindow);
 		}
 
 		inline void SetEventCallback(const EventCallbackFn& callback) override { m_WinData.m_EventCallback = callback; }

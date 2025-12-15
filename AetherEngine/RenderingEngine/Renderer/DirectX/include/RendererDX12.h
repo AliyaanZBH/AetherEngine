@@ -14,9 +14,11 @@ namespace Aether
 	public:
 		// Main start up function
 		AETHER_RESULT Initialize(IWindow& window) override;
+		void ClearFrame() override;
 		void Render() override;
 		void Terminate() override;
-
+		void* GetNativeDevice() override { return m_Device.Get(); }
+		void* GetNativeContext() override { return 0; }
 
 		// Public accessors
 		//
@@ -45,7 +47,7 @@ namespace Aether
 		//
 
 		// Update command lists and clear the frame
-		AETHER_RESULT ClearFrame();
+		AETHER_RESULT ClearAndSyncFrame();
 
 		// Wait for previous frame to free the command list
 		AETHER_RESULT Sync();

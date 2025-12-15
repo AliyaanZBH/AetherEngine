@@ -14,8 +14,11 @@ namespace Aether
         virtual ~IRenderer() = default;
 
         virtual AETHER_RESULT Initialize(IWindow& window) = 0;
+        virtual void ClearFrame() = 0;
         virtual void Render() = 0;
         virtual void Terminate() = 0;
+        virtual void* GetNativeDevice() = 0;
+        virtual void* GetNativeContext() = 0;
     };
 
     enum class eRenderAPI

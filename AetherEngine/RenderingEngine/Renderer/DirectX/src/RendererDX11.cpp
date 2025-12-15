@@ -41,12 +41,16 @@ namespace Aether
 
 	void RendererDX11::Render()
 	{
+		// Present the frame
+		m_pSwapChain->Present(1, 0);
+	}
+
+	void RendererDX11::ClearFrame()
+	{
 		// Clear the back buffer
 		float clearColor[4] = { 1.f, 0.3f, 0.0f, 1.0f };
 		m_pD3DImmediateContext->ClearRenderTargetView(m_pRenderTargetView.Get(), clearColor);
 
-		// Present the frame
-		m_pSwapChain->Present(1, 0);
 	}
 
 	void RendererDX11::Terminate()

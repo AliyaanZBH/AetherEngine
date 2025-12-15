@@ -12,10 +12,12 @@
 
 #ifdef USE_OPENGL
 #include "RendererOpenGL.h"
+#include "ImGuiLayerOpenGL.h"
 #endif
 
 #ifdef USE_DX11
 #include "RendererDX11.h"
+#include "ImGuiLayerDX11.h"
 #endif
 
 #ifdef USE_DX12
@@ -27,7 +29,6 @@
 #endif
 
 #include "AppEvent.h"
-#include "ImGuiLayer.h"
 //===============================================================================
 namespace Aether
 {
@@ -68,16 +69,21 @@ namespace Aether
             case eRenderAPI::kOpenGL:
             {
                 m_Renderer = std::make_unique<RendererOpenGL>();
+				// Setup ImGui backend for the renderer too
+				m_ImGuiLayer = new ImGuiLayerOpenGL(m_CurrentRenderAPI);
+
                 break;
             }
             case eRenderAPI::kDX11:
             {
                 m_Renderer = std::make_unique<RendererDX11>();
+				m_ImGuiLayer = new ImGuiLayerDX11(m_CurrentRenderAPI);
                 break;
             }
             case eRenderAPI::kDX12:
             {
                 m_Renderer = std::make_unique<RendererDX12>();
+				//m_ImGuiLayer = new ImGuiLayerDX12(m_CurrentRenderAPI);
                 break;
             }
             default:
@@ -86,10 +92,6 @@ namespace Aether
                 AETHER_ASSERT(ar, "No rendering API defined. Please enable one of the `USE_X` arguments and select a valid desired rendering API.")
             }
         }
-
-        // Setup ImGui backend for the renderer
-        //m_ImGuiLayer = std::make_unique<ImGuiLayer>(m_CurrentRenderAPI);
-        m_ImGuiLayer = new ImGuiLayer(m_CurrentRenderAPI);
 
         // Bind event callback for our window
         m_Window->SetEventCallback(BIND_APP_FN(OnEvent));
@@ -129,15 +131,19 @@ namespace Aether
         PushOverlay(m_ImGuiLayer);
 
         // The game loop!
-        while (!m_Window->WindowShouldClose()) {
+        while (!m_Window->WindowShouldClose())
+        {
+
+            // Clear frame!
+            m_Renderer->ClearFrame();
 
             // Handle window events here (e.g., using GLFW or another windowing library)
             m_Window->PollEvents();
 
-            // Update our layers! Eventually, the renderer will tie in to this aswell as it will render each layer
+            // Update our layers! Eventually, the renderer will tie in to this aswell as it will render each layer. ImGui renders here too, which is why clear frame earlier!
             m_LayerStack.UpdateLayers();
 
-            // Render our lovely frame!
+            // Render our finished lovely frame!
             m_Renderer->Render();
         }
 

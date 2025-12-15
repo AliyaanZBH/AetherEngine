@@ -15,7 +15,11 @@ namespace Aether
 		// Main start up function
 		AETHER_RESULT Initialize(IWindow& window) override;
 		void Render() override;
+		void ClearFrame() override;
 		void Terminate() override;
+		void* GetNativeDevice() override { return m_pD3DDevice.Get(); }
+		void* GetNativeContext() override { return m_pD3DImmediateContext.Get(); }
+
 
 		// Is the screen/window square or letterbox or?
 		float GetAspectRatio();

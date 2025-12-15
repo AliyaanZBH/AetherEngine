@@ -19,7 +19,10 @@ set(SRC
     Renderer/DirectX/src/RendererDX12.cpp
     Renderer/OpenGL/src/RendererOpenGL.cpp
 
-    Layers/src/ImGuiLayer.cpp
+    Layers/src/ImGuiBaseLayer.cpp
+    Layers/src/ImGuiLayerOpenGL.cpp
+    Layers/src/ImGuiLayerDX11.cpp
+  #  Layers/src/ImGuiLayerDX12.cpp
 )
 
 set(INCLUDE
@@ -54,7 +57,10 @@ set(INCLUDE
     Events/include/AppEvent.h
 
     # Layers
-    Layers/include/ImGuiLayer.h
+    Layers/include/ImGuiBaseLayer.h
+    Layers/include/ImGuiLayerOpenGL.h
+    Layers/include/ImGuiLayerDX11.h
+    #Layers/include/ImGuiLayerDX12.h
 
 
     # Miscellaneous third-party includes

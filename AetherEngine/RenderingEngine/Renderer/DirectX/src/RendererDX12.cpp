@@ -197,7 +197,7 @@ namespace Aether
 		AETHER_RESULT ar = AETHER_OK;
 
 		// Begin every render by first clearing the frame
-		AETHER_ASSERT(ClearFrame());
+		AETHER_ASSERT(ClearAndSyncFrame());
 
 		// Draw something! Simple triangle for now
 
@@ -230,6 +230,11 @@ namespace Aether
 
 		// Backbuffer is ready to present, show us that frame!
 		AETHER_HR_ASSERT(m_SwapChain->Present(0, 0));
+	}
+
+	void RendererDX12::ClearFrame()
+	{
+		ClearAndSyncFrame();
 	}
 
 	void RendererDX12::Terminate()
@@ -606,7 +611,7 @@ namespace Aether
 		return ar;
 	}
 
-	AETHER_RESULT RendererDX12::ClearFrame()
+	AETHER_RESULT RendererDX12::ClearAndSyncFrame()
 	{
 		AETHER_RESULT ar = AETHER_OK;
 
