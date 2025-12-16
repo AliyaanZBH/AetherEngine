@@ -1,6 +1,6 @@
 #pragma once
 //===============================================================================
-// desc: The core engine app that facilitates DLL exporting and general use for any application made with Aether!
+// desc: The core engine app that facilitates general use for any application made with Aether!
 // auth: Aliyaan Zulfiqar
 //===============================================================================
 #include "Core.h"

@@ -1,6 +1,5 @@
-#include "CoreApp.h"
 //===============================================================================
-// desc: The core rendering app that facilitates DLL exporting for use in the main AetherApp
+// desc: The core engine app that facilitates general use for any application made with Aether!
 // auth: Aliyaan Zulfiqar
 //===============================================================================
 #include "CoreApp.h"

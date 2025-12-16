@@ -56,10 +56,13 @@ set(INCLUDE
     # Layers
     Layers/include/ImGuiLayer.h
 
+    # Input
+    Input/include/Input.h
 
     # Miscellaneous third-party includes
     ThirdParty/dx12Helper/include/d3dx12.h
- )
+    
+)
 
 # Specify shaders
 set(HLSL_SHADER_FILES
@@ -90,6 +93,7 @@ target_include_directories(AetherRenderer
                             Renderer/OpenGL/include
                             Events/include
                             Layers/include
+                            Input/include
                             ThirdParty/dx12Helper/include
                     PUBLIC
                          Core/include # Public as application target needs to see these interfaces. Detailed implementations can remain private
