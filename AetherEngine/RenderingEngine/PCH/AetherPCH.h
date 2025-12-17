@@ -16,6 +16,10 @@
 #include <sstream>
 #include <fstream>
 
+//
+//	Our headers that won't change much
+//
+#include "InputCodes.h"
 
 //
 //	Windows and Renderer libraries

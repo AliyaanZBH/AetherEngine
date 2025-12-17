@@ -12,7 +12,8 @@ set(SRC
 
     Core/src/Log.cpp
     Core/src/LayerStack.cpp
-    Core/Input/src/Input.cpp
+    
+    Input/src/Input.cpp
 
     Window/src/WindowGLFW.cpp
     
@@ -39,8 +40,8 @@ set(INCLUDE
 
     
     # Input
-    Core/Input/include/InputCodes.h
-    Core/Input/include/Input.h
+    Input/include/InputCodes.h
+    Input/include/Input.h
 
     # Interfaces
     Core/include/IRenderer.h
@@ -96,10 +97,12 @@ target_include_directories(AetherRenderer
                             Renderer/OpenGL/include
                             Events/include
                             Layers/include
-                            Core/Input/include
                             ThirdParty/dx12Helper/include
+
+# Certain things need to be public as the application target needs to see these interfaces. Detailed implementations can remain private
                     PUBLIC
-                         Core/include # Public as application target needs to see these interfaces. Detailed implementations can remain private
+                            Core/include 
+                            Input/include
 )
 
 

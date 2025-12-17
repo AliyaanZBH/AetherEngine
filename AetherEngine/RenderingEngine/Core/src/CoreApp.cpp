@@ -151,10 +151,6 @@ namespace Aether
             // Handle window events here (e.g., using GLFW or another windowing library)
             m_Window->PollEvents();
 
-            // DEBUG TEST: print custom input value!
-            auto [x, y] = Input::GetMousePosition();
-            AETHER_CORE_TRACE("{0}, {1}",x, y);
-
             // Update our layers! Eventually, the renderer will tie in to this aswell as it will render each layer. ImGui renders here too, which is why clear frame earlier!
             m_LayerStack.UpdateLayers();
 

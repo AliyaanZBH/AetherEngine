@@ -3,8 +3,6 @@
 // desc: This file handles Keyboard events such as Pressed and Released
 // auth: Aliyaan Zulfiqar
 //===============================================================================
-#include <sstream>	// TODO: Move to PCH
-
 #include "Event.h"
 //===============================================================================
 
@@ -38,7 +36,7 @@ namespace Aether
 		std::string ToString() const override
 		{
 			std::stringstream ss;
-			ss << "KeyPressedEvent: " << m_KeyCode << " (repeating = " << m_bRepeat << ")";
+			ss << "KeyPressedEvent: Keycode = " << m_KeyCode << " Character(if valid) = " << (char)m_KeyCode << " (repeating = " << m_bRepeat << ")";
 			return ss.str();
 		}
 

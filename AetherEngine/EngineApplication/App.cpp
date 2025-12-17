@@ -11,7 +11,11 @@ public:
 	DemoLayer()
 		: Layer("Demo") {}
 
-	//void OnUpdate() override { AETHER_INFO("Demo Layer :: Update"); }
+	void OnUpdate() override 
+	{
+		if (Aether::Input::IsKeyPressed(Aether::KeyCode::kSpace))
+			AETHER_INFO("Space is pressed! (Our polling!)"); 
+	}
 	void OnEvent(Aether::Event& event) override { AETHER_TRACE("{0}", event); }
 };
 
