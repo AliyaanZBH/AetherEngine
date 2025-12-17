@@ -1,9 +1,10 @@
 #pragma once
 //===============================================================================
-// desc: The core input polling class that handles all inputs, API agnostic
+// desc: The core input polling class that handles all inputs, based largely on GLFW for now.
 // auth: Aliyaan Zulfiqar
 //===============================================================================
 #include "Core.h"
+#include "InputCodes.h"
 //===============================================================================
 
 namespace Aether
@@ -11,8 +12,7 @@ namespace Aether
 	class AETHER_API Input
 	{
 	public:
-		static bool IsKeyPressed(int keycode);
+		static bool IsKeyPressed(KeyCode key);
 	private:
-		static Input* s_Instance;
 	};
 }
