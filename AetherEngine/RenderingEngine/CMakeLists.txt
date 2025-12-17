@@ -12,6 +12,8 @@ set(SRC
 
     Core/src/Log.cpp
     Core/src/LayerStack.cpp
+    
+    Input/src/Input.cpp
 
     Window/src/WindowGLFW.cpp
     
@@ -36,6 +38,11 @@ set(INCLUDE
     Core/include/Layer.h
     Core/include/LayerStack.h
 
+    
+    # Input
+    Input/include/InputCodes.h
+    Input/include/Input.h
+
     # Interfaces
     Core/include/IRenderer.h
     Core/include/IWindow.h
@@ -56,10 +63,10 @@ set(INCLUDE
     # Layers
     Layers/include/ImGuiLayer.h
 
-
     # Miscellaneous third-party includes
     ThirdParty/dx12Helper/include/d3dx12.h
- )
+    
+)
 
 # Specify shaders
 set(HLSL_SHADER_FILES
@@ -91,8 +98,11 @@ target_include_directories(AetherRenderer
                             Events/include
                             Layers/include
                             ThirdParty/dx12Helper/include
+
+# Certain things need to be public as the application target needs to see these interfaces. Detailed implementations can remain private
                     PUBLIC
-                         Core/include # Public as application target needs to see these interfaces. Detailed implementations can remain private
+                            Core/include 
+                            Input/include
 )
 
 
