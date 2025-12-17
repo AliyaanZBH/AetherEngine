@@ -22,14 +22,14 @@ namespace Aether
 		kButtonLeft = kButton0,
 		kButtonRight = kButton1,
 		kButtonMiddle = kButton2
-
-		// Handy operator to pass keycodes easily through our logging macro
-		inline std::ostream & operator<<(std::ostream & os, MouseCode mouseCode)
-		{
-			os << static_cast<int32_t>(mouseCode);
-			return os;
-		}
 	};
+
+	// Handy operator to pass key and mouse codes easily through our logging macro
+	inline std::ostream& operator<<(std::ostream& os, MouseCode mouseCode)
+	{
+		os << static_cast<int32_t>(mouseCode);
+		return os;
+	}
 
 	//
 	// Repeat for keys, there's a lot more of them though!
@@ -175,13 +175,12 @@ namespace Aether
 		kRightAlt = 346,
 		kRightSuper = 347,
 		kMenu = 348
-		
 
-		inline std::ostream& operator<<(std::ostream& os, KeyCode keyCode)
-		{
-			os << static_cast<int32_t>(keyCode);
-			return os;
-		}
 	};
 
+	inline std::ostream& operator<<(std::ostream& os, KeyCode keyCode)
+	{
+		os << static_cast<int32_t>(keyCode);
+		return os;
+	}
 };
