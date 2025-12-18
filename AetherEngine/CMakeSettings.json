@@ -25,6 +25,21 @@
           "name": "AETHER_BUILD_DLL",
           "value": "True",
           "type": "BOOL"
+        },
+        {
+          "name": "USE_DX12",
+          "value": "False",
+          "type": "BOOL"
+        },
+        {
+          "name": "USE_DX11",
+          "value": "False",
+          "type": "BOOL"
+        },
+        {
+          "name": "GLFW_BUILD_DOCS",
+          "value": "False",
+          "type": "BOOL"
         }
       ]
     },
@@ -32,6 +47,17 @@
       "name": "x64-Release",
       "generator": "Ninja",
       "configurationType": "Release",
+      "buildRoot": "${projectDir}\\out\\build\\${name}",
+      "installRoot": "${projectDir}\\out\\install\\${name}",
+      "cmakeCommandArgs": "",
+      "buildCommandArgs": "",
+      "ctestCommandArgs": "",
+      "inheritEnvironments": [ "msvc_x64_x64" ]
+    },
+    {
+      "name": "x64-RelDbgInfo",
+      "generator": "Ninja",
+      "configurationType": "RelWithDebInfo",
       "buildRoot": "${projectDir}\\out\\build\\${name}",
       "installRoot": "${projectDir}\\out\\install\\${name}",
       "cmakeCommandArgs": "",

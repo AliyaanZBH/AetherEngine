@@ -1,0 +1,28 @@
+# Try to locate D3D12
+find_path(D3D12_INCLUDE_DIR d3d12.h
+  HINTS
+    $ENV{DXSDK_DIR}
+    ${CMAKE_SYSTEM_INCLUDE_PATH}
+    ${CMAKE_INCLUDE_PATH}
+    [HINTS_FOR_VS_SDK_PATH]
+)
+
+find_library(D3D12_LIBRARY d3d12
+  HINTS
+    $ENV{DXSDK_DIR}
+    ${CMAKE_SYSTEM_LIBRARY_PATH}
+    ${CMAKE_LIBRARY_PATH}
+    [HINTS_FOR_VS_SDK_PATH]
+)
+
+# If we found the D3D12 include dir and library, create the D3D12::D3D12 target
+if (D3D12_INCLUDE_DIR AND D3D12_LIBRARY)
+  add_library(D3D12::D3D12 UNKNOWN IMPORTED)
+  set_target_properties(D3D12::D3D12 PROPERTIES
+    INTERFACE_INCLUDE_DIRECTORIES "${D3D12_INCLUDE_DIR}"
+    IMPORTED_LOCATION "${D3D12_LIBRARY}"
+  )
+  message(STATUS "Found D3D12: ${D3D12_LIBRARY}")
+else ()
+  message(FATAL_ERROR "Could not find D3D12")
+endif ()

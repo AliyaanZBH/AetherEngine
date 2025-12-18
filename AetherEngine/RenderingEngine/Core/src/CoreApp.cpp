@@ -1,82 +1,180 @@
 //===============================================================================
-// desc: The core rendering app that facilitates DLL exporting for use in the main AetherApp
+// desc: The core engine app that facilitates general use for any application made with Aether!
 // auth: Aliyaan Zulfiqar
 //===============================================================================
-#include <memory>
-
 #include "CoreApp.h"
-#include "IWindow.h"
-#include "IRenderer.h"
+#include "Log.h"
 
 #ifdef USE_GLFW
-#include "WinManGLFW.h"
+#include "WindowGLFW.h"
+#endif
+
+#ifdef USE_OPENGL
+#include "RendererOpenGL.h"
 #endif
 
 #ifdef USE_DX11
 #include "RendererDX11.h"
 #endif
 
+#ifdef USE_DX12
+#include "RendererDX12.h"
+#endif
+
 #ifdef USE_VULKAN
 #include "Renderer/RendererVulkan.h" // To be implemented
 #endif
+
+#include "AppEvent.h"
+#include "ImGuiLayer.h"
+#include "Input.h"
 //===============================================================================
-
-AetherReturn Aether::Application::Run()
+namespace Aether
 {
-    // A local instance that represents possible error codes.
-    AetherReturn ret;
+#define BIND_APP_FN(x) std::bind(&Application::x, this, std::placeholders::_1)
 
-    // Create unique, single instances of our key interfaces
-    std::unique_ptr<IWindow> window;
-    std::unique_ptr<IRenderer> renderer;
+    Application* Application::s_Instance = nullptr;
 
-    // Set which type of window we are creating
-    // Later in development, this will be read from a JSON config file so that the user can manually change it from a GUI inside the application!
-#ifdef USE_GLFW
-    window = std::make_unique<WinManGLFW>();
-#elif defined(USE_WIN32)
-    renderer = std::make_unique<WinManWin32>();
-#else
+    Application::Application()
+    {
+        // A local instance that represents possible error codes.
+        AETHER_RESULT ar = AETHER_OK;
+        
+        if (s_Instance != nullptr)
+            AETHER_ASSERT(AETHER_FAIL, "An instance of the application is already running!")
+        s_Instance = this;
+
+        // Set which type of window we are creating and pass in some data for it
+        // Later in development, this will be read from a JSON config file so that the user can save and load settings, along with manually changing it from a GUI inside the application!
+        IWindow::WinData wd =
+        {
+            .m_ClientWidth = 800,
+            .m_ClientHeight = 600
+            /*.m_Title = "AetherApp"*/      // Default title is Aether Engine
+        };
+
+    #ifdef USE_GLFW
+        m_Window = std::make_unique<WindowGLFW>(wd);      // Calls initialise and catches errors inside with assert
+    #elif defined(USE_WIN32)
+        m_Window = std::make_unique<WinManWin32>();
+    #else
     #error No window API defined. Please enable USE_GLFW or USE_WIN32."
-    ret = AETHER_FAIL;
-#endif
+        ar = AETHER_FAIL;
+    #endif
 
-    // Set the desired rendering API, based on the chosen macro.
-#ifdef USE_DX11
-    renderer = std::make_unique<RendererDX11>();
-#elif defined(USE_VULKAN)
-    renderer = std::make_unique<RendererVulkan>();
-#else
-    #error No rendering API defined. Please enable USE_DX11 or USE_VULKAN.
-    ret = AETHER_FAIL;
-#endif
+        // Set the desired rendering API, based on the chosen runtime enum. 
+        switch (m_CurrentRenderAPI)
+        {
+            case eRenderAPI::kOpenGL:
+            {
+                m_Renderer = std::make_unique<RendererOpenGL>();
 
-    // Set up winData struct. Again, this would be saved and loaded from a config file later in development
-    int w = 800, h = 600;
-    window->SetData(w, h, "Aether Engine");
+                break;
+            }
+            case eRenderAPI::kDX11:
+            {
+                m_Renderer = std::make_unique<RendererDX11>();
+                break;
+            }
+            case eRenderAPI::kDX12:
+            {
+                m_Renderer = std::make_unique<RendererDX12>();
+                break;
+            }
+            default:
+            {
+                ar = AETHER_FAIL;
+                AETHER_ASSERT(ar, "No rendering API defined. Please enable one of the `USE_X` arguments and select a valid desired rendering API.")
+            }
+        }
 
-    // Now try and initiate window
-    if (!window->Initialize(window->GetData()))
-        assert(false);
-    // Init rendering API
-    if (!renderer->Initialize(*window)) {
-        throw "Renderer initialization failed.";
-        ret = -1;
+		// Init rendering API - catch errors out here with assert
+		AETHER_ASSERT(m_Renderer->Initialize(*m_Window));
+
+		// Setup ImGui layer for the renderer too
+		m_ImGuiLayer = new ImGuiLayer(m_CurrentRenderAPI);
+
+		// Push the ImGui layer into the stack at the overlay point
+		PushOverlay(m_ImGuiLayer);
+
+        // Bind event callback for our window
+        m_Window->SetEventCallback(BIND_APP_FN(OnEvent));
     }
 
-    // The game loop!
-    while (!window->WindowShouldClose()) {
-
-        // Handle window events here (e.g., using GLFW or another windowing library)
-        window->PollEvents();
-
-        // Render our lovely frame!
-        renderer->Render();
+    void Application::PushLayer(Layer* layer)
+    {
+        m_LayerStack.PushLayer(layer);
+        layer->OnAttach();
     }
 
-    // Make sure we release our resources
-    renderer->Terminate();
+    void Application::PushOverlay(Layer* overlay)
+    {
+        m_LayerStack.PushOverlay(overlay);
+        overlay->OnAttach();
+    }
 
-    // Return the OK!
-    return AETHER_OK;
-}
+    bool Application::OnWindowResize(WindowResizeEvent& e)
+    {
+		// Let the renderer handle it's specific steps for resizing (recreating buffers, contexts, etc.)
+        m_Renderer->Resize(e.GetWidth(),e.GetHeight());
+        return true;
+    }
+
+
+    void Application::OnEvent(Event& event)
+    {
+        // Just print the event for now
+        AETHER_CORE_TRACE("{0}", event);
+
+        // Handle window resize in DirectX
+        EventDispatcher dispatcher(event);
+
+        // This magic function does a bit of type checking to ensure that only the correct event gets dispatched
+        dispatcher.Dispatch<WindowResizeEvent>(BIND_APP_FN(OnWindowResize));
+
+        // Pass event to layer stack to ensure event fires on correct layer
+        m_LayerStack.HandleEvent(event);
+    }
+
+    AETHER_RESULT Application::Run()
+    {
+        // A local instance that represents possible error codes.
+        AETHER_RESULT ar = AETHER_OK;
+
+        // The game loop!
+        while (!m_Window->WindowShouldClose())
+        {
+
+            // Clear frame!
+            m_Renderer->ClearFrame();
+
+            // Handle window events here (e.g., using GLFW or another windowing library)
+            m_Window->PollEvents();
+
+            // Refresh ImGui drawing context
+            m_ImGuiLayer->Begin();
+
+            // Update our layers! Eventually, the renderer will tie in to this aswell as it will render each layer. ImGui renders here too, which is why we clear frame and begin earlier.
+            m_LayerStack.UpdateLayers();
+
+            // Draw anything else we want!
+            m_Renderer->Render();
+
+            // Finalise ImGui drawing afterwards
+            m_ImGuiLayer->End();
+
+            // Present our finished lovely frame!
+            m_Renderer->Present();
+        }
+
+        printf("\n\n\n");
+        AETHER_CORE_INFO("Thanks for using Aether!\n");
+
+        // Make sure we release our resources manually if they aren't already tied in the destructor - everything in here will get deleted and have those called so no need to call things twice!
+        m_Renderer->Terminate();
+
+        // Return the OK!
+        return AETHER_OK;
+    }
+
+};

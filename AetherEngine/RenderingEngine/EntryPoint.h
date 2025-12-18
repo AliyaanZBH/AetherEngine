@@ -18,13 +18,25 @@ int main(int argc, char** argv)
 	std::string name("NewGame");
 	int var = 5;
 	AETHER_CORE_WARN("Initalised Log!");
-	AETHER_INFO("Hello from AetherApp! Var={0}", var);
-	AETHER_INFO("This game is called: {0}", name);
+
+	std::string renderAPI = "";
+#ifdef USE_DX11
+	renderAPI = "DirectX 11";
+#endif
+#ifdef USE_DX12
+	renderAPI = "DirectX 12";
+#endif
+	AETHER_CORE_INFO("Using Renderer: {0}", renderAPI);
+	
+	AETHER_TRACE("Hello from an AetherApp! Var={0}", var);
+	AETHER_TRACE("This game is called: {0}", name);
 
 	// Register this client application with the core Aether engine
-	auto game = Aether::CreateApplication();
+	Aether::Application* game = Aether::CreateApplication();
 	// Run our game!
 	game->Run();
+
+	// This will call all the destructors and terminate functions!
 	delete game;
 	return 0;
 }
