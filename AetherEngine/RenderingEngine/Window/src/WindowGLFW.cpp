@@ -34,7 +34,6 @@ namespace Aether
     AETHER_RESULT WindowGLFW::Initialize(const WinData& winData)
     {
         AETHER_RESULT ar = AETHER_OK;
-        glm::vec3 testVec = { 0.f,0.f,0.f };
         // Get GLFW setup for all our windows - only do this once!
         if (!s_bInitGLFW)
         {
