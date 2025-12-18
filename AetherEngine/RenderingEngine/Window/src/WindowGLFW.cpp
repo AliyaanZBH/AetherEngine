@@ -47,8 +47,9 @@ namespace Aether
 
             s_bInitGLFW = true;
         }
+
         // Create a GLFW window without an OpenGL context
-       // glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+        // glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
        
         // VSync
         //glfwSwapInterval(1);

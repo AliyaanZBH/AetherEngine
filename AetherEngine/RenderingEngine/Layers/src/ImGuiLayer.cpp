@@ -57,6 +57,28 @@ namespace Aether
 
 	void ImGuiLayer::OnDetach()
 	{
+		ImGui_ImplGlfw_Shutdown();
+
+		// Make sure we shut down the right implementation!
+		switch (m_CurrentRenderAPI)
+		{
+			case eRenderAPI::kOpenGL:
+			{
+				ImGui_ImplOpenGL3_Shutdown();
+				break;
+			}
+			case eRenderAPI::kDX11:
+			{
+				ImGui_ImplDX11_Shutdown();
+				break;
+			}
+			case eRenderAPI::kDX12:
+			{
+				ImGui_ImplDX12_Shutdown();
+				break;
+			}
+		}
+		ImGui::DestroyContext();
 	}
 
 	void ImGuiLayer::OnUpdate()
