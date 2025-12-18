@@ -16,13 +16,16 @@ namespace Aether
 		AETHER_RESULT Initialize(IWindow& window) override;
 		void ClearFrame() override;
 		void Render() override;
+		void Present() override;
+
 		void Resize(int newWidth, int newHeight) override;
 		void Terminate() override;
 		void* GetNativeDevice() override { return m_Device.Get(); }
 		void* GetNativeContext() override { return 0; }
 
 		void InitImGui() override;
-		void RenderImGui() override;
+		void BeginImGuiRender() override;
+		void EndImGuiRender() override;
 
 		// Public accessors
 		//

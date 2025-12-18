@@ -40,8 +40,12 @@ namespace Aether
 		void OnUpdate() override;
 		void OnEvent(Event& event) override;
 
-		void SetStyle();
+		void Begin();
+		void End();
+
 	protected:
 		eRenderAPI m_CurrentRenderAPI;
+	private:
+		void SetStyle();
 	};
 };

@@ -16,6 +16,9 @@ AETHER_RESULT Aether::RendererOpenGL::Initialize(IWindow& window)
 }
 
 void Aether::RendererOpenGL::Render()
+{} // Currently not rendering anything!
+
+void Aether::RendererOpenGL::Present()
 {
 	glfwSwapBuffers(m_pWindow);
 }
@@ -35,15 +38,14 @@ void Aether::RendererOpenGL::InitImGui()
 	ImGui_ImplOpenGL3_Init("#version 410");
 }
 
-void Aether::RendererOpenGL::RenderImGui()
+void Aether::RendererOpenGL::BeginImGuiRender()
 {
 	ImGui_ImplOpenGL3_NewFrame();
 	ImGui_ImplGlfw_NewFrame();
-	ImGui::NewFrame();
+}
 
-	bool show = true;
-	ImGui::ShowDemoWindow(&show);
-
+void Aether::RendererOpenGL::EndImGuiRender()
+{
 	ImGui::Render();
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
