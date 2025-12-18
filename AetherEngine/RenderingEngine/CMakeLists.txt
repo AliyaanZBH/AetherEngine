@@ -124,10 +124,12 @@ endif()
 
 add_subdirectory(ThirdParty/spdlog EXCLUDE_FROM_ALL)
 add_subdirectory(ThirdParty/glad)
+add_subdirectory(ThirdParty/glm EXCLUDE_FROM_ALL)
 
 # Link third party modules to renderer
 target_link_libraries(AetherRenderer PRIVATE glfw)
 target_link_libraries(AetherRenderer PRIVATE glad)
+target_link_libraries(AetherRenderer PRIVATE glm::glm-header-only)
 target_link_libraries(AetherRenderer PUBLIC spdlog::spdlog_header_only)
 
 # ImGui requires a bit of extra linking due to multiple backends
