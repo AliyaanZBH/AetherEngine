@@ -16,8 +16,8 @@ namespace Aether
 		ImGuiIO& io = ImGui::GetIO();
 		io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;			// Enable Keyboard Controls
 		//io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;			// Enable Gamepad Controls
-		//io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;				// Enable Docking
-		//io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;			// Enable Multi-Viewport / Platform Windows
+		io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;				// Enable Docking
+		io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;			// Enable Multi-Viewport / Platform Windows
 		//io.ConfigFlags |= ImGuiConfigFlags_ViewportsNoTaskBarIcons;
 		//io.ConfigFlags |= ImGuiConfigFlags_ViewportsNoMerge;
 
@@ -57,22 +57,67 @@ namespace Aether
 
 	void ImGuiLayer::OnDetach()
 	{
+		ImGui_ImplGlfw_Shutdown();
+
+		// Make sure we shut down the right implementation!
+		switch (m_CurrentRenderAPI)
+		{
+			case eRenderAPI::kOpenGL:
+			{
+				ImGui_ImplOpenGL3_Shutdown();
+				break;
+			}
+			case eRenderAPI::kDX11:
+			{
+				ImGui_ImplDX11_Shutdown();
+				break;
+			}
+			case eRenderAPI::kDX12:
+			{
+				ImGui_ImplDX12_Shutdown();
+				break;
+			}
+		}
+		ImGui::DestroyContext();
 	}
 
-	void ImGuiLayer::OnUpdate()
+	void ImGuiLayer::Begin()
 	{
-		// Setup generic drawing frame, let derived classes implement specifics after this
-		//
-
+		// Update ImGui data 
 		ImGuiIO& io = ImGui::GetIO();
 		io.DisplaySize = ImVec2((float)Application::Get().GetWindow().GetWidth(), (float)Application::Get().GetWindow().GetHeight());
 		io.DeltaTime = (float)glfwGetTime();
 
+		// Call the specific rendering API implementation to begin new frames
+		Application::Get().GetRenderer().BeginImGuiRender();
 
-		// Now proceed with specific rendering API path
-		Application::Get().GetRenderer().RenderImGui();
+		// Now call the generic new frame function once here
+		ImGui::NewFrame();
+	}
+
+	void ImGuiLayer::OnUpdate()
+	{
+		// Currently, the only thing our ImGui layer is doing is this
+		bool show = true;
+		ImGui::ShowDemoWindow(&show);
 
 	}
+
+	void ImGuiLayer::End()
+	{
+		Application::Get().GetRenderer().EndImGuiRender();
+
+		// Necessary ImGui steps when docking and viewports are enabled
+		ImGuiIO& io = ImGui::GetIO();
+		if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+		{
+			GLFWwindow* backup_current_context = glfwGetCurrentContext();
+			ImGui::UpdatePlatformWindows();
+			ImGui::RenderPlatformWindowsDefault();
+			glfwMakeContextCurrent(backup_current_context);
+		}
+	}
+
 
 	void ImGuiLayer::OnEvent(Event& event)
 	{

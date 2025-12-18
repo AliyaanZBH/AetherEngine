@@ -160,40 +160,39 @@ namespace Aether
 		ImGui_ImplDX12_Init(&init_info);
 	}
 
-	void RendererDX12::RenderImGui()
+	void RendererDX12::BeginImGuiRender()
 	{
 		ImGui_ImplDX12_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
-		ImGui::NewFrame();
+	}
 
-		bool show = true;
-		ImGui::ShowDemoWindow(&show);
-
+	void RendererDX12::EndImGuiRender()
+	{
 		ImGui::Render();
 		ID3D12DescriptorHeap* pSrvHeaps[] = { m_SRVHeap.Get() };
 		m_CmdList->SetDescriptorHeaps(1, pSrvHeaps);
-	}
 
+		// Render ImGui on top of everything else!
+		ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), m_CmdList.Get());
+	}
 	void RendererDX12::Render()
 	{
 		AETHER_RESULT ar = AETHER_OK;
 
-		// Draw something! Simple triangle for now
-
-		// draw triangle
+		// Draw something! Simple depth tested quads for now
 		m_CmdList->SetGraphicsRootSignature(m_RootSig);                             // Set the root signature
 		m_CmdList->RSSetViewports(1, &m_Viewport);                                  // Set the viewports
 		m_CmdList->RSSetScissorRects(1, &m_Scissor);                                // Set the scissor rects
 		m_CmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);     // Set the primitive topology
 		m_CmdList->IASetVertexBuffers(0, 1, &m_VertBufView);                        // Set the vertex buffer (using the vertex buffer view)
-		// m_CmdList->DrawInstanced(3, 1, 0, 0);                                    // Finally draw 3 vertices (draw the triangle)
 		m_CmdList->IASetIndexBuffer(&m_IdxBufView);                                 // Set IB
 		m_CmdList->DrawIndexedInstanced(6, 1, 0, 0, 0);                             // Draw 2 triangles (draw 1 instance of 2 triangles)
 		m_CmdList->DrawIndexedInstanced(6, 1, 0, 4, 0);                             // Draw second quad
 
-		// Render imGui on top of all of this!
-		ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), m_CmdList.Get());
+	}
 
+	void RendererDX12::Present()
+	{
 		// Now we've finished drawing, get the RT ready to present again. 
 		CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_RenderTargets[m_BackBufferIndex].Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
 		m_CmdList->ResourceBarrier(1, &barrier);
@@ -212,9 +211,7 @@ namespace Aether
 
 		// Signal fence for THIS CPU frame
 		m_FenceValue[m_FrameContextIndex] = ++m_GlobalFenceValue;
-		AETHER_HR_ASSERT(m_CmdQueue->Signal(m_Fence.Get(), m_FenceValue[m_FrameContextIndex]));
-
-
+		AETHER_HR_ASSERT(m_CmdQueue->Signal(m_Fence.Get(), m_FenceValue[m_FrameContextIndex]))
 	}
 
 	void RendererDX12::Resize(int newWidth, int newHeight)

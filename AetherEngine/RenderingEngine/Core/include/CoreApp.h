@@ -42,7 +42,7 @@ namespace Aether
 		std::unique_ptr<IWindow> m_Window;
 		std::unique_ptr<IRenderer> m_Renderer;
 
-		//std::unique_ptr<ImGuiLayer> m_ImGuiLayer;
+		// Layers all get owned by the layer stack, so we can create this as a raw pointer
 		ImGuiLayer* m_ImGuiLayer = nullptr;
 
 		LayerStack m_LayerStack;

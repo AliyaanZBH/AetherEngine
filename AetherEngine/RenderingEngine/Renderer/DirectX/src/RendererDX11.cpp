@@ -41,8 +41,10 @@ namespace Aether
 	}
 
 	void RendererDX11::Render()
+	{} // Currently not rendering any geometry
+
+	void RendererDX11::Present()
 	{
-		// Present the frame
 		m_pSwapChain->Present(1, 0);
 	}
 
@@ -90,20 +92,17 @@ namespace Aether
 		ImGui_ImplDX11_Init(m_pD3DDevice.Get(), m_pD3DImmediateContext.Get());
 	}
 
-	void RendererDX11::RenderImGui()
+	void RendererDX11::BeginImGuiRender()
 	{
-
 		ImGui_ImplDX11_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
-		ImGui::NewFrame();
+	}
 
-		bool show = true;
-		ImGui::ShowDemoWindow(&show);
-
+	void RendererDX11::EndImGuiRender()
+	{
 		ImGui::Render();
 		ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 	}
-
 
 	bool RendererDX11::CreateDevice()
 	{

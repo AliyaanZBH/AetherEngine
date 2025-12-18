@@ -35,13 +35,17 @@ namespace Aether
 		ImGuiLayer(eRenderAPI backend);
 		~ImGuiLayer();
 
-		void OnAttach();
-		void OnDetach();
-		void OnUpdate();
-		void OnEvent(Event& event);
+		void OnAttach() override;
+		void OnDetach() override;
+		void OnUpdate() override;
+		void OnEvent(Event& event) override;
 
-		void SetStyle();
+		void Begin();
+		void End();
+
 	protected:
 		eRenderAPI m_CurrentRenderAPI;
+	private:
+		void SetStyle();
 	};
 };

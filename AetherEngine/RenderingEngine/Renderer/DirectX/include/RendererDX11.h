@@ -14,15 +14,18 @@ namespace Aether
 	public:
 		// Main start up function
 		AETHER_RESULT Initialize(IWindow& window) override;
-		void Render() override;
-		void Resize(int newWidth, int newHeight) override;
 		void ClearFrame() override;
+		void Render() override;
+		void Present() override;
+
+		void Resize(int newWidth, int newHeight) override;
 		void Terminate() override;
 		void* GetNativeDevice() override { return m_pD3DDevice.Get(); }
 		void* GetNativeContext() override { return m_pD3DImmediateContext.Get(); }
 
 		void InitImGui() override;
-		void RenderImGui() override;
+		void BeginImGuiRender() override;
+		void EndImGuiRender() override;
 
 		// Default minimum behaviour when ALT+ENTER or drag or resize
 		// Parameters are new width and height of window

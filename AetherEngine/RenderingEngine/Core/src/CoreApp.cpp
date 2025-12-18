@@ -151,11 +151,20 @@ namespace Aether
             // Handle window events here (e.g., using GLFW or another windowing library)
             m_Window->PollEvents();
 
-            // Update our layers! Eventually, the renderer will tie in to this aswell as it will render each layer. ImGui renders here too, which is why clear frame earlier!
+            // Refresh ImGui drawing context
+            m_ImGuiLayer->Begin();
+
+            // Update our layers! Eventually, the renderer will tie in to this aswell as it will render each layer. ImGui renders here too, which is why we clear frame and begin earlier.
             m_LayerStack.UpdateLayers();
 
-            // Render our finished lovely frame!
+            // Draw anything else we want!
             m_Renderer->Render();
+
+            // Finalise ImGui drawing afterwards
+            m_ImGuiLayer->End();
+
+            // Present our finished lovely frame!
+            m_Renderer->Present();
         }
 
         printf("\n\n\n");
