@@ -19,14 +19,21 @@
 //
 //	Our headers that won't change much
 //
+
 #include "InputCodes.h"
 
 //
-//	Windows and Renderer libraries
+//	Third party Libraries
 //
 
-#include "imgui.h"
-#include "imgui_internal.h"
+#include <glm/glm.hpp>
+
+//
+//	Windows and Renderer specific Third-Party libraries
+//
+
+#include <imgui.h>
+#include <imgui_internal.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
 
