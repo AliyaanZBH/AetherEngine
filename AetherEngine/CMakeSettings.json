@@ -7,41 +7,9 @@
       "inheritEnvironments": [ "msvc_x64_x64" ],
       "buildRoot": "${projectDir}\\out\\build\\${name}",
       "installRoot": "${projectDir}\\out\\install\\${name}",
-      "cmakeCommandArgs": "AETHER_BUILD_DLL",
+      "cmakeCommandArgs": "",
       "buildCommandArgs": "",
-      "ctestCommandArgs": "",
-      "variables": [
-        {
-          "name": "USE_WIN32",
-          "value": "True",
-          "type": "BOOL"
-        },
-        {
-          "name": "AETHER_PLATFORM_WINDOWS",
-          "value": "true",
-          "type": "BOOL"
-        },
-        {
-          "name": "AETHER_BUILD_DLL",
-          "value": "True",
-          "type": "BOOL"
-        },
-        {
-          "name": "USE_DX12",
-          "value": "False",
-          "type": "BOOL"
-        },
-        {
-          "name": "USE_DX11",
-          "value": "False",
-          "type": "BOOL"
-        },
-        {
-          "name": "GLFW_BUILD_DOCS",
-          "value": "False",
-          "type": "BOOL"
-        }
-      ]
+      "ctestCommandArgs": ""
     },
     {
       "name": "x64-Release",
@@ -68,7 +36,7 @@
     {
       "name": "x64-Shipping",
       "generator": "Ninja",
-      "configurationType": "Release",
+      "configurationType": "Shipping",
       "buildRoot": "${projectDir}\\out\\build\\${name}",
       "installRoot": "${projectDir}\\out\\install\\${name}",
       "cmakeCommandArgs": "",

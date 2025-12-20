@@ -31,22 +31,16 @@ source_group("include" FILES ${INCLUDE})
 
 
 #
-# Build Configuration specific options
+# Re-use Build Configuration macros from interface!
 #
+target_link_libraries(AetherApp PUBLIC AetherConfig)
 
 
-# Configuration compile definitions
-target_compile_definitions(AetherApp PRIVATE
-    $<CONFIG:Debug> AETHER_DEBUG
-    $<CONFIG:Release> AETHER_RELEASE
-    $<CONFIG:RelWithDebInfo> AETHER_RELEASE_DBG_INFO
-    $<CONFIG:Distribution> AETHER_DIST
-)
-
-# Also explicitly add the DLL as dependency - this ensures that when running the exe, the DLL gets recompiled too :)
-add_dependencies(AetherApp AetherRenderer)
-# Also add the deploy target! This ensures the command that copies the files happens every time!
+# Add the deploy target! This ensures the command that copies the shader files happens every time!
 add_dependencies(AetherApp deploy_shaders)
 
-# Link renderer DLL to our app exe
+# Also explicitly add the engine as dependency - this ensures that when running the exe, the engine gets recompiled too :)
+add_dependencies(AetherApp AetherRenderer)
+
+# Link renderer to our app exe - use DLL for non-shipping builds to allow for hot-reloading
 target_link_libraries(AetherApp PRIVATE AetherRenderer)

@@ -47,7 +47,7 @@ namespace Aether
 		}
 		default:
 		{
-			AETHER_ASSERT(AETHER_FAIL, "No rendering backend for ImGui defined.")
+			AETHER_ASSERT(AETHER_FAIL, "No rendering backend for ImGui defined.");
 		}
 		};
 

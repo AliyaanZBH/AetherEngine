@@ -13,8 +13,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-# Setup build configs
+# Setup build configs - config types for multi config and build types for single config
 set(CMAKE_CONFIGURATION_TYPES "Debug;Release;RelWithDebInfo;Shipping " CACHE STRING "" FORCE)
+set(CMAKE_BUILD_TYPES "Debug;Release;RelWithDebInfo;Shipping " CACHE STRING "" FORCE)
 
 # Global compiler options
 set(CMAKE_CXX_FLAGS_DEBUG          "${CMAKE_CXX_FLAGS_DEBUG} /MDd")
@@ -59,11 +60,25 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${BIN_DIR}/lib)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${BIN_DIR}/lib)  # static libs are treated as archive files
 
 # Ensure multi-config support (Debug/Release)
-foreach(OUTPUT_CONFIG Debug Release RelWithDebInfo Distribution Shipping)
+foreach(OUTPUT_CONFIG Debug Release RelWithDebInfo Shipping)
     set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_${OUTPUT_CONFIG} ${BIN_DIR})
     set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_${OUTPUT_CONFIG} ${BIN_DIR}/lib)
     set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${OUTPUT_CONFIG} ${BIN_DIR}/lib)
 endforeach()
+
+
+# Intermediate interface target to handle config-specific macros across engine, app, and third-party libs, ensuring we don't get ABI or symbol mismatch
+add_library(AetherConfig INTERFACE)
+
+target_compile_definitions(AetherConfig INTERFACE
+    $<$<CONFIG:Debug>:AETHER_DEBUG>
+    $<$<CONFIG:Release>:AETHER_RELEASE>
+    $<$<CONFIG:RelWithDebInfo>:AETHER_RELEASE_DBG_INFO>
+    $<$<CONFIG:Shipping>:AETHER_SHIP>
+
+    # Dynamic linking for everything EXCEPT Shipping
+    $<$<NOT:$<CONFIG:Shipping>>:AETHER_DYNAMIC_LINK>
+)
 
 # Add main projects as indivudual subdirectories as they have their own CMakeLists file. These will build in order, so engine DLL first then the app (which depends on the DLL!)
 add_subdirectory(RenderingEngine)

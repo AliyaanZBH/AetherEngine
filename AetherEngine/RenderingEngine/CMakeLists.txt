@@ -80,13 +80,22 @@ set_source_files_properties(Shaders/VertexShader.hlsl PROPERTIES ShaderType "vs"
 set_source_files_properties(Shaders/PixelShader.hlsl PROPERTIES ShaderType "ps")
 
 
-# Define the target - we want a DLL for development and a static lib (for the juicy optimisations) when shipping
-if($<CONFIG:Shipping>)
-    add_library(AetherRenderer STATIC ${SRC} ${INCLUDE} ${HLSL_SHADER_FILES})
+# Define the target - we want a DLL for development and a static lib (for the juicy optimisations) when shipping.
+# Decide library type based on config
+message( ${CMAKE_BUILD_TYPE})
+if(CMAKE_BUILD_TYPE STREQUAL "Shipping")
+    add_library(AetherRenderer STATIC ${SRC} ${INCLUDE})
 else()
-    add_library(AetherRenderer SHARED ${SRC} ${INCLUDE} ${HLSL_SHADER_FILES})
-
+    add_library(AetherRenderer SHARED ${SRC} ${INCLUDE})
+    
+    # This macro ensures that engine functions are exported when building a DLL - This is undefined in the application and which will import them instead! And when static linking, this define gets superseded and is ignored. 
+    # See Core.h for implementation
+    target_compile_definitions(AetherRenderer PRIVATE AETHER_BUILD_DLL)
 endif()
+
+# Link config to propogate configuration macros
+target_link_libraries(AetherRenderer PRIVATE AetherConfig)
+
 # Enable PCH for Visual Studio
 if (MSVC)  # Check if we're on Visual Studio
     target_precompile_headers(AetherRenderer PRIVATE ${PCH_HEADER})
@@ -145,24 +154,6 @@ target_link_libraries(AetherRenderer PUBLIC
     imgui_backend_win32
     imgui_backend_dx11
     imgui_backend_dx12
-)
-
-
-# Define macro to ensure this project exports a DLL - this will be undefined in the application and so will importing our DLL instead! See Core.h for implementation of this
-target_compile_definitions(AetherRenderer PRIVATE AETHER_BUILD_DLL)
-
-
-#
-# Build Configuration specific options
-#
-
-# Configuration compile definitions
-target_compile_definitions(AetherRenderer PRIVATE 
-    $<CONFIG:Debug> AETHER_DEBUG
-    $<CONFIG:Release> AETHER_RELEASE
-    $<CONFIG:RelWithDebInfo> AETHER_RELEASE_DBG_INFO
-    $<CONFIG:Distribution> AETHER_DIST
-    $<CONFIG:SHIPPING> AETHER_SHIP
 )
 
 #
@@ -263,9 +254,8 @@ add_custom_target(aether_shaders DEPENDS ${CSO_SHADER_FILES})
 # Make renderer depend on shader compilation
 add_dependencies(AetherRenderer aether_shaders)
 
-# Deployment target (DLL + PDB + shaders)
-set(RUNTIME_DIR "$<TARGET_FILE_DIR:AetherRenderer>")
-set(SHADER_DEST "${RUNTIME_DIR}/Shaders")
+# Deployment target for the shaders - use the top level binary directory that we defined.
+set(SHADER_DEST "${BIN_DIR}/Shaders")
 
 
 # Copy raw shaders and CSOs to bin folder in build step via another custom intermediate target
@@ -277,3 +267,4 @@ add_custom_target(deploy_shaders ALL
     COMMENT "Deploying AetherEngine shaders..."
     COMMAND ${CMAKE_COMMAND} -E echo "Engine shader files deployed!"
 )
+
