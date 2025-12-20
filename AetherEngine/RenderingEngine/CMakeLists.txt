@@ -80,9 +80,13 @@ set_source_files_properties(Shaders/VertexShader.hlsl PROPERTIES ShaderType "vs"
 set_source_files_properties(Shaders/PixelShader.hlsl PROPERTIES ShaderType "ps")
 
 
-# Define the DLL target
-add_library(AetherRenderer SHARED ${SRC} ${INCLUDE} ${HLSL_SHADER_FILES})
+# Define the target - we want a DLL for development and a static lib (for the juicy optimisations) when shipping
+if($<CONFIG:Shipping>)
+    add_library(AetherRenderer STATIC ${SRC} ${INCLUDE} ${HLSL_SHADER_FILES})
+else()
+    add_library(AetherRenderer SHARED ${SRC} ${INCLUDE} ${HLSL_SHADER_FILES})
 
+endif()
 # Enable PCH for Visual Studio
 if (MSVC)  # Check if we're on Visual Studio
     target_precompile_headers(AetherRenderer PRIVATE ${PCH_HEADER})
@@ -158,6 +162,7 @@ target_compile_definitions(AetherRenderer PRIVATE
     $<CONFIG:Release> AETHER_RELEASE
     $<CONFIG:RelWithDebInfo> AETHER_RELEASE_DBG_INFO
     $<CONFIG:Distribution> AETHER_DIST
+    $<CONFIG:SHIPPING> AETHER_SHIP
 )
 
 #

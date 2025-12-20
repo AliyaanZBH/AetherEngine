@@ -14,12 +14,13 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Setup build configs
-set(CMAKE_CONFIGURATION_TYPES "Debug;Release;RelWithDebInfo " CACHE STRING "" FORCE)
+set(CMAKE_CONFIGURATION_TYPES "Debug;Release;RelWithDebInfo;Shipping " CACHE STRING "" FORCE)
 
 # Global compiler options
 set(CMAKE_CXX_FLAGS_DEBUG          "${CMAKE_CXX_FLAGS_DEBUG} /MDd")
 set(CMAKE_CXX_FLAGS_RELEASE        "${CMAKE_CXX_FLAGS_RELEASE} /MD /O2")
 set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} /MD /O2")
+set(CMAKE_CXX_FLAGS_SHIPPING       "${CMAKE_CXX_FLAGS_RELEASE} /MD /O2")
 
 
 # Option to build with GLFW
@@ -54,14 +55,14 @@ set(BIN_DIR ${CMAKE_BINARY_DIR}/bin)
 
 # All targets (DLL/EXE) will output here
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${BIN_DIR})
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${BIN_DIR})
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${BIN_DIR})  # For static libs from third-parties
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${BIN_DIR}/lib)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${BIN_DIR}/lib)  # static libs are treated as archive files
 
 # Ensure multi-config support (Debug/Release)
-foreach(OUTPUT_CONFIG Debug Release RelWithDebInfo Distribution)
-    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_${OUTPUT_CONFIG} ${CMAKE_BINARY_DIR}/bin)
-    set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_${OUTPUT_CONFIG} ${CMAKE_BINARY_DIR}/bin)
-    set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${OUTPUT_CONFIG} ${CMAKE_BINARY_DIR}/bin)
+foreach(OUTPUT_CONFIG Debug Release RelWithDebInfo Distribution Shipping)
+    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_${OUTPUT_CONFIG} ${BIN_DIR})
+    set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_${OUTPUT_CONFIG} ${BIN_DIR}/lib)
+    set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${OUTPUT_CONFIG} ${BIN_DIR}/lib)
 endforeach()
 
 # Add main projects as indivudual subdirectories as they have their own CMakeLists file. These will build in order, so engine DLL first then the app (which depends on the DLL!)

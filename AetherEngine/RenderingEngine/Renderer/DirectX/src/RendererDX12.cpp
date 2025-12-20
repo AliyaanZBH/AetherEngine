@@ -91,7 +91,7 @@ namespace Aether
         srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
         srvHeapDesc.NumDescriptors = m_kSRVHeapSize;
         srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-        AETHER_HR_ASSERT(m_Device->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&m_SRVHeap)))
+		AETHER_HR_ASSERT(m_Device->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&m_SRVHeap)));
         m_SRVHeapAllocator.Create(m_Device.Get(), m_SRVHeap.Get());
     
 
@@ -211,7 +211,7 @@ namespace Aether
 
 		// Signal fence for THIS CPU frame
 		m_FenceValue[m_FrameContextIndex] = ++m_GlobalFenceValue;
-		AETHER_HR_ASSERT(m_CmdQueue->Signal(m_Fence.Get(), m_FenceValue[m_FrameContextIndex]))
+		AETHER_HR_ASSERT(m_CmdQueue->Signal(m_Fence.Get(), m_FenceValue[m_FrameContextIndex]));
 	}
 
 	void RendererDX12::Resize(int newWidth, int newHeight)
@@ -747,10 +747,8 @@ namespace Aether
 		m_CmdList->ResourceBarrier(1, &barrier);
 
 
-
 		// Get handle to RTV this frame, so that we can set it as the RT
 		CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_RTVHeap->GetCPUDescriptorHandleForHeapStart(), m_BackBufferIndex, m_RTVDescripterSize);
-
 
 		// Get our DSB!
 		CD3DX12_CPU_DESCRIPTOR_HANDLE dsbHandle(m_DSBHeap->GetCPUDescriptorHandleForHeapStart());
