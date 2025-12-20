@@ -8,9 +8,15 @@
 AETHER_RESULT Aether::RendererOpenGL::Initialize(IWindow& window)
 {
 	AETHER_RESULT ar = AETHER_OK;
-	ar = gladLoadGL();
 
 	m_pWindow = static_cast<GLFWwindow*>(window.GetNativeWindowHandle());
+
+	// Set OpenGL context, ready for loading openGL properly
+	glfwMakeContextCurrent(m_pWindow);
+
+	// Actually load now via glad
+	ar = gladLoadGL();
+
 	// Glad returns 1 on success, we use 0
 	return ar - 1;
 }

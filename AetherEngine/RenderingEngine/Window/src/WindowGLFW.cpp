@@ -63,8 +63,6 @@ namespace Aether
             AETHER_ASSERT(AETHER_FAIL, "Failed to create GLFW window. Check window creation data.");
         }
 
-        // Focus window
-        glfwMakeContextCurrent(m_pWindow);
         // Set User pointer which contains the callback function to handle events!
         glfwSetWindowUserPointer(m_pWindow, &m_WinData);
 
