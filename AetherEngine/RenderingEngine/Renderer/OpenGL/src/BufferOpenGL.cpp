@@ -1,5 +1,5 @@
 //===============================================================================
-// desc: Implmentation of geometry buffers for OpenGL
+// desc: Implmentation of GPU buffers for OpenGL
 // auth: Aliyaan Zulfiqar
 //===============================================================================
 #include "BufferOpenGL.h"
@@ -8,58 +8,23 @@
 namespace Aether
 {
 
-	//
-	// Vertex Buffer
-	//
-
-	VertexBufferOpenGL::VertexBufferOpenGL(float* vertices, uint32_t size)
+	BufferOpenGL::BufferOpenGL(const BufferDesc& desc)
+		: m_Desc(desc)
 	{
-		glCreateBuffers(1, &m_Buffer);
-		glBindBuffer(GL_ARRAY_BUFFER, m_Buffer);
-		glBufferData(GL_ARRAY_BUFFER, size, vertices, GL_STATIC_DRAW);
+		glCreateBuffers(1, &m_Handle);
 
+		// Using namedbuffer for Direct State Access in order to avoid global mutable state and hidden state changes
+		glNamedBufferData(m_Handle, desc.m_SizeInBytes, nullptr, desc.m_CPUVisible ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW);	// Ternary here to allow for static and dynamic draws based on the description we pass in!
 	}
 
-	VertexBufferOpenGL::~VertexBufferOpenGL()
+	BufferOpenGL::~BufferOpenGL()
 	{
-		glDeleteBuffers(1, &m_Buffer);
+		glDeleteBuffers(1, &m_Handle);
 	}
 
-	void VertexBufferOpenGL::Bind()
+	void BufferOpenGL::Upload(const void* data, size_t size, size_t offset)
 	{
-		glBindBuffer(GL_ARRAY_BUFFER, m_Buffer);
-	}
-
-	void VertexBufferOpenGL::Unbind()
-	{
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-	}
-
-
-	//
-	// Index Buffer
-	//
-
-
-	IndexBufferOpenGL::IndexBufferOpenGL(uint32_t* indices, uint32_t size)
-	{
-		glCreateBuffers(1, &m_Buffer);
-		glBufferData(GL_ARRAY_BUFFER, size, indices, GL_STATIC_DRAW);
-	}
-
-	IndexBufferOpenGL::~IndexBufferOpenGL()
-	{
-		glDeleteBuffers(1, &m_Buffer);
-	}
-
-	void IndexBufferOpenGL::Bind()
-	{
-		glBindBuffer(GL_ARRAY_BUFFER, m_Buffer);
-	}
-
-	void IndexBufferOpenGL::Unbind()
-	{
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glNamedBufferSubData(m_Handle, offset, size, data);
 	}
 
 }

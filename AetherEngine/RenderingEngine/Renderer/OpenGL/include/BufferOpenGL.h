@@ -1,6 +1,6 @@
 #pragma once
 //===============================================================================
-// desc: Implmentation of geometry buffers for OpenGL
+// desc: Implmentation of GPU buffers for OpenGL
 // auth: Aliyaan Zulfiqar
 //===============================================================================
 #include "Buffer.h"
@@ -8,28 +8,20 @@
 
 namespace Aether
 {
-	class AETHER_API VertexBufferOpenGL : public VertexBuffer
+	class AETHER_API BufferOpenGL final : public Buffer
 	{
 	public:
-		VertexBufferOpenGL(float* vertices, uint32_t size);
-		~VertexBufferOpenGL();
+		BufferOpenGL(const BufferDesc& desc);
+		~BufferOpenGL();
+
+		void Upload(const void* data, size_t size, size_t offset = 0) override;
 		
-		void Bind() override;
-		void Unbind() override;
+		GLuint GetHandle() const { return m_Handle; }
+		size_t GetSize() const override { return m_Desc.m_SizeInBytes; }
+		eBufferType GetType() const override { return m_Desc.m_Type; }
+
 	private:
-		uint32_t m_Buffer = 0u;
-	};
-
-	class AETHER_API IndexBufferOpenGL : public IndexBuffer
-	{
-	public:
-		IndexBufferOpenGL(uint32_t* indices, uint32_t size);
-		~IndexBufferOpenGL();
-
-		void Bind() override;
-		void Unbind() override;
-	private:
-		uint32_t m_Buffer = 0u;
-
+		GLuint m_Handle = 0u;
+		BufferDesc m_Desc = {};
 	};
 }

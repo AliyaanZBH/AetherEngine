@@ -8,7 +8,7 @@
 
 namespace Aether
 {
-	class AETHER_API ShaderOpenGL : public Shader
+	class AETHER_API ShaderOpenGL final : public Shader
 	{
 	public:
 		ShaderOpenGL(const std::string& vertSrc, const std::string& fragSrc);

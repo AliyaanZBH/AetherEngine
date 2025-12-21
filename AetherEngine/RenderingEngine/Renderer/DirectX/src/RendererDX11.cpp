@@ -87,6 +87,11 @@ namespace Aether
 		AETHER_HR_ASSERT(pD3DDebug->ReportLiveDeviceObjects(D3D11_RLDO_SUMMARY));
 	}
 
+	Buffer* RendererDX11::CreateBuffer(const BufferDesc& desc)
+	{
+		return nullptr;
+	}
+
 	void RendererDX11::InitImGui()
 	{
 		ImGui_ImplDX11_Init(m_pD3DDevice.Get(), m_pD3DImmediateContext.Get());

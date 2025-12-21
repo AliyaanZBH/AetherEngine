@@ -12,7 +12,7 @@ class IRenderer;
 // WinMan - Window Manager.
 namespace Aether
 {
-	class WindowGLFW : public IWindow
+	class WindowGLFW final : public IWindow
 	{
 	public:
 		WindowGLFW(const WinData& winData);

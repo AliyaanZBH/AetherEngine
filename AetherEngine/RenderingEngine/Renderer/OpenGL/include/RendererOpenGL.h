@@ -9,7 +9,7 @@
 //===============================================================================
 namespace Aether
 {
-	class RendererOpenGL : public IRenderer
+	class RendererOpenGL final : public IRenderer
 	{
 	public:
 		// Main start up function
@@ -17,9 +17,11 @@ namespace Aether
 		void ClearFrame() override;
 		void Render() override;
 		void Present() override;
-
 		void Resize(int newWidth, int newHeight) override {}	// Empty for now since GLFW seemingly handles this for us!
 		void Terminate() override;
+
+		Buffer* CreateBuffer(const BufferDesc& desc) override;
+
 		void* GetNativeDevice() override { return 0; }
 		void* GetNativeContext() override { return 0; }
 
@@ -29,9 +31,10 @@ namespace Aether
 	private:
 		GLFWwindow* m_pWindow;
 
-		unsigned int m_VertexArray, m_IndexBuffer;
+		unsigned int m_VertexArray;
 
 		ShaderOpenGL* m_Shader = nullptr;
-		VertexBuffer* m_VertexBuffer = nullptr;
+		BufferOpenGL* m_VertexBuffer = nullptr;
+		BufferOpenGL* m_IndexBuffer = nullptr;
 	};
 };

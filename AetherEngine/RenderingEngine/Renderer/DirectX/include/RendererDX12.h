@@ -10,7 +10,7 @@
 
 namespace Aether
 {
-	class RendererDX12 : public IRenderer
+	class RendererDX12 final : public IRenderer
 	{
 	public:
 		// Main start up function
@@ -21,6 +21,10 @@ namespace Aether
 
 		void Resize(int newWidth, int newHeight) override;
 		void Terminate() override;
+
+		Buffer* CreateBuffer(const BufferDesc& desc) override;
+
+
 		void* GetNativeDevice() override { return m_Device.Get(); }
 		void* GetNativeContext() override { return 0; }
 

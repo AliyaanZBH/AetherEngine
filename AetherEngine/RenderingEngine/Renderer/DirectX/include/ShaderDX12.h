@@ -8,7 +8,7 @@
 
 namespace Aether
 {
-	class AETHER_API ShaderDX12 : public Shader
+	class AETHER_API ShaderDX12 final : public Shader
 	{
 	public:
 		ShaderDX12(const std::wstring& shaderSrc, const std::string& shaderType);

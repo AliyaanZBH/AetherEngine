@@ -3,6 +3,7 @@
 // auth: Aliyaan Zulfiqar
 //===============================================================================
 #include "RendererOpenGL.h"
+#include "BufferOpenGL.h"
 //===============================================================================
 
 namespace Aether
@@ -41,18 +42,37 @@ namespace Aether
 			0.f,	0.5f,	0.f
 		};
 
-		m_VertexBuffer = VertexBuffer::Create(verts, sizeof(verts));
+		// Create vertex buffer here with our fancy new buffer desc
+		BufferDesc vbDesc =
+		{
+			.m_SizeInBytes = sizeof(verts),
+			.m_Type = eBufferType::kVertex,
+			.m_CPUVisible = true
+		};
+
+		m_VertexBuffer = static_cast<BufferOpenGL*>(CreateBuffer(vbDesc));
+
+		// Memory has been allocated, now upload data to it
+		m_VertexBuffer->Upload(verts, vbDesc.m_SizeInBytes);
+
+		// Bind that boy
+		glBindBuffer(GL_ARRAY_BUFFER, m_VertexBuffer->GetHandle());
 
 		// Enable vert attributes
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
 		glEnableVertexAttribArray(0);
 
-		// Create indices
-		glGenBuffers(1, &m_IndexBuffer);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_IndexBuffer);
-
+		// Create indices and repeat
 		unsigned int indices[3] = { 0, 1, 2 };
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+		BufferDesc ibDesc =
+		{
+			.m_SizeInBytes = sizeof(indices),
+			.m_Type = eBufferType::kIndex,
+			.m_CPUVisible = true
+		};
+		m_IndexBuffer = static_cast<BufferOpenGL*>(CreateBuffer(ibDesc));
+		m_IndexBuffer->Upload(indices, ibDesc.m_SizeInBytes);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_IndexBuffer->GetHandle());
 
 
 		// TMP: Paste simple shader source here for now
@@ -110,6 +130,11 @@ namespace Aether
 	
 	void RendererOpenGL::Terminate()
 	{
+	}
+
+	Buffer* RendererOpenGL::CreateBuffer(const BufferDesc& desc)
+	{
+		return new BufferOpenGL(desc);
 	}
 	
 	void RendererOpenGL::InitImGui()

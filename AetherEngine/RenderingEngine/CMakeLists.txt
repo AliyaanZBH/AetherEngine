@@ -23,7 +23,6 @@ set(SRC
 
     Graphics/src/GraphicsContext.cpp
     Graphics/src/Shader.cpp
-    Graphics/src/Buffer.cpp
 
     #
     # DirectX Implementations
@@ -104,7 +103,6 @@ set(INCLUDE
 
     # Miscellaneous third-party includes
     ThirdParty/dx12Helper/include/d3dx12.h
-    
  
 )
 
@@ -126,7 +124,7 @@ message( ${CMAKE_BUILD_TYPE})
 if(CMAKE_BUILD_TYPE STREQUAL "Shipping")
     add_library(AetherRenderer STATIC ${SRC} ${INCLUDE})
 else()
-    add_library(AetherRenderer SHARED ${SRC} ${INCLUDE} "Graphics/src/Buffer.cpp")
+    add_library(AetherRenderer SHARED ${SRC} ${INCLUDE})
     
     # This macro ensures that engine functions are exported when building a DLL - This is undefined in the application and which will import them instead! And when static linking, this define gets superseded and is ignored. 
     # See Core.h for implementation
@@ -148,7 +146,6 @@ target_include_directories(AetherRenderer
                             Window/include
                             Renderer/DirectX/include
                             Renderer/OpenGL/include
-                            Graphics/include
                             Events/include
                             Layers/include
                             ThirdParty/dx12Helper/include
@@ -156,6 +153,7 @@ target_include_directories(AetherRenderer
 # Certain things need to be public as the application target needs to see these interfaces. Detailed implementations can remain private
                     PUBLIC
                             Core/include 
+                            Graphics/include
                             Input/include
 )
 

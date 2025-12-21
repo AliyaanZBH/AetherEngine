@@ -9,6 +9,9 @@
 
 namespace Aether
 {
+    class Buffer;
+    struct BufferDesc;
+
     class AETHER_API IRenderer {
     public:
         virtual ~IRenderer() = default;
@@ -19,6 +22,9 @@ namespace Aether
         virtual void Present() = 0;
         virtual void Resize(int newWidth, int newHeight) = 0;
         virtual void Terminate() = 0;
+
+        virtual Buffer* CreateBuffer(const BufferDesc& desc) = 0;
+
         virtual void* GetNativeDevice() = 0;
         virtual void* GetNativeContext() = 0;
 

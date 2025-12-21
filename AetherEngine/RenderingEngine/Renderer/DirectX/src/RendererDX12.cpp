@@ -361,6 +361,11 @@ namespace Aether
 		m_Device = nullptr;
 	}
 
+	Buffer* RendererDX12::CreateBuffer(const BufferDesc& desc)
+	{
+		return nullptr;
+	}
+
 
 	AETHER_RESULT RendererDX12::CreateDevice()
 	{
