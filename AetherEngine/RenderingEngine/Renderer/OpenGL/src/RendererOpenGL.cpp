@@ -19,13 +19,47 @@ namespace Aether
 	
 		// Actually load now via glad
 		ar = gladLoadGL();
-	
-		// Glad returns 1 on success, we use 0
-		return ar - 1;
+		// Glad returns 1 on success, we use 0 so decrement the result and we should be good
+		ar--;
+		AETHER_ASSERT(ar, "Failed to load openGL via glad");
+
+		// Create vertex buffer and array
+		glGenVertexArrays(1, &m_VertexArray);
+		glBindVertexArray(m_VertexArray);
+
+		glGenBuffers(1, &m_VertexBuffer);
+		glBindBuffer(GL_ARRAY_BUFFER, m_VertexBuffer);
+
+		// Create geometry itself - centered tri for now
+		float verts[3 * 3]
+		{
+			-0.5f,	-0.5f,	0.f,
+			0.5f,	-0.5f,	0.f,
+			0.f,	0.5f,	0.f
+		};
+
+		glBufferData(GL_ARRAY_BUFFER, sizeof(verts), verts, GL_STATIC_DRAW);
+
+		// Enable vert attributes
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
+		glEnableVertexAttribArray(0);
+
+		// Create indices
+		glGenBuffers(1, &m_IndexBuffer);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_IndexBuffer);
+
+		unsigned int indices[3] = { 0, 1, 2 };
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+		return ar;
 	}
 	
 	void RendererOpenGL::Render()
-	{} // Currently not rendering anything!
+	{
+		// Bind and draw our geo!
+		glBindVertexArray(m_VertexArray);
+		glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, nullptr);
+	}
 	
 	void RendererOpenGL::Present()
 	{
