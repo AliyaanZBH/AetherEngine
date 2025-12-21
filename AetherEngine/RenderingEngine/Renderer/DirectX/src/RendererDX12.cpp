@@ -454,61 +454,8 @@ namespace Aether
 	AETHER_RESULT RendererDX12::CompileShaders()
 	{
 		AETHER_RESULT ar = AETHER_OK;
-
-		ID3DBlob* vertexShader; // D3D blob for holding vertex shader bytecode
-		ID3DBlob* errorBuff;    // A buffer holding the error data if any
-		// [AZB]: Define the list of directories to search for include files
-		std::vector<std::wstring> includeDirs =
-		{
-			L"..\\Shaders"  // [AZB]: Main common shader directory, this is where my stuff lives
-		};
-
-		// [AZB]: Create an instance of the custom include handler with the list of directories and the current shader
-		std::wstring shaderFile = L"VertexShader.hlsl";
-		CustomIncludeHandler includeHandler(includeDirs, shaderFile);
-
-		std::wstring workingShaderDir = includeHandler.GetDirectories().back();
-		std::wstring fullPathToShader = workingShaderDir + L"\\" + shaderFile;
-
-		D3DCompileFromFile(fullPathToShader.c_str(),
-			nullptr,
-			&includeHandler,
-			"main",
-			"vs_5_0",
-			D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
-			0,
-			&vertexShader,
-			&errorBuff
-		);
-
-		// Print errors!
-		if (errorBuff != nullptr)
-			OutputDebugStringA((char*)errorBuff->GetBufferPointer());
-
-		// Fill out  shader bytecode struct, which is basically just a pointer to the shader bytecode and the size of the shader bytecode    
-		m_VS.BytecodeLength = vertexShader->GetBufferSize();
-		m_VS.pShaderBytecode = vertexShader->GetBufferPointer();
-
-		// Repeat for pixel
-		ID3DBlob* pixelShader;
-		shaderFile = L"PixelShader.hlsl";
-		fullPathToShader = workingShaderDir + L"\\" + shaderFile;
-		D3DCompileFromFile(fullPathToShader.c_str(),
-			nullptr,
-			&includeHandler,
-			"main",
-			"ps_5_0",
-			D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
-			0,
-			&pixelShader,
-			&errorBuff
-		);
-		if (errorBuff != nullptr)
-			OutputDebugStringA((char*)errorBuff->GetBufferPointer());
-
-		m_PS.BytecodeLength = pixelShader->GetBufferSize();
-		m_PS.pShaderBytecode = pixelShader->GetBufferPointer();
-
+		m_VS = new ShaderDX12(L"VertexShader.hlsl", "vs_5_0");
+		m_PS = new ShaderDX12(L"PixelShader.hlsl", "ps_5_0");
 		return ar;
 	}
 
@@ -536,8 +483,8 @@ namespace Aether
 		D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
 		psoDesc.InputLayout = inputDesc;
 		psoDesc.pRootSignature = m_RootSig;
-		psoDesc.VS = m_VS;
-		psoDesc.PS = m_PS;
+		psoDesc.VS = m_VS->Get();
+		psoDesc.PS = m_PS->Get();
 		psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 		psoDesc.RTVFormats[0] = m_kRTVFormat;
 		psoDesc.SampleDesc = m_SampleDesc;                                  // Same sample desc as swapchain
@@ -568,7 +515,7 @@ namespace Aether
 		   //};
 
 
-		   // We got quads now baybee!
+		// We got quads now baybee!
 		Vertex verts[] =
 		{
 			// First Quad

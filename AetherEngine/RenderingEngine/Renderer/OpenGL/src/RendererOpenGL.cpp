@@ -85,7 +85,7 @@ namespace Aether
 		)";
 
 		// Create shader program by compiling and linking shader files ( or raw source as we have it currently)
-		m_Shader = new Shader(vertexSrc, fragSrc);
+		m_Shader = new ShaderOpenGL(vertexSrc, fragSrc);
 		//m_Shader = new Shader("VertexShader.glsl", "FragShader.glsl");
 		// Bind that boy
 		m_Shader->Bind();

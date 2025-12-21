@@ -4,7 +4,7 @@
 // auth: Aliyaan Zulfiqar
 //===============================================================================
 #include "IRenderer.h"
-#include "Shader.h"
+#include "ShaderOpenGL.h"
 //===============================================================================
 namespace Aether
 {
@@ -30,6 +30,6 @@ namespace Aether
 
 		unsigned int m_VertexArray, m_VertexBuffer, m_IndexBuffer;
 
-		Shader* m_Shader = nullptr;
+		ShaderOpenGL* m_Shader = nullptr;
 	};
 };

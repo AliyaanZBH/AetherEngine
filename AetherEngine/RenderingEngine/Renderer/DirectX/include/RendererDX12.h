@@ -5,6 +5,7 @@
 // auth: Aliyaan Zulfiqar
 //===============================================================================
 #include "IRenderer.h"
+#include "ShaderDX12.h"
 //===============================================================================
 
 namespace Aether
@@ -120,13 +121,6 @@ namespace Aether
 				FreeIndices.push_back(cpu_idx);
 			}
 		};
-		
-		struct Vertex
-		{
-			Vertex(float x, float y, float z, float r, float g, float b, float a) : pos(x, y, z), colour(r, g, b, a) {}
-			DirectX::XMFLOAT3 pos;
-			DirectX::XMFLOAT4 colour;
-		};
 
 		// Private members to facilitate the above functions
 		//
@@ -178,29 +172,27 @@ namespace Aether
 		//
 
 
-		// PSO!
+		// PSO and root sig!
 		ID3D12PipelineState* m_PipelineStateObject;
-
 		ID3D12RootSignature* m_RootSig;
 
+		// Use our shader wrapper to handle shader files themselves
+		ShaderDX12* m_VS = nullptr;
+		ShaderDX12* m_PS = nullptr;
 
-		// Actual binary blob that is our compiled shader - one for verts and one for pixel
-		D3D12_SHADER_BYTECODE m_VS;
-		D3D12_SHADER_BYTECODE m_PS;
-
-		// Draw bounds stuff
-		D3D12_VIEWPORT m_Viewport;
-		D3D12_RECT m_Scissor;
-
-		// Our VB
+		// Our physical VB
 		Microsoft::WRL::ComPtr<ID3D12Resource> m_VertexBuffer;
 
 		// Structure that points to VB in GPU
 		D3D12_VERTEX_BUFFER_VIEW m_VertBufView;
 
-		// IB now too!
+		// Same for IB!
 		Microsoft::WRL::ComPtr<ID3D12Resource> m_IndexBuffer;
 		D3D12_INDEX_BUFFER_VIEW m_IdxBufView;
+
+		// Draw bounds stuff
+		D3D12_VIEWPORT m_Viewport;
+		D3D12_RECT m_Scissor;
 
 		bool m_bNeedsResize = false;
 

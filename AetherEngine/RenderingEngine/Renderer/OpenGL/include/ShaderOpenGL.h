@@ -1,20 +1,21 @@
 #pragma once
 //===============================================================================
-// desc: A small utility class to handle shaders across rendering APIs (GLSL & HLSL)
+// desc: Shader class implementation for OpenGL
 // auth: Aliyaan Zulfiqar
 //===============================================================================
-#include "Core.h"
-#include <IRenderer.h>
+#include "Shader.h"
 //===============================================================================
 
 namespace Aether
 {
-	class AETHER_API Shader
+	class AETHER_API ShaderOpenGL : public Shader
 	{
 	public:
-		virtual ~Shader() = default;
+		ShaderOpenGL(const std::string& vertSrc, const std::string& fragSrc);
 
-		virtual void Bind() = 0;
-		virtual void Unbind() = 0;
+		void Bind() override;
+		void Unbind() override;
+	private:
+		GLuint m_GLProgram;
 	};
 }
