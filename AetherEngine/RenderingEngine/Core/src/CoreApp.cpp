@@ -144,7 +144,6 @@ namespace Aether
         // The game loop!
         while (!m_Window->WindowShouldClose())
         {
-
             // Clear frame!
             m_Renderer->ClearFrame();
 

@@ -20,6 +20,8 @@ set(SRC
     Renderer/DirectX/src/RendererDX11.cpp
     Renderer/DirectX/src/RendererDX12.cpp
     Renderer/OpenGL/src/RendererOpenGL.cpp
+    
+    Graphics/src/GraphicsContext.cpp
 
     Layers/src/ImGuiLayer.cpp
 )
@@ -54,6 +56,9 @@ set(INCLUDE
     Renderer/DirectX/include/RendererDX11.h
     Renderer/DirectX/include/RendererDX12.h
     Renderer/OpenGL/include/RendererOpenGL.h
+
+    # Graphics
+    Graphics/include/GraphicsContext.h
 
     # Events
     Events/include/KeyEvent.h
@@ -108,6 +113,7 @@ target_include_directories(AetherRenderer
                             Window/include
                             Renderer/DirectX/include
                             Renderer/OpenGL/include
+                            Graphics/include
                             Events/include
                             Layers/include
                             ThirdParty/dx12Helper/include
