@@ -23,6 +23,12 @@ namespace Aether
 		ar--;
 		AETHER_ASSERT(ar, "Failed to load openGL via glad");
 
+		// Nice little bit of logging to see what renderer we're using (integrated vs hopefully dedicated!
+		const char* vendorString = (const char*)glGetString(GL_VENDOR);
+		const char* rendererString = (const char*)glGetString(GL_RENDERER);
+		const char* versionString = (const char*)glGetString(GL_VERSION);
+		AETHER_CORE_INFO("OpenGL Info:\n    Vendor: {0}\n    Device: {1}\n    GL Version & Driver: {2}", vendorString, rendererString, versionString);
+
 		// Create vertex buffer and array
 		glGenVertexArrays(1, &m_VertexArray);
 		glBindVertexArray(m_VertexArray);
