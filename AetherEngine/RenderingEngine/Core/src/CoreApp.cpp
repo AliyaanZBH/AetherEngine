@@ -84,7 +84,7 @@ namespace Aether
             default:
             {
                 ar = AETHER_FAIL;
-                AETHER_ASSERT(ar, "No rendering API defined. Please enable one of the `USE_X` arguments and select a valid desired rendering API.");
+                AETHER_ASSERT(ar, "No rendering API defined. Please enable one of the `USE_X` arguments to ensure that one is built and then select a valid desired rendering API.");
             }
         }
 
