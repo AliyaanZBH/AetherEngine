@@ -63,8 +63,11 @@ namespace Aether
 			#version 430 core
 			layout (location = 0) in vec3 a_Pos;
 			
+			out vec3 v_Position;
+
 			void main()
 			{
+				v_Position = a_Pos;
 			    gl_Position = vec4(a_Pos, 1.0);
 			}
 		)";
@@ -73,9 +76,11 @@ namespace Aether
 			#version 430 core
 			layout (location = 0) out vec4 colour;
 			
+			in vec3 v_Position;
+
 			void main()
 			{
-			    colour = vec4(1.0, 0.3, 0.0, 1.0);
+			    colour = vec4(v_Position * 0.5 + 0.65, 1.0);
 			}
 		)";
 
