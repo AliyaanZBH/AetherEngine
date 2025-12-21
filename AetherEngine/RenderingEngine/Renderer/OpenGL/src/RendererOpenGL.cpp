@@ -5,47 +5,98 @@
 #include "RendererOpenGL.h"
 //===============================================================================
 
-AETHER_RESULT Aether::RendererOpenGL::Initialize(IWindow& window)
+namespace Aether
 {
-	AETHER_RESULT ar = AETHER_OK;
-	ar = gladLoadGL();
 
-	m_pWindow = static_cast<GLFWwindow*>(window.GetNativeWindowHandle());
-	// Glad returns 1 on success, we use 0
-	return ar - 1;
-}
+	AETHER_RESULT RendererOpenGL::Initialize(IWindow& window)
+	{
+		AETHER_RESULT ar = AETHER_OK;
+	
+		m_pWindow = static_cast<GLFWwindow*>(window.GetNativeWindowHandle());
+	
+		// Set OpenGL context, ready for loading openGL properly
+		glfwMakeContextCurrent(m_pWindow);
+	
+		// Actually load now via glad
+		ar = gladLoadGL();
+		// Glad returns 1 on success, we use 0 so decrement the result and we should be good
+		ar--;
+		AETHER_ASSERT(ar, "Failed to load openGL via glad");
 
-void Aether::RendererOpenGL::Render()
-{} // Currently not rendering anything!
+		// Nice little bit of logging to see what renderer we're using (integrated vs hopefully dedicated!
+		const char* vendorString = (const char*)glGetString(GL_VENDOR);
+		const char* rendererString = (const char*)glGetString(GL_RENDERER);
+		const char* versionString = (const char*)glGetString(GL_VERSION);
+		AETHER_CORE_INFO("OpenGL Info:\n    Vendor: {0}\n    Device: {1}\n    GL Version & Driver: {2}", vendorString, rendererString, versionString);
 
-void Aether::RendererOpenGL::Present()
-{
-	glfwSwapBuffers(m_pWindow);
-}
+		// Create vertex buffer and array
+		glGenVertexArrays(1, &m_VertexArray);
+		glBindVertexArray(m_VertexArray);
 
-void Aether::RendererOpenGL::ClearFrame()
-{
-	glClearColor(0.2f, 0.7f, 0.9f, 1.f);
-	glClear(GL_COLOR_BUFFER_BIT);
-}
+		glGenBuffers(1, &m_VertexBuffer);
+		glBindBuffer(GL_ARRAY_BUFFER, m_VertexBuffer);
 
-void Aether::RendererOpenGL::Terminate()
-{
-}
+		// Create geometry itself - centered tri for now
+		float verts[3 * 3]
+		{
+			-0.5f,	-0.5f,	0.f,
+			0.5f,	-0.5f,	0.f,
+			0.f,	0.5f,	0.f
+		};
 
-void Aether::RendererOpenGL::InitImGui()
-{
-	ImGui_ImplOpenGL3_Init("#version 410");
-}
+		glBufferData(GL_ARRAY_BUFFER, sizeof(verts), verts, GL_STATIC_DRAW);
 
-void Aether::RendererOpenGL::BeginImGuiRender()
-{
-	ImGui_ImplOpenGL3_NewFrame();
-	ImGui_ImplGlfw_NewFrame();
-}
+		// Enable vert attributes
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
+		glEnableVertexAttribArray(0);
 
-void Aether::RendererOpenGL::EndImGuiRender()
-{
-	ImGui::Render();
-	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+		// Create indices
+		glGenBuffers(1, &m_IndexBuffer);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_IndexBuffer);
+
+		unsigned int indices[3] = { 0, 1, 2 };
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+		return ar;
+	}
+	
+	void RendererOpenGL::Render()
+	{
+		// Bind and draw our geo!
+		glBindVertexArray(m_VertexArray);
+		glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, nullptr);
+	}
+	
+	void RendererOpenGL::Present()
+	{
+		glfwSwapBuffers(m_pWindow);
+	}
+	
+	void RendererOpenGL::ClearFrame()
+	{
+		glClearColor(0.2f, 0.7f, 0.9f, 1.f);
+		glClear(GL_COLOR_BUFFER_BIT);
+	}
+	
+	void RendererOpenGL::Terminate()
+	{
+	}
+	
+	void RendererOpenGL::InitImGui()
+	{
+		ImGui_ImplOpenGL3_Init("#version 410");
+	}
+	
+	void RendererOpenGL::BeginImGuiRender()
+	{
+		ImGui_ImplOpenGL3_NewFrame();
+		ImGui_ImplGlfw_NewFrame();
+	}
+	
+	void RendererOpenGL::EndImGuiRender()
+	{
+		ImGui::Render();
+		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+	}
+
 }

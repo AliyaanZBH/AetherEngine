@@ -11,10 +11,14 @@ typedef int AETHER_RESULT;	// For more useful error handling at low-level, can b
 #define AETHER_UNKNOWN -99
 
 #ifdef AETHER_PLATFORM_WINDOWS
-	#ifdef AETHER_BUILD_DLL
-		#define AETHER_API __declspec(dllexport)
+	#ifdef AETHER_DYNAMIC_LINK
+		#ifdef AETHER_BUILD_DLL
+			#define AETHER_API __declspec(dllexport)
+		#else	// If not building DLL, we're importing it!
+			#define AETHER_API __declspec(dllimport)
+		#endif
 	#else
-		#define AETHER_API __declspec(dllimport)
+		#define AETHER_API
 	#endif
 #else
 	#error Aether currently only supports Windows! Linux and Mac are coming soon <3

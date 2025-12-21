@@ -26,8 +26,8 @@ namespace Aether
 			EventCallbackFn m_EventCallback;
 
 			std::string m_Title = "Aether Engine";
-			int m_ClientWidth;
-			int m_ClientHeight;
+			uint16_t m_ClientWidth = 800u;
+			uint16_t m_ClientHeight = 600u;
 			bool m_bAppPaused = false;
 			bool m_bMinimized = false;
 			bool m_bMaximized = false;

@@ -26,5 +26,7 @@ namespace Aether
 		void EndImGuiRender() override;
 	private:
 		GLFWwindow* m_pWindow;
+
+		unsigned int m_VertexArray, m_VertexBuffer, m_IndexBuffer;
 	};
 };

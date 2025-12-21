@@ -41,7 +41,7 @@ namespace Aether
         AETHER_RESULT ar = AETHER_OK;
         
         if (s_Instance != nullptr)
-            AETHER_ASSERT(AETHER_FAIL, "An instance of the application is already running!")
+            AETHER_ASSERT(AETHER_FAIL, "An instance of the application is already running!");
         s_Instance = this;
 
         // Set which type of window we are creating and pass in some data for it
@@ -84,7 +84,7 @@ namespace Aether
             default:
             {
                 ar = AETHER_FAIL;
-                AETHER_ASSERT(ar, "No rendering API defined. Please enable one of the `USE_X` arguments and select a valid desired rendering API.")
+                AETHER_ASSERT(ar, "No rendering API defined. Please enable one of the `USE_X` arguments and select a valid desired rendering API.");
             }
         }
 
@@ -144,7 +144,6 @@ namespace Aether
         // The game loop!
         while (!m_Window->WindowShouldClose())
         {
-
             // Clear frame!
             m_Renderer->ClearFrame();
 

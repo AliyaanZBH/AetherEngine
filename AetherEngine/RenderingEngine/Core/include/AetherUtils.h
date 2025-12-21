@@ -11,7 +11,7 @@
 
 // Debug stuff - currently tied to windows, will update to be truly cross platform in future :)
 
-#if defined(AETHER_DEBUG) | AETHER_RELEASE_DBG_INFO | defined(_DEBUG)
+#if defined(AETHER_DEBUG) | defined(AETHER_RELEASE_DBG_INFO) | defined(_DEBUG)
 
 #ifndef AETHER_ASSERT													
 
@@ -65,6 +65,6 @@ inline void AetherError(AETHER_RESULT ar, const char* pFileStr, int lineNum, ...
 #endif
 #else
 #ifndef AETHER_ASSERT
-#define AETHER_ASSERT(x) (x)
+#define AETHER_ASSERT(x, ...) (x)
 #endif
 #endif
