@@ -17,11 +17,15 @@ set(SRC
 
     Window/src/WindowGLFW.cpp
     
+    Graphics/src/GraphicsContext.cpp
+    Graphics/src/Shader.cpp
+
     Renderer/DirectX/src/RendererDX11.cpp
     Renderer/DirectX/src/RendererDX12.cpp
+    Renderer/DirectX/src/ShaderDX12.cpp
+
     Renderer/OpenGL/src/RendererOpenGL.cpp
-    
-    Graphics/src/GraphicsContext.cpp
+    Renderer/OpenGL/src/ShaderOpenGL.cpp
 
     Layers/src/ImGuiLayer.cpp
 )
@@ -51,14 +55,24 @@ set(INCLUDE
 
     Window/include/WindowGLFW.h
 
+    #
     # Rendering
+    #
+
+    
+    # Graphics
+    Graphics/include/GraphicsContext.h
+    Graphics/include/Shader.h
+
+    # DirectX
     Renderer/DirectX/include/D3DUtils.h
     Renderer/DirectX/include/RendererDX11.h
     Renderer/DirectX/include/RendererDX12.h
-    Renderer/OpenGL/include/RendererOpenGL.h
+    Renderer/DirectX/include/ShaderDX12.h
 
-    # Graphics
-    Graphics/include/GraphicsContext.h
+    # OpenGL
+    Renderer/OpenGL/include/RendererOpenGL.h
+    Renderer/OpenGL/include/ShaderOpenGL.h
 
     # Events
     Events/include/KeyEvent.h
@@ -71,6 +85,7 @@ set(INCLUDE
     # Miscellaneous third-party includes
     ThirdParty/dx12Helper/include/d3dx12.h
     
+ 
 )
 
 # Specify shaders
