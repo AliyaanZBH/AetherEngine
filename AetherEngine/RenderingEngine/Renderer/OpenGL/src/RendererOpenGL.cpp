@@ -33,9 +33,6 @@ namespace Aether
 		glGenVertexArrays(1, &m_VertexArray);
 		glBindVertexArray(m_VertexArray);
 
-		glGenBuffers(1, &m_VertexBuffer);
-		glBindBuffer(GL_ARRAY_BUFFER, m_VertexBuffer);
-
 		// Create geometry itself - centered tri for now
 		float verts[3 * 3]
 		{
@@ -44,7 +41,7 @@ namespace Aether
 			0.f,	0.5f,	0.f
 		};
 
-		glBufferData(GL_ARRAY_BUFFER, sizeof(verts), verts, GL_STATIC_DRAW);
+		m_VertexBuffer = VertexBuffer::Create(verts, sizeof(verts));
 
 		// Enable vert attributes
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);

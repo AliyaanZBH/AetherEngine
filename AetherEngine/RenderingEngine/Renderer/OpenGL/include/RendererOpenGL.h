@@ -5,6 +5,7 @@
 //===============================================================================
 #include "IRenderer.h"
 #include "ShaderOpenGL.h"
+#include "BufferOpenGL.h"
 //===============================================================================
 namespace Aether
 {
@@ -28,8 +29,9 @@ namespace Aether
 	private:
 		GLFWwindow* m_pWindow;
 
-		unsigned int m_VertexArray, m_VertexBuffer, m_IndexBuffer;
+		unsigned int m_VertexArray, m_IndexBuffer;
 
 		ShaderOpenGL* m_Shader = nullptr;
+		VertexBuffer* m_VertexBuffer = nullptr;
 	};
 };
