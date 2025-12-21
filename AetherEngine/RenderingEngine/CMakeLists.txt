@@ -20,8 +20,9 @@ set(SRC
     Renderer/DirectX/src/RendererDX11.cpp
     Renderer/DirectX/src/RendererDX12.cpp
     Renderer/OpenGL/src/RendererOpenGL.cpp
-    
+     
     Graphics/src/GraphicsContext.cpp
+    Graphics/src/Shader.cpp
 
     Layers/src/ImGuiLayer.cpp
 )
@@ -59,6 +60,7 @@ set(INCLUDE
 
     # Graphics
     Graphics/include/GraphicsContext.h
+    Graphics/include/Shader.h
 
     # Events
     Events/include/KeyEvent.h
@@ -71,6 +73,7 @@ set(INCLUDE
     # Miscellaneous third-party includes
     ThirdParty/dx12Helper/include/d3dx12.h
     
+ 
 )
 
 # Specify shaders

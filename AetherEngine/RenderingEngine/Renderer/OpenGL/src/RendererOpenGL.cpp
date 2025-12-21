@@ -57,6 +57,34 @@ namespace Aether
 		unsigned int indices[3] = { 0, 1, 2 };
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
+
+		// TMP: Paste simple shader source here for now
+		std::string vertexSrc = R"(
+			#version 430 core
+			layout (location = 0) in vec3 a_Pos;
+			
+			void main()
+			{
+			    gl_Position = vec4(a_Pos, 1.0);
+			}
+		)";
+
+		std::string fragSrc = R"(
+			#version 430 core
+			layout (location = 0) out vec4 colour;
+			
+			void main()
+			{
+			    colour = vec4(1.0, 0.3, 0.0, 1.0);
+			}
+		)";
+
+		// Create shader program by compiling and linking shader files ( or raw source as we have it currently)
+		m_Shader = new Shader(vertexSrc, fragSrc);
+		//m_Shader = new Shader("VertexShader.glsl", "FragShader.glsl");
+		// Bind that boy
+		m_Shader->Bind();
+
 		return ar;
 	}
 	
