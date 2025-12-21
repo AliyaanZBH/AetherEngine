@@ -9,12 +9,12 @@ namespace Aether
 {
 
 	BufferOpenGL::BufferOpenGL(const BufferDesc& desc)
-		: m_Desc(desc)
+		: Buffer(desc)
 	{
 		glCreateBuffers(1, &m_Handle);
 
 		// Using namedbuffer for Direct State Access in order to avoid global mutable state and hidden state changes
-		glNamedBufferData(m_Handle, desc.m_SizeInBytes, nullptr, desc.m_CPUVisible ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW);	// Ternary here to allow for static and dynamic draws based on the description we pass in!
+		glNamedBufferData(m_Handle, desc.m_SizeInBytes, desc.m_Data, desc.m_CPUVisible ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW);	// Ternary here to allow for static and dynamic draws based on the description we pass in!
 	}
 
 	BufferOpenGL::~BufferOpenGL()

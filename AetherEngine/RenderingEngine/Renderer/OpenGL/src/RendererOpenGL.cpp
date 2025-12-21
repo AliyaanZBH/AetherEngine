@@ -66,12 +66,12 @@ namespace Aether
 		unsigned int indices[3] = { 0, 1, 2 };
 		BufferDesc ibDesc =
 		{
+			.m_Data = indices,	// We can skip this (as we did with verts) and it will default to nullptr, allowing us to manually upload data later. Supplying this causes an immediate upload
 			.m_SizeInBytes = sizeof(indices),
 			.m_Type = eBufferType::kIndex,
 			.m_CPUVisible = true
 		};
 		m_IndexBuffer = static_cast<BufferOpenGL*>(CreateBuffer(ibDesc));
-		m_IndexBuffer->Upload(indices, ibDesc.m_SizeInBytes);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_IndexBuffer->GetHandle());
 
 
@@ -130,6 +130,8 @@ namespace Aether
 	
 	void RendererOpenGL::Terminate()
 	{
+		delete m_VertexBuffer;
+		delete m_IndexBuffer;
 	}
 
 	Buffer* RendererOpenGL::CreateBuffer(const BufferDesc& desc)

@@ -363,7 +363,7 @@ namespace Aether
 
 	Buffer* RendererDX12::CreateBuffer(const BufferDesc& desc)
 	{
-		return nullptr;
+		return new BufferDX12(desc, m_Device.Get(), m_CmdList.Get());
 	}
 
 
@@ -548,85 +548,37 @@ namespace Aether
 		//  Init VBuffer
 		//
 
-		int vBufferSize = sizeof(verts);
+		BufferDesc vbDesc =
+		{
+			.m_Data = verts,
+			.m_SizeInBytes = sizeof(verts),
+			.m_Type = eBufferType::kVertex,
+			.m_CPUVisible = true
+		};
 
-		// Create default memory on GPU that we can copy into from an upload heap
-		//
-		// Use some default helpers that we can plug in as params
-		CD3DX12_HEAP_PROPERTIES defaultHeapProp = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
-		CD3DX12_RESOURCE_DESC defaultResourceDesc = CD3DX12_RESOURCE_DESC::Buffer(vBufferSize);
-		AETHER_HR_ASSERT(m_Device->CreateCommittedResource(
-			&defaultHeapProp,
-			D3D12_HEAP_FLAG_NONE,
-			&defaultResourceDesc,
-			D3D12_RESOURCE_STATE_COPY_DEST, // Start in copy state as we are copying from the upload heap to this heap
-			nullptr,
-			IID_PPV_ARGS(&m_VertexBuffer)
-		));
-
+		m_VertexBuffer = static_cast<BufferDX12*>(CreateBuffer(vbDesc));
 		m_VertexBuffer->SetName(L"Simple AHH Vert Buffer");
 
-		// Create the upload heap now, GPU can read and CPU can write
-		ID3D12Resource* vBufferUploadHeap;
-		CD3DX12_HEAP_PROPERTIES uploadHeapProp = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
-
-		AETHER_HR_ASSERT(m_Device->CreateCommittedResource(
-			&uploadHeapProp,
-			D3D12_HEAP_FLAG_NONE,
-			&defaultResourceDesc,
-			D3D12_RESOURCE_STATE_GENERIC_READ, // GPU will read from this buffer and copy its contents to the default heap we created aboce
-			nullptr,
-			IID_PPV_ARGS(&vBufferUploadHeap)
-		));
-
-		vBufferUploadHeap->SetName(L"CPU Vertex Buffer Upload Heap");
-
-		// Store the vb data in the upload heap
-		D3D12_SUBRESOURCE_DATA vertData = {};
-		vertData.pData = (BYTE*)(verts);
-		vertData.RowPitch = vBufferSize;
-		vertData.SlicePitch = vBufferSize;
-
-		// Create Command to copy the data across
-		UpdateSubresources(m_CmdList.Get(), m_VertexBuffer.Get(), vBufferUploadHeap, 0, 0, 1, &vertData);
-
+		// Upload the buffer to the GPU now, the buffer helper will internally work out if this will map the resource directly or copy to the default heap of the GPU
+		m_VertexBuffer->Upload(vbDesc.m_Data, vbDesc.m_SizeInBytes);
+		
 		// Transition the vertex buffer data from copy destination state to vertex buffer state
-		CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_VertexBuffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
-
+		CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_VertexBuffer->GetResource(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
 		m_CmdList->ResourceBarrier(1, &barrier);
 
 		// Repeat for indices
-		int iBufferSize = sizeof(indices);
-		defaultResourceDesc = CD3DX12_RESOURCE_DESC::Buffer(iBufferSize);
-		AETHER_HR_ASSERT(m_Device->CreateCommittedResource(
-			&defaultHeapProp,
-			D3D12_HEAP_FLAG_NONE,
-			&defaultResourceDesc,
-			D3D12_RESOURCE_STATE_COPY_DEST,
-			nullptr,
-			IID_PPV_ARGS(&m_IndexBuffer)
-		));
+		BufferDesc ibDesc =
+		{
+			.m_Data = indices,
+			.m_SizeInBytes = sizeof(indices),
+			.m_Type = eBufferType::kIndex,
+			.m_CPUVisible = true
+		};
 
+		m_IndexBuffer = static_cast<BufferDX12*>(CreateBuffer(ibDesc));
 		m_IndexBuffer->SetName(L"Simple AHH Index Buffer");
-
-		ID3D12Resource* iBufferUploadHeap;
-		AETHER_HR_ASSERT(m_Device->CreateCommittedResource(
-			&uploadHeapProp,
-			D3D12_HEAP_FLAG_NONE,
-			&defaultResourceDesc,
-			D3D12_RESOURCE_STATE_GENERIC_READ,
-			nullptr,
-			IID_PPV_ARGS(&iBufferUploadHeap)
-		));
-
-		iBufferUploadHeap->SetName(L"CPU Index Buffer Upload Heap");
-
-		D3D12_SUBRESOURCE_DATA indexData = {};
-		indexData.pData = (BYTE*)(indices);
-		indexData.RowPitch = iBufferSize;
-		indexData.SlicePitch = iBufferSize;
-		UpdateSubresources(m_CmdList.Get(), m_IndexBuffer.Get(), iBufferUploadHeap, 0, 0, 1, &indexData);
-		barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_IndexBuffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_INDEX_BUFFER);
+		m_IndexBuffer->Upload(ibDesc.m_Data, ibDesc.m_SizeInBytes);
+		barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_IndexBuffer->GetResource(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_INDEX_BUFFER);
 		m_CmdList->ResourceBarrier(1, &barrier);
 
 		// Execute immediately here to send our geo buffers up one time
@@ -643,13 +595,13 @@ namespace Aether
 		WaitForSingleObject(m_FenceEvent, INFINITE);
 
 		// Finally, create VB and IB views for geo.
-		m_VertBufView.BufferLocation = m_VertexBuffer->GetGPUVirtualAddress();
+		m_VertBufView.BufferLocation = m_VertexBuffer->GetResource()->GetGPUVirtualAddress();
 		m_VertBufView.StrideInBytes = sizeof(Vertex);
-		m_VertBufView.SizeInBytes = vBufferSize;
+		m_VertBufView.SizeInBytes = vbDesc.m_SizeInBytes;
 
-		m_IdxBufView.BufferLocation = m_IndexBuffer->GetGPUVirtualAddress();
+		m_IdxBufView.BufferLocation = m_IndexBuffer->GetResource()->GetGPUVirtualAddress();
 		m_IdxBufView.Format = DXGI_FORMAT_R32_UINT; // 32-bit unsigned integer (this is what a dword is, double word, a word is 2 bytes)
-		m_IdxBufView.SizeInBytes = iBufferSize;
+		m_IdxBufView.SizeInBytes = ibDesc.m_SizeInBytes;
 
 		return ar;
 	}

@@ -6,6 +6,7 @@
 //===============================================================================
 #include "IRenderer.h"
 #include "ShaderDX12.h"
+#include "BufferDX12.h"
 //===============================================================================
 
 namespace Aether
@@ -185,13 +186,13 @@ namespace Aether
 		ShaderDX12* m_PS = nullptr;
 
 		// Our physical VB
-		Microsoft::WRL::ComPtr<ID3D12Resource> m_VertexBuffer;
+		BufferDX12* m_VertexBuffer = nullptr;
 
 		// Structure that points to VB in GPU
 		D3D12_VERTEX_BUFFER_VIEW m_VertBufView;
 
 		// Same for IB!
-		Microsoft::WRL::ComPtr<ID3D12Resource> m_IndexBuffer;
+		BufferDX12* m_IndexBuffer = nullptr;
 		D3D12_INDEX_BUFFER_VIEW m_IdxBufView;
 
 		// Draw bounds stuff

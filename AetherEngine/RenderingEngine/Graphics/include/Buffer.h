@@ -21,6 +21,7 @@ namespace Aether
 
 	struct BufferDesc
 	{
+		const void*	m_Data = nullptr;	// Optional paramater to upload data initially, or leave it for batch uploading optimisation
 		size_t      m_SizeInBytes;
 		eBufferType m_Type;
 		bool        m_CPUVisible;   // Staging / dynamic buffers that we want to read back from
@@ -29,6 +30,9 @@ namespace Aether
 	class AETHER_API Buffer
 	{
 	public:
+		Buffer (const BufferDesc& desc)
+			: m_Desc(desc) {}
+
 		virtual ~Buffer() = default;
 
 		virtual size_t GetSize() const = 0;
@@ -36,6 +40,10 @@ namespace Aether
 
 		// Explicit data upload that supports all types of buffers
 		virtual void Upload(const void* data, size_t size, size_t offset = 0) = 0;
+		const BufferDesc& GetDesc() const { return m_Desc; }
+
+	protected:
+		BufferDesc m_Desc;
 	};
 
 	// Different kinds of views into the abstract buffer that we may want

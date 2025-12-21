@@ -11,12 +11,19 @@ public:
 	DemoLayer()
 		: Layer("Demo") {}
 
+	void OnAttach() override
+	{
+
+	}
+
 	void OnUpdate() override 
 	{
 		if (Aether::Input::IsKeyPressed(Aether::KeyCode::kSpace))
 			AETHER_INFO("Space is pressed! (Our polling!)"); 
 	}
 	void OnEvent(Aether::Event& event) override { AETHER_TRACE("{0}", event); }
+private:
+	//Buffer* m_VertexBuffer;
 };
 
 class AetherGame : public Aether::Application
