@@ -8,8 +8,16 @@
 
 namespace Aether
 {
+    using PipelineHandle = uint32_t;
+
 	struct PipelineDesc
 	{
-		
+        ShaderHandle m_VertexShader;
+        ShaderHandle m_PixelShader;
+        VertexLayout m_Layout;
+
+        //RasterState Raster;
+        //DepthStencilState Depth;
+        //BlendState Blend;
 	};
 }

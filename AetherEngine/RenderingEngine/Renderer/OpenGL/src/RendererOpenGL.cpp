@@ -8,6 +8,26 @@
 
 namespace Aether
 {
+	// TMP
+	uint32_t ToGLLocation(eShaderSemantic semantic)
+	{
+		switch (semantic)
+		{
+		case eShaderSemantic::kPosition:  return 0;
+		case eShaderSemantic::kNormal:    return 1;
+		case eShaderSemantic::kColour:    return 2;
+		case eShaderSemantic::kTexCoord0: return 3;
+		case eShaderSemantic::kTexCoord1: return 4;
+		default:
+			AETHER_ASSERT(false, "Unsupported semantic");
+			return 0;
+		}
+	}
+
+	std::string ResolveGLShaderPath(const std::string& name)
+	{
+		return "Shaders/GLSL/" + name + ".glsl";
+	}
 
 	AETHER_RESULT RendererOpenGL::Initialize(IWindow& window)
 	{
@@ -124,6 +144,10 @@ namespace Aether
 		m_Shader->Bind();
 
 		return ar;
+	}
+
+	void RendererOpenGL::CreatePipeline(const PipelineDesc& desc)
+	{
 	}
 
 	void RendererOpenGL::Render()

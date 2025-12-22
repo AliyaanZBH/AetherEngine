@@ -8,6 +8,7 @@
 #include "RendererDX12.h"
 #include "D3DUtils.h"
 #include "GraphicsContext.h"
+#include "Pipeline.h"
 //===============================================================================
 namespace Aether
 {
@@ -140,11 +141,33 @@ namespace Aether
 			return AETHER_FAIL;
 
 
-		// Create pipelines!
-		AETHER_ASSERT(CreatePipelines());
+		// Create root signature for our pipeline!
+		AETHER_ASSERT(CreateRootSignature());
+
+		// Compile shaders for this pipeline!
+		//AETHER_ASSERT(CompileShaders());
+		//
+		//// Build PSO
+		//AETHER_ASSERT(CreateInputLayoutAndPSO());
+		//
+		//AETHER_ASSERT(CreateAndUploadGeo());
+		//FinalizeUploads();
+
+		// Last bit of additional setup - define our viewport and scissor rects. This needs re-calling on resize!
+		UpdateViewportAndScissor();
 
 		// Return result - if we made all the way here without failing previous functions this should be A-OK!
 		return ar;
+	}
+
+	void RendererDX12::CreatePipeline(const PipelineDesc& desc)
+	{
+		// Grab or create shaders for this pipeline
+		ShaderDX12* vs = LoadShader(desc.m_VertexShader);
+		ShaderDX12* ps = LoadShader(desc.m_PixelShader);
+
+		// Create PSO with the desired input layout for these shaders
+		CreatePSO(vs->Get(), ps->Get(), desc.m_Layout);
 	}
 
 	void RendererDX12::InitImGui()
@@ -181,6 +204,7 @@ namespace Aether
 		AETHER_RESULT ar = AETHER_OK;
 
 		// Draw something! Simple depth tested quads for now
+		m_CmdList->SetPipelineState(m_PipelineStateObject);
 		m_CmdList->SetGraphicsRootSignature(m_RootSig);                             // Set the root signature
 		m_CmdList->RSSetViewports(1, &m_Viewport);                                  // Set the viewports
 		m_CmdList->RSSetScissorRects(1, &m_Scissor);                                // Set the scissor rects
@@ -188,7 +212,7 @@ namespace Aether
 		m_CmdList->IASetVertexBuffers(0, 1, &m_VertBufView);                        // Set the vertex buffer (using the vertex buffer view)
 		m_CmdList->IASetIndexBuffer(&m_IdxBufView);                                 // Set IB
 		m_CmdList->DrawIndexedInstanced(6, 1, 0, 0, 0);                             // Draw 2 triangles (draw 1 instance of 2 triangles)
-		m_CmdList->DrawIndexedInstanced(6, 1, 0, 4, 0);                             // Draw second quad
+		//m_CmdList->DrawIndexedInstanced(6, 1, 0, 4, 0);                             // Draw second quad
 	}
 
 	void RendererDX12::Render(VertexBufferView* vbv, IndexBufferView* ibv)
@@ -196,9 +220,15 @@ namespace Aether
 		D3D12_VERTEX_BUFFER_VIEW dxVBView = CreateVertBufView(vbv);
 		D3D12_INDEX_BUFFER_VIEW dxIBView = CreateIdxBufView(ibv);
 
+		m_CmdList->SetPipelineState(m_PipelineStateObject);
+		m_CmdList->SetGraphicsRootSignature(m_RootSig);                             // Set the root signature
+		m_CmdList->RSSetViewports(1, &m_Viewport);                                  // Set the viewports
+		m_CmdList->RSSetScissorRects(1, &m_Scissor);                                // Set the scissor rects
+		m_CmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);     // Set the primitive topology
 		m_CmdList->IASetVertexBuffers(0, 1, &dxVBView);
-		m_CmdList->IASetIndexBuffer(&dxIBView);
-		m_CmdList->DrawIndexedInstanced(ibv->m_Count, 1, 0, 0, 0);
+		//m_CmdList->IASetIndexBuffer(&dxIBView);
+		//m_CmdList->DrawIndexedInstanced(ibv->m_Count, 1, 0, 0, 0);
+		m_CmdList->DrawInstanced(3, 1, 0, 0);
 	}
 
 	void RendererDX12::Present()
@@ -402,6 +432,24 @@ namespace Aether
 		return new BufferDX12(desc, m_Device.Get(), m_CmdList.Get());
 	}
 
+	void RendererDX12::FinalizeUploads()
+	{
+		AETHER_ASSERT(CreateAndUploadGeo());
+
+		// Execute immediately to send our geo buffers up
+		m_CmdList->Close();
+		ID3D12CommandList* ppCmdLists[] = { m_CmdList.Get() };
+		m_CmdQueue->ExecuteCommandLists(1, ppCmdLists);
+		
+		// Signal once
+		const UINT64 uploadFence = ++m_GlobalFenceValue;
+		AETHER_HR_ASSERT(m_CmdQueue->Signal(m_Fence.Get(), uploadFence));
+		
+		// Wait once
+		AETHER_HR_ASSERT(m_Fence->SetEventOnCompletion(uploadFence, m_FenceEvent));
+		WaitForSingleObject(m_FenceEvent, INFINITE);
+	}
+
 
 	AETHER_RESULT RendererDX12::CreateDevice()
 	{
@@ -464,7 +512,7 @@ namespace Aether
 		return ar;
 	}
 
-	AETHER_RESULT RendererDX12::CreatePipelines()
+	AETHER_RESULT RendererDX12::CreateRootSignature()
 	{
 		AETHER_RESULT ar = AETHER_OK;
 
@@ -477,27 +525,86 @@ namespace Aether
 		AETHER_HR_ASSERT(D3D12SerializeRootSignature(&rootDesc, D3D_ROOT_SIGNATURE_VERSION_1, &signature, nullptr));
 
 		AETHER_HR_ASSERT(m_Device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&m_RootSig)));
-
-		// Compile shaders for this pipeline!
-		AETHER_ASSERT(CompileShaders());
-
-		// Build PSO
-		AETHER_ASSERT(CreateInputLayoutAndPSO());
-
-		AETHER_ASSERT(CreateAndUploadGeo());
-
-		// Last bit of additional setup - define our viewport and scissor rects. This needs re-calling on resize!
-		UpdateViewportAndScissor();
-
 		return ar;
 	}
 
-	AETHER_RESULT RendererDX12::CompileShaders()
+	ShaderDX12* RendererDX12::LoadShader(ShaderHandle handle)
 	{
-		AETHER_RESULT ar = AETHER_OK;
-		m_VS = new ShaderDX12(L"VertexShader.hlsl", "vs_5_0");
-		m_PS = new ShaderDX12(L"PixelShader.hlsl", "ps_5_0");
-		return ar;
+		// See if this shader was already compiled, return it if so
+		auto it = m_ShaderCache.find(handle);
+		if (it != m_ShaderCache.end())
+			return it->second;
+
+		// Doesn't exist yet, let's build it
+		const ShaderDesc& desc = ShaderLibrary::Get().GetDesc(handle);
+
+		// DX12 is weird and windows-y so it wants a wstring
+		std::wstring windowsPath = ToWide(ResolveDirectXShaderPath(desc.m_Name));
+		ShaderDX12* shader = new ShaderDX12(windowsPath, ShaderStageToCompilerString(desc.m_ShaderStage));
+
+		// Register shader in DX12 cache
+		m_ShaderCache[handle] = shader;
+
+		return shader;
+	}
+
+	std::vector<D3D12_INPUT_ELEMENT_DESC> RendererDX12::TranslateLayout(const VertexLayout& layout)
+	{
+		std::vector<D3D12_INPUT_ELEMENT_DESC> outLayout;
+		size_t layoutSize = layout.m_Attributes.size();
+		outLayout.reserve(layoutSize);
+
+		// Iterate through each attribute (position, colour, normal, etc) and push back into our output layout
+		for (uint32_t i = 0u; i < layoutSize; ++i)
+		{
+			const VertexAttribute& attr = layout.m_Attributes[i];
+
+			D3D12_INPUT_ELEMENT_DESC desc
+			{
+				.SemanticName = ToDirectXSemantic(attr.m_Name),
+				.SemanticIndex = 0,
+				.Format = ToDXGIFormat(attr.m_Format),
+				.InputSlot = 0,
+				.AlignedByteOffset = attr.m_Offset,
+				.InputSlotClass = D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,
+				.InstanceDataStepRate = 0
+			};
+
+			outLayout.push_back(desc);
+		}
+
+		return outLayout;
+	}
+
+	void RendererDX12::CreatePSO(const D3D12_SHADER_BYTECODE& vs, const D3D12_SHADER_BYTECODE& ps, const VertexLayout& layout)
+	{
+		// Translate from our API agnostic vertex layout into something nice for DX12
+		std::vector<D3D12_INPUT_ELEMENT_DESC> inputs = TranslateLayout(layout);
+
+		// Use this to create a single input layout desc for the pso
+		D3D12_INPUT_LAYOUT_DESC inputDesc =
+		{
+			.pInputElementDescs = inputs.data(),
+			.NumElements = static_cast<UINT>(inputs.size())
+		};
+
+		D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
+		psoDesc.InputLayout = inputDesc;
+		psoDesc.pRootSignature = m_RootSig;
+		psoDesc.VS = vs;
+		psoDesc.PS = ps;
+		psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+		psoDesc.RTVFormats[0] = m_kRTVFormat;
+		psoDesc.SampleDesc = m_SampleDesc;										// Same sample desc as swapchain
+		psoDesc.SampleMask = 0xf;												// Point sampling
+		psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);		// Lazy default init, good enough for triangle!
+		psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);					// Lazy default init, good enough for triangle!
+		psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);  // Depth buffer enable!
+		psoDesc.DSVFormat = m_kDSVFormat;										// Depth buffer format!
+		psoDesc.NumRenderTargets = 1;
+
+		AETHER_HR_ASSERT(m_Device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_PipelineStateObject)));
+
 	}
 
 	AETHER_RESULT RendererDX12::CreateInputLayoutAndPSO()
@@ -598,10 +705,6 @@ namespace Aether
 		// Upload the buffer to the GPU now, the buffer helper will internally work out if this will map the resource directly or copy to the default heap of the GPU
 		m_VertexBuffer->Upload(vbDesc.m_Data, vbDesc.m_SizeInBytes);
 		
-		// Transition the vertex buffer data from copy destination state to vertex buffer state
-		CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_VertexBuffer->GetResource(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
-		m_CmdList->ResourceBarrier(1, &barrier);
-
 		// Repeat for indices
 		BufferDesc ibDesc =
 		{
@@ -614,21 +717,6 @@ namespace Aether
 		m_IndexBuffer = static_cast<BufferDX12*>(CreateBuffer(ibDesc));
 		m_IndexBuffer->SetName(L"Simple AHH Index Buffer");
 		m_IndexBuffer->Upload(ibDesc.m_Data, ibDesc.m_SizeInBytes);
-		barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_IndexBuffer->GetResource(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_INDEX_BUFFER);
-		m_CmdList->ResourceBarrier(1, &barrier);
-
-		// Execute immediately here to send our geo buffers up one time
-		m_CmdList->Close();
-		ID3D12CommandList* ppCmdLists[] = { m_CmdList.Get() };
-		m_CmdQueue->ExecuteCommandLists(1, ppCmdLists);
-
-		// Signal once
-		const UINT64 uploadFence = ++m_GlobalFenceValue;
-		AETHER_HR_ASSERT(m_CmdQueue->Signal(m_Fence.Get(), uploadFence));
-
-		// Wait once
-		AETHER_HR_ASSERT(m_Fence->SetEventOnCompletion(uploadFence, m_FenceEvent));
-		WaitForSingleObject(m_FenceEvent, INFINITE);
 
 		// Finally, create VB and IB views for geo.
 		m_VertBufView.BufferLocation = m_VertexBuffer->GetResource()->GetGPUVirtualAddress();

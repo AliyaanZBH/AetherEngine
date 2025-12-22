@@ -40,6 +40,10 @@ namespace Aether
 		return ret;
 	}
 
+	void RendererDX11::CreatePipeline(const PipelineDesc& desc)
+	{
+	}
+
 	void RendererDX11::Render()
 	{} // Currently not rendering any geometry
 

@@ -7,7 +7,6 @@
 
 namespace Aether
 {
-
 	BufferOpenGL::BufferOpenGL(const BufferDesc& desc)
 		: Buffer(desc)
 	{
@@ -26,5 +25,4 @@ namespace Aether
 	{
 		glNamedBufferSubData(m_Handle, offset, size, data);
 	}
-
 }

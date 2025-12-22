@@ -14,10 +14,13 @@ namespace Aether
 	public:
 		// Main start up function
 		AETHER_RESULT Initialize(IWindow& window) override;
+		void CreatePipeline(const PipelineDesc& desc) override;
+
 		void ClearFrame() override;
 		void Render() override;
 		void Render(VertexBufferView* vbv, IndexBufferView* ibv) override;
 		void Present() override;
+
 		void Resize(int newWidth, int newHeight) override {}	// Empty for now since GLFW seemingly handles this for us!
 		void Terminate() override;
 
@@ -35,6 +38,8 @@ namespace Aether
 		unsigned int m_VertexAttributeArray;
 
 		ShaderOpenGL* m_Shader = nullptr;
+		std::unordered_map<ShaderHandle, ShaderOpenGL*> m_ShaderCache;
+
 		BufferOpenGL* m_VertexBuffer = nullptr;
 		BufferOpenGL* m_IndexBuffer = nullptr;
 	};

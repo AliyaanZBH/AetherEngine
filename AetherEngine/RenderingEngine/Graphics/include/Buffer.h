@@ -10,13 +10,14 @@ namespace Aether
 {
 	enum class eBufferType : uint16_t
 	{
-		kNone = 0,
-		kVertex = 1 << 0,
-		kIndex = 1 << 1,
-		kUniform = 1 << 2,
-		kStorage = 1 << 3,
-		kTransferSrc = 1 << 4,
-		kTransferDst = 1 << 5
+		kNone,
+		kVertex,
+		kIndex ,
+		kConstant,
+		kUniform, 
+		kStorage, 
+		kTransferSrc,
+		kTransferDst
 	};
 
 	struct BufferDesc

@@ -1,3 +1,4 @@
+#include "CoreApp.h"
 //===============================================================================
 // desc: The core engine app that facilitates general use for any application made with Aether!
 // auth: Aliyaan Zulfiqar
@@ -29,6 +30,7 @@
 #include "ImGuiLayer.h"
 #include "Input.h"
 #include "GraphicsContext.h"
+#include "Pipeline.h"
 //===============================================================================
 namespace Aether
 {
@@ -98,26 +100,8 @@ namespace Aether
 		// Init rendering API - catch errors out here with assert
 		AETHER_ASSERT(m_Renderer->Initialize(*m_Window));
 
-        // Define what layout we want our renderer to use and create pipelines for
-        VertexLayout layout;
-        layout.m_Stride = sizeof(Vertex);
-        eVertexAttributeFormat vec4Format = eVertexAttributeFormat::kFloat4;
-
-        VertexAttribute aPos
-        {
-            .m_Name = "Position",
-            .m_Format = vec4Format,
-            .m_Size = VertexAttributeSize(vec4Format),
-            .m_ComponentCount = VertexAttributeComponentCount(vec4Format),
-            .m_Offset = 0,
-            .m_Location = 0
-        };
-
-        layout.m_Attributes =
-        {
-            aPos,
-            { "Colour", vec4Format, VertexAttributeSize(vec4Format),VertexAttributeComponentCount(vec4Format), offsetof(Vertex, m_Pos),  1}
-        };
+        // Create default pipeline for the renderer
+        CreatePipeline();
 
 		// Setup ImGui layer for the renderer too
 		m_ImGuiLayer = new ImGuiLayer(m_CurrentRenderAPI);
@@ -139,6 +123,50 @@ namespace Aether
     {
         m_LayerStack.PushOverlay(overlay);
         overlay->OnAttach();
+    }
+
+    void Application::CreatePipeline()
+    {
+        // Define what layout we want our renderer to use and create pipelines for
+        VertexLayout layout;
+        layout.m_Stride = sizeof(Vertex);
+
+        VertexAttribute aPos
+        {
+            .m_Name = eShaderSemantic::kPosition,
+            .m_Format = eVertexAttributeFormat::kFloat4,
+            .m_Offset = 0
+        };
+
+        layout.m_Attributes =
+        {
+            aPos,
+            { eShaderSemantic::kColour, eVertexAttributeFormat::kFloat4,offsetof(Vertex, m_Colour) }
+        };
+
+        // Grab shader library and register shaders or grab handle in the case that they've already been registered (not the case here, but could be when called later!)
+        ShaderLibrary& shaders = ShaderLibrary::Get();
+        ShaderDesc vsDesc
+        {
+            .m_Name = "VertexShader",
+            .m_ShaderStage = eShaderStage::kVertex
+        };
+        ShaderHandle vsHandle = shaders.Register("DefaultVertexShader", vsDesc);
+
+        ShaderDesc psDesc
+        {
+            .m_Name = "PixelShader",
+            .m_ShaderStage = eShaderStage::kPixel
+        };
+        ShaderHandle psHandle = shaders.Register("DefaultIndexShader", psDesc);
+
+        PipelineDesc pipelineDesc =
+        {
+            .m_VertexShader = vsHandle,
+            .m_PixelShader = psHandle,
+            .m_Layout = layout
+        };
+        m_Renderer->CreatePipeline(pipelineDesc);
     }
 
     bool Application::OnWindowResize(WindowResizeEvent& e)

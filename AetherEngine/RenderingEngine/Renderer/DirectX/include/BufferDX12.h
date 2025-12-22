@@ -23,6 +23,8 @@ namespace Aether
 		eBufferType GetType() const override { return m_Desc.m_Type; }
 
 	private:
+		D3D12_RESOURCE_STATES GetFinalState(eBufferType type) const;
+
 		ID3D12Device* m_Device = nullptr;
 		ID3D12GraphicsCommandList* m_CmdList = nullptr;
 		ID3D12Resource* m_Resource = nullptr;

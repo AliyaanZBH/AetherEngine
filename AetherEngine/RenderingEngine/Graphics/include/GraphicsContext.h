@@ -4,6 +4,8 @@
 // auth: Aliyaan Zulfiqar
 //===============================================================================
 #include "Core.h"
+#include "AetherUtils.h"
+#include "Shader.h"
 #include "glm/vec4.hpp" // Include is needed here so that the app can see GLM
 //===============================================================================
 
@@ -27,12 +29,9 @@ namespace Aether
 
     struct VertexAttribute
     {
-        std::string             m_Name;
+		eShaderSemantic         m_Name;				// Position, Colour, etc.
         eVertexAttributeFormat  m_Format;           // e.g., Float3
-        uint32_t                m_Size;             // sizeof(format) * ComponentCount
-        uint32_t                m_ComponentCount;   // 3 for vec3
         uint32_t                m_Offset;           // Offset in bytes from vertex start
-        uint8_t                 m_Location;         // Shader binding location
     };
 
 	static uint32_t VertexAttributeSize(eVertexAttributeFormat type)

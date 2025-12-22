@@ -106,7 +106,7 @@ set(INCLUDE
     # Miscellaneous third-party includes
     ThirdParty/dx12Helper/include/d3dx12.h
  
- "Graphics/include/Pipeline.h")
+ "Graphics/include/Pipeline.h" "Renderer/DirectX/include/ImGuiDX12.h")
 
 # Specify shaders
 set(HLSL_SHADER_FILES

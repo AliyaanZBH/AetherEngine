@@ -13,8 +13,8 @@ namespace Aether
 	public:
 		ShaderOpenGL(const std::string& vertSrc, const std::string& fragSrc);
 
-		void Bind() override;
-		void Unbind() override;
+		void Bind();
+		void Unbind();
 	private:
 		GLuint m_GLProgram;
 	};
