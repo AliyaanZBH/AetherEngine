@@ -13,17 +13,76 @@ public:
 
 	void OnAttach() override
 	{
+		// Create vertex - position, colour
+		Aether::Vertex verts[] =
+		{
+			{ {	-0.75f, 0.f,	0.f,	1.f	}, {1.f, 0.f, 0.f, 1.f} },
+			{ {	-0.5f,	0.f,	0.f,	1.f	}, {0.f, 1.f, 0.f, 1.f} },
+			{ {	-0.6f,  0.5f,	0.f,	1.f	}, {0.f, 0.f, 1.f, 1.f} }
+		};
+
+		//float verts[] =
+		//{
+		//	-0.75f, 0.f, 0.f,
+		//	-0.5f,	0.f, 0.f,
+		//	-0.6f,  0.5f, 0.f
+		//};
+		Aether::BufferDesc vbDesc
+		{
+			.m_SizeInBytes = sizeof(verts),
+			.m_Type = Aether::eBufferType::kVertex,
+			.m_CPUVisible = true
+		};
+		
+
+		m_VertexBuffer = Aether::Application::Get().GetRenderer().CreateBuffer(vbDesc);
+		m_VertexBuffer->Upload(verts, sizeof(verts));
+
+		m_VertBufView.m_Buffer = m_VertexBuffer;
+		m_VertBufView.m_Stride = sizeof(Aether::Vertex);
+		m_VertBufView.m_Offset = 0;
+
+
+		unsigned int indices[3] = { 0, 1, 2 };
+
+		Aether::BufferDesc ibDesc
+		{
+			.m_Data = indices,
+			.m_SizeInBytes = sizeof(indices),
+			.m_Type = Aether::eBufferType::kIndex,
+			.m_CPUVisible = true
+		};
+
+
+		m_IndexBuffer = Aether::Application::Get().GetRenderer().CreateBuffer(ibDesc);
+		m_IndexBuffer->Upload(indices, sizeof(indices));
+
+		m_IndBufView.m_Buffer = m_IndexBuffer;
+		m_IndBufView.m_Count = 3;
+		m_IndBufView.m_IndexSize = sizeof(unsigned int);
+		m_IndBufView.m_Offset = 0;
 
 	}
 
-	void OnUpdate() override 
+	void OnEvent(Aether::Event& event) override { /*AETHER_TRACE("{0}", event);*/ }
+
+	void Update() override 
 	{
 		if (Aether::Input::IsKeyPressed(Aether::KeyCode::kSpace))
 			AETHER_INFO("Space is pressed! (Our polling!)"); 
 	}
-	void OnEvent(Aether::Event& event) override { AETHER_TRACE("{0}", event); }
+
+	void Render() override
+	{
+		Aether::Application::Get().GetRenderer().Render(&m_VertBufView, &m_IndBufView);
+	}
+
 private:
-	//Buffer* m_VertexBuffer;
+	Aether::Buffer* m_VertexBuffer;
+	Aether::VertexBufferView m_VertBufView;
+	Aether::Buffer* m_IndexBuffer;
+	Aether::IndexBufferView m_IndBufView;
+
 };
 
 class AetherGame : public Aether::Application

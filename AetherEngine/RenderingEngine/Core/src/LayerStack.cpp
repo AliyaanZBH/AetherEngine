@@ -31,7 +31,13 @@ namespace Aether
 	void LayerStack::UpdateLayers()
 	{
 		for (Layer* layer : m_Layers)
-			layer->OnUpdate();
+			layer->Update();
+	}
+
+	void LayerStack::RenderLayers()
+	{
+		for (Layer* layer : m_Layers)
+			layer->Render();
 	}
 
 	// Push layer to end of the layer section of our list, just in front of the first overlay.

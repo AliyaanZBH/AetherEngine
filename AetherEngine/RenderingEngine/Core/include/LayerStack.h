@@ -14,7 +14,9 @@ namespace Aether
 		~LayerStack();
 
 		void HandleEvent(Event& e);
+
 		void UpdateLayers();
+		void RenderLayers();
 
 		void PushLayer(Layer* layer);
 		void PushOverlay(Layer* overlay);

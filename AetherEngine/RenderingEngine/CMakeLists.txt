@@ -106,7 +106,7 @@ set(INCLUDE
     # Miscellaneous third-party includes
     ThirdParty/dx12Helper/include/d3dx12.h
  
-)
+ "Graphics/include/Pipeline.h")
 
 # Specify shaders
 set(HLSL_SHADER_FILES
@@ -178,13 +178,15 @@ endif()
 
 add_subdirectory(ThirdParty/spdlog EXCLUDE_FROM_ALL)
 add_subdirectory(ThirdParty/glad)
-add_subdirectory(ThirdParty/glm EXCLUDE_FROM_ALL)
+add_subdirectory(ThirdParty/glm)
 add_subdirectory(ThirdParty/imgui-1.92.5)
 
 # Link third party modules to renderer
 target_link_libraries(AetherRenderer PRIVATE glfw)
 target_link_libraries(AetherRenderer PRIVATE glad)
-target_link_libraries(AetherRenderer PRIVATE glm::glm-header-only)
+
+# These ones are public since the application will want to be able to do some maths or logging or create ImGui windows for use in the editor.
+target_link_libraries(AetherRenderer PUBLIC glm::glm-header-only)
 target_link_libraries(AetherRenderer PUBLIC spdlog::spdlog_header_only)
 target_link_libraries(AetherRenderer PUBLIC imgui)
 

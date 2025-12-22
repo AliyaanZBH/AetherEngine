@@ -7,6 +7,7 @@
 #include "Log.h"
 #include "Input.h"
 #include "Buffer.h"
+#include "GraphicsContext.h"
 
 // This is our main.cpp equivalent with extra setup due to being a DLL
 #include "EntryPoint.h"

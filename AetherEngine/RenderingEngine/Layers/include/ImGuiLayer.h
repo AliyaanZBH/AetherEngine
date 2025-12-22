@@ -37,7 +37,7 @@ namespace Aether
 
 		void OnAttach() override;
 		void OnDetach() override;
-		void OnUpdate() override;
+		void Update() override;
 		void OnEvent(Event& event) override;
 
 		void Begin();

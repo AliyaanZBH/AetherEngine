@@ -7,12 +7,12 @@
 
 
 // Re-usable vertex attribute struct
-struct Vertex
-{
-	Vertex(float x, float y, float z, float r, float g, float b, float a) : pos(x, y, z), colour(r, g, b, a) {}
-	DirectX::XMFLOAT3 pos;
-	DirectX::XMFLOAT4 colour;
-};
+//struct Vertex
+//{
+//	Vertex(float x, float y, float z, float r, float g, float b, float a) : pos(x, y, z), colour(r, g, b, a) {}
+//	DirectX::XMFLOAT3 pos;
+//	DirectX::XMFLOAT4 colour;
+//};
 
 // [AZB]: I didn't want to have to keep copy and pasting shader files into all the different directories, so I wrote this in order to get shader files from a single common folder
 class CustomIncludeHandler : public ID3DInclude

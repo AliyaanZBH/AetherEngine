@@ -18,6 +18,7 @@ namespace Aether
 		AETHER_RESULT Initialize(IWindow& window) override;
 		void ClearFrame() override;
 		void Render() override;
+		void Render(VertexBufferView* vbv, IndexBufferView* ibv) override;
 		void Present() override;
 
 		void Resize(int newWidth, int newHeight) override;
@@ -62,6 +63,9 @@ namespace Aether
 
 		// Extra Methods to help with rendering
 		//
+
+		D3D12_VERTEX_BUFFER_VIEW CreateVertBufView(VertexBufferView* vbv);
+		D3D12_INDEX_BUFFER_VIEW CreateIdxBufView(IndexBufferView* ibv);
 
 		AETHER_RESULT CleanupRenderBuffers();
 

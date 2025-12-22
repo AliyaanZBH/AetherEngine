@@ -31,15 +31,31 @@ namespace Aether
 		AETHER_CORE_INFO("OpenGL Info:\n    Vendor: {0}\n    Device: {1}\n    GL Version & Driver: {2}", vendorString, rendererString, versionString);
 
 		// Create vertex buffer and array
-		glGenVertexArrays(1, &m_VertexArray);
-		glBindVertexArray(m_VertexArray);
+		glCreateVertexArrays(1, &m_VertexAttributeArray);
+		// Attrib 0: Position
+		glEnableVertexArrayAttrib(m_VertexAttributeArray, 0);
+		glVertexArrayAttribFormat(
+			m_VertexAttributeArray,
+			0,                  // attrib index
+			4,                  // vec4
+			GL_FLOAT,
+			GL_FALSE,
+			0                   // offset within vertex
+		);
+		glVertexArrayAttribBinding(m_VertexAttributeArray, 0, 0);
+
+		// Binding slot 0 defines stride
+		glVertexArrayBindingDivisor(m_VertexAttributeArray, 0, 0);
+
+		//glGenVertexArrays(1, &m_VertexArray);
+		//glBindVertexArray(m_VertexAttributeArray);
 
 		// Create geometry itself - centered tri for now
-		float verts[3 * 3]
+		float verts[4 * 3]
 		{
-			-0.5f,	-0.5f,	0.f,
-			0.5f,	-0.5f,	0.f,
-			0.f,	0.5f,	0.f
+			-0.5f,	-0.5f,	0.f, 1.f,
+			0.5f,	-0.5f,	0.f, 1.f,
+			0.f,	0.5f,	0.f, 1.f
 		};
 
 		// Create vertex buffer here with our fancy new buffer desc
@@ -59,8 +75,8 @@ namespace Aether
 		glBindBuffer(GL_ARRAY_BUFFER, m_VertexBuffer->GetHandle());
 
 		// Enable vert attributes
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
-		glEnableVertexAttribArray(0);
+		//glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
+		//glEnableVertexAttribArray(0);
 
 		// Create indices and repeat
 		unsigned int indices[3] = { 0, 1, 2 };
@@ -109,12 +125,40 @@ namespace Aether
 
 		return ar;
 	}
-	
+
 	void RendererOpenGL::Render()
 	{
 		// Bind and draw our geo!
-		glBindVertexArray(m_VertexArray);
+		glBindVertexArray(m_VertexAttributeArray);
+		
+		// Bind vertex buffer to binding slot 0
+		glBindVertexBuffer(
+			0,                                  // binding index
+			m_VertexBuffer->GetHandle(),
+			0,
+			4 * sizeof(float)
+		);
+
+		// Bind index buffer (this IS VAO state, unavoidable)
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_IndexBuffer->GetHandle());
 		glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, nullptr);
+	}
+
+	void RendererOpenGL::Render(VertexBufferView* vbv, IndexBufferView* ibv)
+	{
+		// Need to rebind vertex array as it is still pointing at the old set of geometry!
+		glBindVertexArray(m_VertexAttributeArray);
+		// Bind vertex buffer to binding slot 0
+		glBindVertexBuffer(
+			0,                                  // binding index
+			static_cast<BufferOpenGL*>(vbv->m_Buffer)->GetHandle(),
+			vbv->m_Offset,
+			vbv->m_Stride
+		);
+
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, static_cast<BufferOpenGL*>(ibv->m_Buffer)->GetHandle());
+		glDrawElements(GL_TRIANGLES, ibv->m_Count, GL_UNSIGNED_INT, nullptr);
+
 	}
 	
 	void RendererOpenGL::Present()

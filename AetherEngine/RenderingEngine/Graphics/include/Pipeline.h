@@ -1,19 +1,15 @@
-#pragma once
 //===============================================================================
-// desc: A small utility class to handle shaders across rendering APIs (GLSL & HLSL)
+// desc: A small utility class to handle pipeline creation across rendering APIs (GLSL & HLSL)
 // auth: Aliyaan Zulfiqar
 //===============================================================================
-#include "Core.h"
+#include "Shader.h"
+#include "GraphicsContext.h"
 //===============================================================================
 
 namespace Aether
 {
-	class AETHER_API Shader
+	struct PipelineDesc
 	{
-	public:
-		virtual ~Shader() = default;
-
-		virtual void Bind() = 0;
-		virtual void Unbind() = 0;
+		
 	};
 }

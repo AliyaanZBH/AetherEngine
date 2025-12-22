@@ -28,6 +28,7 @@
 #include "AppEvent.h"
 #include "ImGuiLayer.h"
 #include "Input.h"
+#include "GraphicsContext.h"
 //===============================================================================
 namespace Aether
 {
@@ -68,19 +69,25 @@ namespace Aether
             case eRenderAPI::kOpenGL:
             {
                 m_Renderer = std::make_unique<RendererOpenGL>();
-
                 break;
             }
+
+            #ifdef USE_DX11
             case eRenderAPI::kDX11:
             {
                 m_Renderer = std::make_unique<RendererDX11>();
                 break;
             }
+            #endif
+
+            #ifdef USE_DX12
             case eRenderAPI::kDX12:
             {
                 m_Renderer = std::make_unique<RendererDX12>();
                 break;
             }
+            #endif
+
             default:
             {
                 ar = AETHER_FAIL;
@@ -90,6 +97,27 @@ namespace Aether
 
 		// Init rendering API - catch errors out here with assert
 		AETHER_ASSERT(m_Renderer->Initialize(*m_Window));
+
+        // Define what layout we want our renderer to use and create pipelines for
+        VertexLayout layout;
+        layout.m_Stride = sizeof(Vertex);
+        eVertexAttributeFormat vec4Format = eVertexAttributeFormat::kFloat4;
+
+        VertexAttribute aPos
+        {
+            .m_Name = "Position",
+            .m_Format = vec4Format,
+            .m_Size = VertexAttributeSize(vec4Format),
+            .m_ComponentCount = VertexAttributeComponentCount(vec4Format),
+            .m_Offset = 0,
+            .m_Location = 0
+        };
+
+        layout.m_Attributes =
+        {
+            aPos,
+            { "Colour", vec4Format, VertexAttributeSize(vec4Format),VertexAttributeComponentCount(vec4Format), offsetof(Vertex, m_Pos),  1}
+        };
 
 		// Setup ImGui layer for the renderer too
 		m_ImGuiLayer = new ImGuiLayer(m_CurrentRenderAPI);
@@ -124,7 +152,7 @@ namespace Aether
     void Application::OnEvent(Event& event)
     {
         // Just print the event for now
-        AETHER_CORE_TRACE("{0}", event);
+       // AETHER_CORE_TRACE("{0}", event);
 
         // Handle window resize in DirectX
         EventDispatcher dispatcher(event);
@@ -155,6 +183,8 @@ namespace Aether
 
             // Update our layers! Eventually, the renderer will tie in to this aswell as it will render each layer. ImGui renders here too, which is why we clear frame and begin earlier.
             m_LayerStack.UpdateLayers();
+
+            m_LayerStack.RenderLayers();
 
             // Draw anything else we want!
             m_Renderer->Render();

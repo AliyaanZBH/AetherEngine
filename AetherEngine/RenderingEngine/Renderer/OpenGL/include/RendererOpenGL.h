@@ -16,6 +16,7 @@ namespace Aether
 		AETHER_RESULT Initialize(IWindow& window) override;
 		void ClearFrame() override;
 		void Render() override;
+		void Render(VertexBufferView* vbv, IndexBufferView* ibv) override;
 		void Present() override;
 		void Resize(int newWidth, int newHeight) override {}	// Empty for now since GLFW seemingly handles this for us!
 		void Terminate() override;
@@ -31,7 +32,7 @@ namespace Aether
 	private:
 		GLFWwindow* m_pWindow;
 
-		unsigned int m_VertexArray;
+		unsigned int m_VertexAttributeArray;
 
 		ShaderOpenGL* m_Shader = nullptr;
 		BufferOpenGL* m_VertexBuffer = nullptr;

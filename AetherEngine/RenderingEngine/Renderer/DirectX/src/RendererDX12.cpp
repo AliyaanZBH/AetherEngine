@@ -7,6 +7,7 @@
 //===============================================================================
 #include "RendererDX12.h"
 #include "D3DUtils.h"
+#include "GraphicsContext.h"
 //===============================================================================
 namespace Aether
 {
@@ -188,7 +189,16 @@ namespace Aether
 		m_CmdList->IASetIndexBuffer(&m_IdxBufView);                                 // Set IB
 		m_CmdList->DrawIndexedInstanced(6, 1, 0, 0, 0);                             // Draw 2 triangles (draw 1 instance of 2 triangles)
 		m_CmdList->DrawIndexedInstanced(6, 1, 0, 4, 0);                             // Draw second quad
+	}
 
+	void RendererDX12::Render(VertexBufferView* vbv, IndexBufferView* ibv)
+	{
+		D3D12_VERTEX_BUFFER_VIEW dxVBView = CreateVertBufView(vbv);
+		D3D12_INDEX_BUFFER_VIEW dxIBView = CreateIdxBufView(ibv);
+
+		m_CmdList->IASetVertexBuffers(0, 1, &dxVBView);
+		m_CmdList->IASetIndexBuffer(&dxIBView);
+		m_CmdList->DrawIndexedInstanced(ibv->m_Count, 1, 0, 0, 0);
 	}
 
 	void RendererDX12::Present()
@@ -294,6 +304,32 @@ namespace Aether
 		return AETHER_OK;
 	}
 
+
+	D3D12_VERTEX_BUFFER_VIEW RendererDX12::CreateVertBufView(VertexBufferView* vbv)
+	{
+		BufferDX12* dxBuf = static_cast<BufferDX12*>(vbv->m_Buffer);
+
+		D3D12_VERTEX_BUFFER_VIEW dxVBView
+		{
+			.BufferLocation = dxBuf->GetResource()->GetGPUVirtualAddress() + vbv->m_Offset,
+			.SizeInBytes = (UINT)dxBuf->GetSize(),
+			.StrideInBytes = sizeof(Vertex)
+		};
+		return dxVBView;
+	}
+
+	D3D12_INDEX_BUFFER_VIEW RendererDX12::CreateIdxBufView(IndexBufferView* ibv)
+	{
+		BufferDX12* dxBuf = static_cast<BufferDX12*>(ibv->m_Buffer);
+
+		D3D12_INDEX_BUFFER_VIEW dxIBView
+		{
+			.BufferLocation = dxBuf->GetResource()->GetGPUVirtualAddress() + ibv->m_Offset,
+			.SizeInBytes = (UINT)dxBuf->GetSize(),
+			.Format = DXGI_FORMAT_R32_UINT
+		};
+		return dxIBView;
+	}
 
 	AETHER_RESULT RendererDX12::CleanupRenderBuffers()
 	{
@@ -471,7 +507,7 @@ namespace Aether
 		// Create input layout for our input assembler so it knows how to read our vert attributes
 		D3D12_INPUT_ELEMENT_DESC inputLayout[] =
 		{
-			{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
+			{"POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
 			{"COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0}
 		};
 
@@ -524,16 +560,16 @@ namespace Aether
 		Vertex verts[] =
 		{
 			// First Quad
-			{ -0.5f,  0.5f, 0.5f,   1.0f, 0.f, 0.f, 1.f }, // Top left
-			{  0.5f, -0.5f, 0.5f,   0.f, 1.0f, 0.f, 1.f }, // Bottom right
-			{ -0.5f, -0.5f, 0.5f,   0.f, 0.f, 1.0f, 1.f }, // Bottom left
-			{  0.5f,  0.5f, 0.5f,   1.f, 1.0f, 1.f, 1.f },  // Top right
+			{ {	-0.5f,  0.5f, 0.5f, 1.f	},   { 1.f, 0.f, 0.f, 1.f } }, // Top left
+			{ {	 0.5f, -0.5f, 0.5f, 1.f	},   { 0.f, 1.f, 0.f, 1.f } }, // Bottom right
+			{ {	-0.5f, -0.5f, 0.5f, 1.f	},   { 0.f, 0.f, 1.f, 1.f } }, // Bottom left
+			{ {	 0.5f,  0.5f, 0.5f, 1.f	},   { 1.f, 1.f, 1.f, 1.f } }, // Top right
 
 			// Second Quad - flip colours
-			{ -0.75f,  0.75f, 0.7f,   1.f, 1.0f, 1.f, 1.f }, // Top left
-			{  0.0f, 0.0f, 0.7f,   0.f, 0.f, 1.0f, 1.f }, // Bottom right
-			{ -0.75f, 0.0f, 0.7f,   0.f, 1.0f, 0.f, 1.f }, // Bottom left
-			{  0.0f,  0.75f, 0.7f,   1.0f, 0.f, 0.f, 1.f }  // Top right
+			{ {	-0.75f, 0.75f,	0.7f, 1.f },   { 1.f, 1.f, 1.f, 1.f } }, // Top left
+			{ {	 0.0f,	0.0f,	0.7f, 1.f },   { 0.f, 0.f, 1.f, 1.f } }, // Bottom right
+			{ {	-0.75f, 0.0f,	0.7f, 1.f },   { 0.f, 1.f, 0.f, 1.f } }, // Bottom left
+			{ {	 0.f,  0.75f,	0.7f, 1.f },   { 1.f, 0.f, 0.f, 1.f } }  // Top right
 		};
 
 		// Indices too!

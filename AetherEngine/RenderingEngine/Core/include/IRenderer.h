@@ -11,15 +11,22 @@ namespace Aether
 {
     class Buffer;
     struct BufferDesc;
+    struct PipelineDesc;
+    struct VertexBufferView;
+    struct IndexBufferView;
 
     class AETHER_API IRenderer {
     public:
         virtual ~IRenderer() = default;
 
         virtual AETHER_RESULT Initialize(IWindow& window) = 0;
+       // virtual void CreatePipeline(const PipelineDesc& desc) = 0;
+
         virtual void ClearFrame() = 0;
         virtual void Render() = 0;
+        virtual void Render(VertexBufferView* vbv, IndexBufferView* ibv) {};
         virtual void Present() = 0;
+
         virtual void Resize(int newWidth, int newHeight) = 0;
         virtual void Terminate() = 0;
 
