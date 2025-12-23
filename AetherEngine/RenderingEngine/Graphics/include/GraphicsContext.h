@@ -12,7 +12,7 @@
 namespace Aether
 {
 	// Base Vertex data structs
-	struct Vertex
+	struct AETHER_API Vertex
 	{
 		glm::vec4 m_Pos;
 		glm::vec4 m_Colour;

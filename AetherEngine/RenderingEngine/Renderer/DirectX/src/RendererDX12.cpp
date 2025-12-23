@@ -226,9 +226,9 @@ namespace Aether
 		m_CmdList->RSSetScissorRects(1, &m_Scissor);                                // Set the scissor rects
 		m_CmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);     // Set the primitive topology
 		m_CmdList->IASetVertexBuffers(0, 1, &dxVBView);
-		//m_CmdList->IASetIndexBuffer(&dxIBView);
-		//m_CmdList->DrawIndexedInstanced(ibv->m_Count, 1, 0, 0, 0);
-		m_CmdList->DrawInstanced(3, 1, 0, 0);
+		m_CmdList->IASetIndexBuffer(&dxIBView);
+		m_CmdList->DrawIndexedInstanced(ibv->m_Count, 1, 0, 0, 0);
+		//m_CmdList->DrawInstanced(3, 1, 0, 0);
 	}
 
 	void RendererDX12::Present()
@@ -588,6 +588,10 @@ namespace Aether
 			.NumElements = static_cast<UINT>(inputs.size())
 		};
 
+		D3D12_RASTERIZER_DESC rasterDesc = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
+		//rasterDesc.CullMode = D3D12_CULL_MODE_NONE;
+		//rasterDesc.FrontCounterClockwise = TRUE;
+
 		D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
 		psoDesc.InputLayout = inputDesc;
 		psoDesc.pRootSignature = m_RootSig;
@@ -597,7 +601,7 @@ namespace Aether
 		psoDesc.RTVFormats[0] = m_kRTVFormat;
 		psoDesc.SampleDesc = m_SampleDesc;										// Same sample desc as swapchain
 		psoDesc.SampleMask = 0xf;												// Point sampling
-		psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);		// Lazy default init, good enough for triangle!
+		psoDesc.RasterizerState = rasterDesc;									// Lazy default init, good enough for triangle!
 		psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);					// Lazy default init, good enough for triangle!
 		psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);  // Depth buffer enable!
 		psoDesc.DSVFormat = m_kDSVFormat;										// Depth buffer format!

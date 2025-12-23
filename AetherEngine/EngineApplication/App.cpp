@@ -14,14 +14,22 @@ public:
 	void OnAttach() override
 	{
 		// Create vertex - position, colour
-		static Aether::Vertex appVerts[] =
+		Aether::Vertex appVerts[] =
 		{
-			{ {	-0.75f, 0.f,	1.f,	1.f	}, {1.f, 0.f, 0.f, 1.f} },
-			{ {	-0.5f,	0.f,	1.f,	1.f	}, {0.f, 1.f, 0.f, 1.f} },
-			{ {	-0.6f,  0.5f,	1.f,	1.f	}, {0.f, 0.f, 1.f, 1.f} }
+			{ {	-0.75f, 0.f,	0.5f,	1.f	}, {1.f, 0.f, 0.f, 1.f} },	// Bottom Left
+			{ {	-0.6f,  0.5f,	0.5f,	1.f	}, {0.f, 0.f, 1.f, 1.f} },	// Top (and to the right slightly)
+			{ {	-0.5f,	0.f,	0.5f,	1.f	}, {0.f, 1.f, 0.f, 1.f} }	// Bottom Right
 		};
+		// Clockwise verts! Clockwise winding order!
 
-		static Aether::BufferDesc AppVbDesc
+		//Aether::Vertex appVerts[] =
+		// {
+		//	{ { 0.0f, 0.5f, 0.5f,  1.f},   { 1.0f, 0.f, 0.f, 1.f } },
+		//	{ { 0.5f, -0.5f, 0.5f, 1.f },  { 0.f, 1.0f, 0.f, 1.f } },
+		//	{ { -0.5f, -0.5f, 0.5f, 1.f},  { 0.f, 0.f, 1.0f, 1.f } }
+		// };
+
+		Aether::BufferDesc AppVbDesc
 		{
 			.m_Data = appVerts,
 			.m_SizeInBytes = sizeof(appVerts),
@@ -51,8 +59,9 @@ public:
 
 
 		m_IndexBuffer = Aether::Application::Get().GetRenderer().CreateBuffer(ibDesc);
-		m_VertexBuffer->Upload(ibDesc.m_Data, ibDesc.m_SizeInBytes);
-		//m_IndexBuffer->Upload(ibDesc.m_Data, ibDesc.m_SizeInBytes);
+		//m_VertexBuffer->Upload(ibDesc.m_Data, ibDesc.m_SizeInBytes);	/// WHY THE FUCK DOES THIS "MAKE IT WORK"??!!
+		//m_VertexBuffer->Upload(0, 0);
+		m_IndexBuffer->Upload(ibDesc.m_Data, ibDesc.m_SizeInBytes);
 
 		//m_IndexBuffer->Upload(indices, sizeof(indices));
 

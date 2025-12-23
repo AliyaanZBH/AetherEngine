@@ -64,6 +64,8 @@ namespace Aether
 
 	void BufferDX12::Upload(const void* data, size_t size, size_t offset)
 	{
+		// Make sure to update our desc otherwise it'll be wrong and we get nothing when we go to read it!
+
 		//m_Desc.m_Data = data;
 		//memcpy(m_Desc.m_Data, data, size);
 		//m_Desc.m_SizeInBytes = size;
@@ -84,6 +86,11 @@ namespace Aether
 			subData.SlicePitch = size;
 		
 			UpdateSubresources(m_CmdList, m_Resource, m_UploadHeap, 0, 0, 1, &subData);
+			// Transition the resource now that it has been uploaded
+			D3D12_RESOURCE_STATES finalState = GetFinalState(m_Desc.m_Type);
+
+			CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_Resource, D3D12_RESOURCE_STATE_COMMON, finalState);
+			m_CmdList->ResourceBarrier(1, &barrier);
 		}
 		else
 		{
@@ -95,13 +102,7 @@ namespace Aether
 			m_Resource->Unmap(0, nullptr);
 		}
 
-		// Make sure to update our desc otherwise it'll be wrong and we get nothing when we go to read it!
-
-		// Transition the resource now that it has been uploaded
-		D3D12_RESOURCE_STATES finalState = GetFinalState(m_Desc.m_Type);
-
-		CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_Resource, D3D12_RESOURCE_STATE_COMMON, finalState);
-		m_CmdList->ResourceBarrier(1, &barrier);
+		
 
 	}
 	void BufferDX12::SetName(const WCHAR* name)

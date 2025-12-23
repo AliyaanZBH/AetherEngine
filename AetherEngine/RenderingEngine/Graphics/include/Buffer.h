@@ -20,7 +20,7 @@ namespace Aether
 		kTransferDst
 	};
 
-	struct BufferDesc
+	struct AETHER_API BufferDesc
 	{
 		const void*	m_Data = nullptr;	// Optional paramater to upload data initially, or leave it for batch uploading optimisation
 		size_t      m_SizeInBytes;
