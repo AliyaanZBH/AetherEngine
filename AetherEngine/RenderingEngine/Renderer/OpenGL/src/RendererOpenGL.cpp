@@ -4,6 +4,7 @@
 //===============================================================================
 #include "RendererOpenGL.h"
 #include "BufferOpenGL.h"
+#include "Pipeline.h"
 //===============================================================================
 
 namespace Aether
@@ -148,6 +149,14 @@ namespace Aether
 
 	void RendererOpenGL::CreatePipeline(const PipelineDesc& desc)
 	{
+		// Grab or create shaders for this openGL "Pipeline"
+		// Currently still using raw shaders from init, skip this for now
+		//
+		//ShaderOpenGL* vs = LoadShader(desc.m_VertexShader);
+		//ShaderOpenGL* ps = LoadShader(desc.m_PixelShader);
+
+		// Propogate pipeline layout though
+		//desc.m_Layout.
 	}
 
 	void RendererOpenGL::Render()

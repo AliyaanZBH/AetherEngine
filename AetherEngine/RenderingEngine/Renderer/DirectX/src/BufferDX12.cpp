@@ -12,7 +12,11 @@ namespace Aether
 		: Buffer(desc), m_Device(device), m_CmdList(cmdList)
 	{
 		CD3DX12_HEAP_PROPERTIES defaultHeapProps = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
+
+		// Check if we want to read back from this in CPU - this defines which type of upload we'll be taking. Default heap gives most bandwidth but no access, Upload is good for single writes and reads.
 		defaultHeapProps.Type = desc.m_CPUVisible ? D3D12_HEAP_TYPE_UPLOAD : D3D12_HEAP_TYPE_DEFAULT;
+		// Depending on the heap we're using, the initial state will need to be different, with upload heaps needing to start in `GENERIC_READ`, and default ones as a copy_Dest
+		D3D12_RESOURCE_STATES initialState = desc.m_CPUVisible ? D3D12_RESOURCE_STATE_GENERIC_READ : D3D12_RESOURCE_STATE_COPY_DEST;
 
 		CD3DX12_RESOURCE_DESC defaultResourceDesc = CD3DX12_RESOURCE_DESC::Buffer(desc.m_SizeInBytes);
 
@@ -20,7 +24,7 @@ namespace Aether
 			&defaultHeapProps,
 			D3D12_HEAP_FLAG_NONE,
 			&defaultResourceDesc,
-			D3D12_RESOURCE_STATE_COMMON,
+			initialState,
 			nullptr,
 			IID_PPV_ARGS(&m_Resource)
 		));
@@ -92,9 +96,6 @@ namespace Aether
 			memcpy(static_cast<uint8_t*>(mapped) + offset, m_Desc.m_Data, m_Desc.m_SizeInBytes);
 			m_Resource->Unmap(0, nullptr);
 		}
-
-		
-
 	}
 	void BufferDX12::SetName(const WCHAR* name)
 	{

@@ -144,15 +144,6 @@ namespace Aether
 		// Create root signature for our pipeline!
 		AETHER_ASSERT(CreateRootSignature());
 
-		// Compile shaders for this pipeline!
-		//AETHER_ASSERT(CompileShaders());
-		//
-		//// Build PSO
-		//AETHER_ASSERT(CreateInputLayoutAndPSO());
-		//
-		//AETHER_ASSERT(CreateAndUploadGeo());
-		//FinalizeUploads();
-
 		// Last bit of additional setup - define our viewport and scissor rects. This needs re-calling on resize!
 		UpdateViewportAndScissor();
 
