@@ -61,10 +61,13 @@ namespace Aether
 
 		// Either find or compile a shader
 		ShaderDX12* LoadShader(ShaderHandle handle);
+
+		// Translate API agnostic input layout into DX12 land
 		std::vector<D3D12_INPUT_ELEMENT_DESC> TranslateLayout(const VertexLayout& layout);
+
+		// Create a PSO using
 		void CreatePSO(const D3D12_SHADER_BYTECODE& vs, const D3D12_SHADER_BYTECODE& ps, const VertexLayout& layout);
 
-		AETHER_RESULT CreateInputLayoutAndPSO();
 
 		AETHER_RESULT CreateAndUploadGeo();
 

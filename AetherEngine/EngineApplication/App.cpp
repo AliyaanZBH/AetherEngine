@@ -16,18 +16,11 @@ public:
 		// Create vertex - position, colour
 		Aether::Vertex appVerts[] =
 		{
-			{ {	-0.75f, 0.f,	0.5f,	1.f	}, {1.f, 0.f, 0.f, 1.f} },	// Bottom Left
-			{ {	-0.6f,  0.5f,	0.5f,	1.f	}, {0.f, 0.f, 1.f, 1.f} },	// Top (and to the right slightly)
-			{ {	-0.5f,	0.f,	0.5f,	1.f	}, {0.f, 1.f, 0.f, 1.f} }	// Bottom Right
+			{ {	-0.75f, -0.5f,	0.6f,	1.f	}, {1.f, 0.f, 0.f, 1.f} },	// Bottom Left
+			{ {	-0.5f,  0.5f,	0.6f,	1.f	}, {0.f, 0.f, 1.f, 1.f} },	// Top (and to the right slightly)
+			{ {	-0.4f,	-0.5f,	0.6f,	1.f	}, {0.f, 1.f, 0.f, 1.f} }	// Bottom Right
 		};
 		// Clockwise verts! Clockwise winding order!
-
-		//Aether::Vertex appVerts[] =
-		// {
-		//	{ { 0.0f, 0.5f, 0.5f,  1.f},   { 1.0f, 0.f, 0.f, 1.f } },
-		//	{ { 0.5f, -0.5f, 0.5f, 1.f },  { 0.f, 1.0f, 0.f, 1.f } },
-		//	{ { -0.5f, -0.5f, 0.5f, 1.f},  { 0.f, 0.f, 1.0f, 1.f } }
-		// };
 
 		Aether::BufferDesc AppVbDesc
 		{

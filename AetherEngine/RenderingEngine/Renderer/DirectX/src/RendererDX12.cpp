@@ -212,7 +212,7 @@ namespace Aether
 		m_CmdList->IASetVertexBuffers(0, 1, &m_VertBufView);                        // Set the vertex buffer (using the vertex buffer view)
 		m_CmdList->IASetIndexBuffer(&m_IdxBufView);                                 // Set IB
 		m_CmdList->DrawIndexedInstanced(6, 1, 0, 0, 0);                             // Draw 2 triangles (draw 1 instance of 2 triangles)
-		//m_CmdList->DrawIndexedInstanced(6, 1, 0, 4, 0);                             // Draw second quad
+		m_CmdList->DrawIndexedInstanced(6, 1, 0, 4, 0);                             // Draw second quad
 	}
 
 	void RendererDX12::Render(VertexBufferView* vbv, IndexBufferView* ibv)
@@ -228,7 +228,6 @@ namespace Aether
 		m_CmdList->IASetVertexBuffers(0, 1, &dxVBView);
 		m_CmdList->IASetIndexBuffer(&dxIBView);
 		m_CmdList->DrawIndexedInstanced(ibv->m_Count, 1, 0, 0, 0);
-		//m_CmdList->DrawInstanced(3, 1, 0, 0);
 	}
 
 	void RendererDX12::Present()
@@ -592,6 +591,9 @@ namespace Aether
 		//rasterDesc.CullMode = D3D12_CULL_MODE_NONE;
 		//rasterDesc.FrontCounterClockwise = TRUE;
 
+		D3D12_DEPTH_STENCIL_DESC dsDesc = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
+		dsDesc.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;	// Allows for values of 1.0 to stay in!
+
 		D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
 		psoDesc.InputLayout = inputDesc;
 		psoDesc.pRootSignature = m_RootSig;
@@ -603,7 +605,7 @@ namespace Aether
 		psoDesc.SampleMask = 0xf;												// Point sampling
 		psoDesc.RasterizerState = rasterDesc;									// Lazy default init, good enough for triangle!
 		psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);					// Lazy default init, good enough for triangle!
-		psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);  // Depth buffer enable!
+		psoDesc.DepthStencilState = dsDesc;										// Depth buffer enable!
 		psoDesc.DSVFormat = m_kDSVFormat;										// Depth buffer format!
 		psoDesc.NumRenderTargets = 1;
 
@@ -611,61 +613,10 @@ namespace Aether
 
 	}
 
-	AETHER_RESULT RendererDX12::CreateInputLayoutAndPSO()
-	{
-		AETHER_RESULT ar = AETHER_OK;
-
-		// Create input layout for our input assembler so it knows how to read our vert attributes
-		D3D12_INPUT_ELEMENT_DESC inputLayout[] =
-		{
-			{"POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
-			{"COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0}
-		};
-
-		D3D12_INPUT_LAYOUT_DESC inputDesc = {};
-
-		// Simple (size of array) / (size of element type) to get num elements
-		inputDesc.NumElements = sizeof(inputLayout) / sizeof(D3D12_INPUT_ELEMENT_DESC);
-		inputDesc.pInputElementDescs = inputLayout;
-
-		// Create a depth buffer - use a default one for now
-		CD3DX12_DEPTH_STENCIL_DESC dsDesc = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
-
-		// Simple PSO for our humble geo
-		D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
-		psoDesc.InputLayout = inputDesc;
-		psoDesc.pRootSignature = m_RootSig;
-		psoDesc.VS = m_VS->Get();
-		psoDesc.PS = m_PS->Get();
-		psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-		psoDesc.RTVFormats[0] = m_kRTVFormat;
-		psoDesc.SampleDesc = m_SampleDesc;                                  // Same sample desc as swapchain
-		psoDesc.SampleMask = 0xf;                                           // Point sampling
-		psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);   // Lazy default init, good enough for triangle!
-		psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);             // Lazy default init, good enough for triangle!
-		psoDesc.DepthStencilState = dsDesc;                                 // Depth buffer enable!
-		psoDesc.DSVFormat = m_kDSVFormat;									// Depth buffer format!
-		psoDesc.NumRenderTargets = 1;
-
-		// Create the PSO
-		AETHER_HR_ASSERT(m_Device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_PipelineStateObject)));
-
-		return ar;
-	}
 
 	AETHER_RESULT RendererDX12::CreateAndUploadGeo()
 	{
 		AETHER_RESULT ar = AETHER_OK;
-
-		// More hardcoding, just send a triangle up
-		   //
-		   //Vertex verts[] =
-		   //{
-		   //    { 0.0f, 0.5f, 0.5f,     1.0f, 0.f, 0.f, 1.f },
-		   //    { 0.5f, -0.5f, 0.5f,    0.f, 1.0f, 0.f, 1.f },
-		   //    { -0.5f, -0.5f, 0.5f,   0.f, 0.f, 1.0f, 1.f }
-		   //};
-
 
 		// We got quads now baybee!
 		Vertex verts[] =

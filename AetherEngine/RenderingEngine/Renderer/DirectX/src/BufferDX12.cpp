@@ -64,28 +64,20 @@ namespace Aether
 
 	void BufferDX12::Upload(const void* data, size_t size, size_t offset)
 	{
-		// Make sure to update our desc otherwise it'll be wrong and we get nothing when we go to read it!
-
-		//m_Desc.m_Data = data;
-		//memcpy(m_Desc.m_Data, data, size);
-		//m_Desc.m_SizeInBytes = size;
+		// Make sure to update our desc first.
+		m_Desc.m_Data = data;
+		m_Desc.m_SizeInBytes = size;
 
 		if (m_UploadHeap)
 		{
-			// Copy to temp heap first incase memory goes out of scope before the GPU decides to finally do the copy (it does this async!)
-			//std::vector<uint8_t> tempData(size);
-			//m_Desc.m_SizeInBytes = size;
-		
 			// Default heap: copy to GPU from intermediate upload heap via UpdateSubresources
 			D3D12_SUBRESOURCE_DATA subData{};
-			//.pData = m_Desc.m_Data;
-			//subData.RowPitch = m_Desc.m_SizeInBytes;
-			//subData.SlicePitch = m_Desc.m_SizeInBytes;
-			subData.pData = data;
-			subData.RowPitch = size;
-			subData.SlicePitch = size;
+			subData.pData = m_Desc.m_Data;
+			subData.RowPitch = m_Desc.m_SizeInBytes;
+			subData.SlicePitch = m_Desc.m_SizeInBytes;
 		
 			UpdateSubresources(m_CmdList, m_Resource, m_UploadHeap, 0, 0, 1, &subData);
+			
 			// Transition the resource now that it has been uploaded
 			D3D12_RESOURCE_STATES finalState = GetFinalState(m_Desc.m_Type);
 
@@ -97,8 +89,7 @@ namespace Aether
 			// Skip upload heap and GPU copy: map & memcpy directly
 			void* mapped = nullptr;
 			m_Resource->Map(0, nullptr, &mapped);
-			//memcpy(static_cast<uint8_t*>(mapped) + offset, m_Desc.m_Data, m_Desc.m_SizeInBytes);
-			memcpy(static_cast<uint8_t*>(mapped) + offset, data, size);
+			memcpy(static_cast<uint8_t*>(mapped) + offset, m_Desc.m_Data, m_Desc.m_SizeInBytes);
 			m_Resource->Unmap(0, nullptr);
 		}
 
