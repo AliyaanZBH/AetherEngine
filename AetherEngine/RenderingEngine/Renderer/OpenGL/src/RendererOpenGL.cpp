@@ -85,11 +85,11 @@ namespace Aether
 		//glBindVertexArray(m_VertexAttributeArray);
 
 		// Create geometry itself - centered tri for now
-		float verts[4 * 3]
+		Vertex verts[]
 		{
-			-0.5f,	-0.5f,	0.f, 1.f,
-			0.5f,	-0.5f,	0.f, 1.f,
-			0.f,	0.5f,	0.f, 1.f
+			{ { -0.5f,	-0.5f,	0.f, 1.f},	{1.f, 0.f, 0.f, 1.f} },
+			{ {  0.5f,	-0.5f,	0.f, 1.f},	{0.f, 0.f, 1.f, 1.f} },
+			{ {  0.f,	 0.5f,	0.f, 1.f},	{0.f, 1.f, 0.f, 1.f} }
 		};
 
 		// Create vertex buffer here with our fancy new buffer desc
@@ -106,7 +106,7 @@ namespace Aether
 		m_VertexBuffer->Upload(verts, vbDesc.m_SizeInBytes);
 
 		// Bind that boy
-		glBindBuffer(GL_ARRAY_BUFFER, m_VertexBuffer->GetHandle());
+		//glBindBuffer(GL_ARRAY_BUFFER, m_VertexBuffer->GetHandle());
 
 		// Enable vert attributes
 		//glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
@@ -122,7 +122,7 @@ namespace Aether
 			.m_CPUVisible = true
 		};
 		m_IndexBuffer = static_cast<BufferOpenGL*>(CreateBuffer(ibDesc));
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_IndexBuffer->GetHandle());
+		//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_IndexBuffer->GetHandle());
 
 		return ar;
 	}
@@ -153,8 +153,8 @@ namespace Aether
 				attrib.m_Offset										// offset within vertex struct ( e.g. colour would be 16 bytes offset as there are 16 bytes of position data first)
 			);
 
-			// Set the binding location to be used in the shaders. In my engine today, each vertex attribute location maps 1:1 to a binding slot, because all attributes come from the same interleaved buffer. 
-			glVertexArrayAttribBinding(m_VertexAttributeArray, location, location);
+			// Set the binding location to be used in the shaders. In my engine today, each vertex attribute location maps to a single binding slot, because all attributes come from the same interleaved buffer. 
+			glVertexArrayAttribBinding(m_VertexAttributeArray, location, 0);
 
 			// Finally, enable the attribute in the vertex array
 			glEnableVertexArrayAttrib(m_VertexAttributeArray, location);
@@ -187,14 +187,13 @@ namespace Aether
 
 			void main()
 			{
-			    colour = vec4(v_Position.xyz * 0.5 + 0.65, 1.0);
-			    //colour = v_Colour;
+			    //colour = vec4(v_Position.xyz * 0.5 + 0.65, 1.0);
+			    colour = v_Colour;
 			}
 		)";
 
 		// Create shader program by compiling and linking shader files ( or raw source as we have it currently)
 		m_Shader = new ShaderOpenGL(vertexSrc, fragSrc);
-		//m_Shader = new Shader("VertexShader.glsl", "FragShader.glsl");
 		// Bind that boy
 		m_Shader->Bind();
 	}
@@ -205,15 +204,24 @@ namespace Aether
 		glBindVertexArray(m_VertexAttributeArray);
 		
 		// Bind vertex buffer to binding slot 0
-		glBindVertexBuffer(
-			0,                                  // binding index
+		//glBindVertexBuffer(
+		//	0,                                  // binding index
+		//	m_VertexBuffer->GetHandle(),
+		//	0,
+		//	4 * sizeof(float)
+		//);
+
+		glVertexArrayVertexBuffer(
+			m_VertexAttributeArray,
+			0,   // same index used when binding attributes for the VAO
 			m_VertexBuffer->GetHandle(),
 			0,
-			4 * sizeof(float)
+			sizeof(Vertex)
 		);
 
 		// Bind index buffer (this IS VAO state, unavoidable)
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_IndexBuffer->GetHandle());
+		//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_IndexBuffer->GetHandle());
+		glVertexArrayElementBuffer(m_VertexAttributeArray, m_IndexBuffer->GetHandle());
 		glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, nullptr);
 	}
 
@@ -221,15 +229,25 @@ namespace Aether
 	{
 		// Need to rebind vertex array as it is still pointing at the old set of geometry!
 		glBindVertexArray(m_VertexAttributeArray);
-		// Bind vertex buffer to binding slot 0
-		glBindVertexBuffer(
-			0,                                  // binding index
+		
+		glVertexArrayVertexBuffer(
+			m_VertexAttributeArray,
+			0,   // same index used when binding attributes for the VAO
 			static_cast<BufferOpenGL*>(vbv->m_Buffer)->GetHandle(),
 			vbv->m_Offset,
 			vbv->m_Stride
 		);
 
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, static_cast<BufferOpenGL*>(ibv->m_Buffer)->GetHandle());
+		//// Bind vertex buffer to binding slot 0
+		//glBindVertexBuffer(
+		//	0,                                  // binding index
+		//	static_cast<BufferOpenGL*>(vbv->m_Buffer)->GetHandle(),
+		//	vbv->m_Offset,
+		//	vbv->m_Stride
+		//);
+
+		//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, static_cast<BufferOpenGL*>(ibv->m_Buffer)->GetHandle());
+		glVertexArrayElementBuffer(m_VertexAttributeArray, static_cast<BufferOpenGL*>(ibv->m_Buffer)->GetHandle());
 		glDrawElements(GL_TRIANGLES, ibv->m_Count, GL_UNSIGNED_INT, nullptr);
 
 	}
