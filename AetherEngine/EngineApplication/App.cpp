@@ -33,7 +33,6 @@ public:
 
 		m_VertexBuffer = Aether::Application::Get().GetRenderer().CreateBuffer(AppVbDesc);
 		m_VertexBuffer->Upload(AppVbDesc.m_Data, AppVbDesc.m_SizeInBytes);
-		//m_VertexBuffer->Upload(verts, sizeof(verts));
 
 		m_VertBufView.m_Buffer = m_VertexBuffer;
 		m_VertBufView.m_Stride = sizeof(Aether::Vertex);
@@ -52,12 +51,7 @@ public:
 
 
 		m_IndexBuffer = Aether::Application::Get().GetRenderer().CreateBuffer(ibDesc);
-		//m_VertexBuffer->Upload(ibDesc.m_Data, ibDesc.m_SizeInBytes);	/// WHY THE FUCK DOES THIS "MAKE IT WORK"??!!
-		//m_VertexBuffer->Upload(0, 0);
 		m_IndexBuffer->Upload(ibDesc.m_Data, ibDesc.m_SizeInBytes);
-
-		//m_IndexBuffer->Upload(indices, sizeof(indices));
-
 		m_IndBufView.m_Buffer = m_IndexBuffer;
 		m_IndBufView.m_Count = 3;
 		m_IndBufView.m_IndexSize = sizeof(unsigned int);
