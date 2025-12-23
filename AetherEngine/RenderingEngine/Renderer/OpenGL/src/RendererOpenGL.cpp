@@ -97,6 +97,8 @@ namespace Aether
 		};
 		m_IndexBuffer = static_cast<BufferOpenGL*>(CreateBuffer(ibDesc));
 
+		//glEnable(GL_FRAMEBUFFER_SRGB);
+
 		return ar;
 	}
 
@@ -160,8 +162,8 @@ namespace Aether
 			void main()
 			{
 			   // colour = vec4(v_Colour.xyz * 0.5 + 0.65, 1.0);
-			   // colour = v_Colour;
-			    colour = vec4(v_Colour.xyz + 0.25, 1.0);
+			    colour = v_Colour;
+			    //colour = vec4(v_Colour.xyz + 0.25, 1.0);
 			}
 		)";
 
