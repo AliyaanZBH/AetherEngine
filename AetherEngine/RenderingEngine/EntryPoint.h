@@ -16,7 +16,6 @@ int main(int argc, char** argv)
 
 	// Test logging with variadic macros!
 	std::string name("NewGame");
-	int var = 5;
 	AETHER_CORE_WARN("Initalised Log!");
 
 	std::string renderAPI = "";
@@ -28,8 +27,7 @@ int main(int argc, char** argv)
 #endif
 	AETHER_CORE_INFO("Using Renderer: {0}", renderAPI);
 	
-	AETHER_TRACE("Hello from an AetherApp! Var={0}", var);
-	AETHER_TRACE("This game is called: {0}", name);
+	AETHER_TRACE("Hello from an AetherApp! This game is called: {0}", name);
 
 	// Register this client application with the core Aether engine
 	Aether::Application* game = Aether::CreateApplication();

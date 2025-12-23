@@ -76,6 +76,7 @@ namespace Aether
 		// Create vertex buffer here with our fancy new buffer desc
 		BufferDesc vbDesc =
 		{
+			.m_Data = verts,
 			.m_SizeInBytes = sizeof(verts),
 			.m_Type = eBufferType::kVertex,
 			.m_CPUVisible = true
@@ -122,7 +123,7 @@ namespace Aether
 			glVertexArrayAttribFormat(
 				m_VertexAttributeArray,
 				location,											// attrib index
-				VertexAttributeSize(attrib.m_Format),				// Size of attribute. e.g. 4*4 =16  for float4
+				VertexAttributeComponentCount(attrib.m_Format),				// Size  in OpenGL land actually means `component count`. So we want 4 instead of 16
 				ToGLFormat(attrib.m_Format),						// GL enum that matches our format (usually GL_FLOAT)
 				GL_FALSE,											// Force false on normalisation for now
 				attrib.m_Offset										// offset within vertex struct ( e.g. colour would be 16 bytes offset as there are 16 bytes of position data first)
@@ -142,14 +143,12 @@ namespace Aether
 			layout (location = 0) in vec4 a_Pos;
 			layout (location = 1) in vec4 a_Col;
 			
-			out vec4 v_Position;
 			out vec4 v_Colour;
 
 			void main()
 			{
-				v_Position = a_Pos;
-				v_Colour = a_Col;
 			    gl_Position = a_Pos;
+				v_Colour = a_Col;
 			}
 		)";
 
@@ -161,9 +160,7 @@ namespace Aether
 
 			void main()
 			{
-			   // colour = vec4(v_Colour.xyz * 0.5 + 0.65, 1.0);
 			    colour = v_Colour;
-			    //colour = vec4(v_Colour.xyz + 0.25, 1.0);
 			}
 		)";
 
@@ -187,7 +184,6 @@ namespace Aether
 		);
 
 		// Bind index buffer (this IS VAO state, unavoidable)
-		//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_IndexBuffer->GetHandle());
 		glVertexArrayElementBuffer(m_VertexAttributeArray, m_IndexBuffer->GetHandle());
 		glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, nullptr);
 	}
@@ -206,7 +202,6 @@ namespace Aether
 		);
 
 
-		//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, static_cast<BufferOpenGL*>(ibv->m_Buffer)->GetHandle());
 		glVertexArrayElementBuffer(m_VertexAttributeArray, static_cast<BufferOpenGL*>(ibv->m_Buffer)->GetHandle());
 		glDrawElements(GL_TRIANGLES, ibv->m_Count, GL_UNSIGNED_INT, nullptr);
 
