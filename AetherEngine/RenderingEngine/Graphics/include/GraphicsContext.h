@@ -48,6 +48,7 @@ namespace Aether
 		return 0;
 	}
 
+	// Mainly used for openGL vertex attrib arrays, but might be useful elsewhere so I left it defined here.
 	static uint32_t VertexAttributeComponentCount(eVertexAttributeFormat type)
 	{
 		switch (type)
