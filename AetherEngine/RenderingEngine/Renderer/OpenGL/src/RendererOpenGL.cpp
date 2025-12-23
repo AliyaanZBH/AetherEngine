@@ -15,8 +15,8 @@ namespace Aether
 		switch (semantic)
 		{
 		case eShaderSemantic::kPosition:  return 0;
-		case eShaderSemantic::kNormal:    return 1;
-		case eShaderSemantic::kColour:    return 2;
+		case eShaderSemantic::kColour:    return 1;
+		case eShaderSemantic::kNormal:    return 2;
 		case eShaderSemantic::kTexCoord0: return 3;
 		case eShaderSemantic::kTexCoord1: return 4;
 		default:
