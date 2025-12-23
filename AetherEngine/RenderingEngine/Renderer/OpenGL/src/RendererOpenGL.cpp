@@ -65,31 +65,12 @@ namespace Aether
 		const char* versionString = (const char*)glGetString(GL_VERSION);
 		AETHER_CORE_INFO("OpenGL Info:\n    Vendor: {0}\n    Device: {1}\n    GL Version & Driver: {2}", vendorString, rendererString, versionString);
 
-
-		// Attrib 0: Position
-		//glEnableVertexArrayAttrib(m_VertexAttributeArray, 0);
-		//glVertexArrayAttribFormat(
-		//	m_VertexAttributeArray,
-		//	0,                  // attrib index
-		//	4,                  // vec4
-		//	GL_FLOAT,
-		//	GL_FALSE,
-		//	0                   // offset within vertex
-		//);
-		//glVertexArrayAttribBinding(m_VertexAttributeArray, 0, 0);
-
-		// Binding slot 0 defines stride
-		//glVertexArrayBindingDivisor(m_VertexAttributeArray, 0, 0);
-
-		//glGenVertexArrays(1, &m_VertexArray);
-		//glBindVertexArray(m_VertexAttributeArray);
-
 		// Create geometry itself - centered tri for now
 		Vertex verts[]
 		{
 			{ { -0.5f,	-0.5f,	0.f, 1.f},	{1.f, 0.f, 0.f, 1.f} },
-			{ {  0.5f,	-0.5f,	0.f, 1.f},	{0.f, 0.f, 1.f, 1.f} },
-			{ {  0.f,	 0.5f,	0.f, 1.f},	{0.f, 1.f, 0.f, 1.f} }
+			{ {  0.5f,	-0.5f,	0.f, 1.f},	{0.f, 1.f, 0.f, 1.f} },
+			{ {  0.f,	 0.5f,	0.f, 1.f},	{0.f, 0.f, 1.f, 1.f} }
 		};
 
 		// Create vertex buffer here with our fancy new buffer desc
@@ -105,13 +86,6 @@ namespace Aether
 		// Memory has been allocated, now upload data to it
 		m_VertexBuffer->Upload(verts, vbDesc.m_SizeInBytes);
 
-		// Bind that boy
-		//glBindBuffer(GL_ARRAY_BUFFER, m_VertexBuffer->GetHandle());
-
-		// Enable vert attributes
-		//glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
-		//glEnableVertexAttribArray(0);
-
 		// Create indices and repeat
 		unsigned int indices[3] = { 0, 1, 2 };
 		BufferDesc ibDesc =
@@ -122,7 +96,6 @@ namespace Aether
 			.m_CPUVisible = true
 		};
 		m_IndexBuffer = static_cast<BufferOpenGL*>(CreateBuffer(ibDesc));
-		//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_IndexBuffer->GetHandle());
 
 		return ar;
 	}
@@ -182,13 +155,13 @@ namespace Aether
 			#version 430 core
 			layout (location = 0) out vec4 colour;
 			
-			in vec4 v_Position;
 			in vec4 v_Colour;
 
 			void main()
 			{
-			    //colour = vec4(v_Position.xyz * 0.5 + 0.65, 1.0);
-			    colour = v_Colour;
+			   // colour = vec4(v_Colour.xyz * 0.5 + 0.65, 1.0);
+			   // colour = v_Colour;
+			    colour = vec4(v_Colour.xyz + 0.25, 1.0);
 			}
 		)";
 
@@ -203,14 +176,6 @@ namespace Aether
 		// Bind and draw our geo!
 		glBindVertexArray(m_VertexAttributeArray);
 		
-		// Bind vertex buffer to binding slot 0
-		//glBindVertexBuffer(
-		//	0,                                  // binding index
-		//	m_VertexBuffer->GetHandle(),
-		//	0,
-		//	4 * sizeof(float)
-		//);
-
 		glVertexArrayVertexBuffer(
 			m_VertexAttributeArray,
 			0,   // same index used when binding attributes for the VAO
@@ -238,13 +203,6 @@ namespace Aether
 			vbv->m_Stride
 		);
 
-		//// Bind vertex buffer to binding slot 0
-		//glBindVertexBuffer(
-		//	0,                                  // binding index
-		//	static_cast<BufferOpenGL*>(vbv->m_Buffer)->GetHandle(),
-		//	vbv->m_Offset,
-		//	vbv->m_Stride
-		//);
 
 		//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, static_cast<BufferOpenGL*>(ibv->m_Buffer)->GetHandle());
 		glVertexArrayElementBuffer(m_VertexAttributeArray, static_cast<BufferOpenGL*>(ibv->m_Buffer)->GetHandle());
