@@ -11,6 +11,13 @@
 
 namespace Aether
 {
+	enum class eRenderAPI
+	{
+		kOpenGL,
+		kDX11,
+		kDX12
+	};
+
 	// Base Vertex data structs
 	struct AETHER_API Vertex
 	{
@@ -33,6 +40,14 @@ namespace Aether
         eVertexAttributeFormat  m_Format;           // e.g., Float3
         uint32_t                m_Offset;           // Offset in bytes from vertex start
     };
+
+
+	struct VertexLayout
+	{
+		std::vector<VertexAttribute> m_Attributes;
+		uint32_t m_Stride;
+	};
+
 
 	static uint32_t VertexAttributeSize(eVertexAttributeFormat type)
 	{
@@ -62,10 +77,4 @@ namespace Aether
 		AETHER_ASSERT(AETHER_FAIL, "Unknown Vertex Attribute Format!");
 		return 0;
 	}
-
-    struct VertexLayout
-    {
-        std::vector<VertexAttribute> m_Attributes;
-        uint32_t m_Stride;
-    };
 }

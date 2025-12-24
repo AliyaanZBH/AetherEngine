@@ -10,6 +10,7 @@
 namespace Aether
 {
 	class Event;
+	enum class eRenderAPI;
 
 	class AETHER_API IWindow {
 	public:
@@ -40,7 +41,7 @@ namespace Aether
 
 		virtual ~IWindow() = default;
 
-		virtual AETHER_RESULT Initialize(const WinData& winData) = 0;
+		virtual AETHER_RESULT Initialize(const WinData& winData, const eRenderAPI currentRenderer) = 0;
 		virtual bool WindowShouldClose() = 0;
 		virtual void PollEvents() = 0;
 		virtual void Terminate() = 0;

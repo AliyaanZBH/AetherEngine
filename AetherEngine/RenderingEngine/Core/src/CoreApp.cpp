@@ -51,13 +51,13 @@ namespace Aether
         // Later in development, this will be read from a JSON config file so that the user can save and load settings, along with manually changing it from a GUI inside the application!
         IWindow::WinData wd =
         {
-            .m_ClientWidth = 800,
-            .m_ClientHeight = 600
+            .m_ClientWidth = 800u,
+            .m_ClientHeight = 600u
             /*.m_Title = "AetherApp"*/      // Default title is Aether Engine
         };
 
     #ifdef USE_GLFW
-        m_Window = std::make_unique<WindowGLFW>(wd);      // Calls initialise and catches errors inside with assert
+        m_Window = std::make_unique<WindowGLFW>(wd, m_CurrentRenderAPI);      // Calls initialise and catches errors inside with assert
     #elif defined(USE_WIN32)
         m_Window = std::make_unique<WinManWin32>();
     #else
@@ -166,6 +166,7 @@ namespace Aether
             .m_PixelShader = psHandle,
             .m_Layout = layout
         };
+
         m_Renderer->CreatePipeline(pipelineDesc);
     }
 

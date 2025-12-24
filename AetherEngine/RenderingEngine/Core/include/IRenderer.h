@@ -41,11 +41,4 @@ namespace Aether
         virtual void BeginImGuiRender() = 0;
         virtual void EndImGuiRender() = 0;
     };
-
-    enum class eRenderAPI
-    {
-        kOpenGL,
-        kDX11,
-        kDX12
-    };
 }

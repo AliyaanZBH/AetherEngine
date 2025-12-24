@@ -15,10 +15,10 @@ namespace Aether
 	class WindowGLFW final : public IWindow
 	{
 	public:
-		WindowGLFW(const WinData& winData);
+		WindowGLFW(const WinData& winData, const eRenderAPI currentRenderer);
 		virtual ~WindowGLFW();
 
-		AETHER_RESULT Initialize(const WinData& winData) override;
+		AETHER_RESULT Initialize(const WinData& winData, const eRenderAPI currentRenderer) override;
 		bool WindowShouldClose() override;
 		void PollEvents() override
 		{

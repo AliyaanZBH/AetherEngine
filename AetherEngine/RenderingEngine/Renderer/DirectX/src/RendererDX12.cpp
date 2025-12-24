@@ -16,12 +16,11 @@ namespace Aether
 	{
 		AETHER_RESULT ar = AETHER_OK;
 
-		AETHER_ASSERT(CreateDevice());
-
 		// Retrieve the native window handle (HWND on Windows) and data about the window for our swapchain
 		HWND hwnd = static_cast<HWND>(window.GetWin32Handle());
 		m_WinData = window.GetData();
 
+		AETHER_ASSERT(CreateDevice());
 
 		//
 		//
@@ -40,6 +39,7 @@ namespace Aether
 		//
 		//
 
+		SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
 
 		// Pinch values from our window!
 		DXGI_MODE_DESC backBufferDesc = {};
@@ -62,13 +62,13 @@ namespace Aether
 
 		IDXGISwapChain* tempSwapChain;
 
-		m_DXGIFactory->CreateSwapChain(
+		AETHER_HR_ASSERT(m_DXGIFactory->CreateSwapChain(
 			m_CmdQueue.Get(),
 			&swapChainDesc,
 			&tempSwapChain
-		);
+		));
 
-		m_SwapChain = static_cast<IDXGISwapChain3*>(tempSwapChain);
+		m_SwapChain = static_cast<IDXGISwapChain3*>(tempSwapChain);	
 
 		m_FrameContextIndex = m_SwapChain->GetCurrentBackBufferIndex();
 
@@ -461,11 +461,14 @@ namespace Aether
 		// Setup to enable debug layer
 #if defined(DEBUG) || defined(_DEBUG)  
 
-		ID3D12Debug* debugInterface;
+		ID3D12Debug1* debugInterface;
 
 		AETHER_HR_ASSERT(D3D12GetDebugInterface(IID_PPV_ARGS(&debugInterface)));
-
 		debugInterface->EnableDebugLayer();
+
+		// REALLY SLOW BUT CAN BE USEFUL!
+		//debugInterface->SetEnableGPUBasedValidation(TRUE);
+
 #endif
 
 		// Find first hardware GPU that supports d3d 12
