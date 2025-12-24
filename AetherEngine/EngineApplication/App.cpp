@@ -47,9 +47,8 @@ public:
 			.m_SizeInBytes = sizeof(indices),
 			.m_Type = Aether::eBufferType::kIndex,
 			.m_CPUVisible = true
-		};
-
-
+		};		
+		
 		m_IndexBuffer = Aether::Application::Get().GetRenderer().CreateBuffer(ibDesc);
 		m_IndexBuffer->Upload(ibDesc.m_Data, ibDesc.m_SizeInBytes);
 		m_IndBufView.m_Buffer = m_IndexBuffer;

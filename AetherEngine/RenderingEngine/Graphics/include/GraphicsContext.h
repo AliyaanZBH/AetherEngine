@@ -38,16 +38,8 @@ namespace Aether
     {
 		eShaderSemantic         m_Name;				// Position, Colour, etc.
         eVertexAttributeFormat  m_Format;           // e.g., Float3
-        uint32_t                m_Offset;           // Offset in bytes from vertex start
+        uint32_t                m_Offset;           // Offset in bytes from vertex start. Can be skipped as the layout struct will calculate this automatically
     };
-
-
-	struct VertexLayout
-	{
-		std::vector<VertexAttribute> m_Attributes;
-		uint32_t m_Stride;
-	};
-
 
 	static uint32_t VertexAttributeSize(eVertexAttributeFormat type)
 	{
@@ -77,4 +69,28 @@ namespace Aether
 		AETHER_ASSERT(AETHER_FAIL, "Unknown Vertex Attribute Format!");
 		return 0;
 	}
+
+
+
+	struct VertexLayout
+	{
+		std::vector<VertexAttribute> m_Attributes;
+		uint32_t m_Stride;
+
+		VertexLayout(std::vector<VertexAttribute> elements)
+			: m_Attributes(elements)
+		{
+			uint32_t offset = 0;
+			// Calculate the offsets of each element
+			for (VertexAttribute& elem : m_Attributes)
+			{
+				elem.m_Offset = offset;
+				offset += VertexAttributeSize(elem.m_Format);
+			}
+
+			// Set stride - this is a vertex layout so it's the size of vertex!
+			m_Stride = sizeof(Vertex);
+		}
+	};
+
 }

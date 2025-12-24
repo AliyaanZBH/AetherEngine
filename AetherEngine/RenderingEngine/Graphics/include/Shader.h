@@ -21,8 +21,8 @@ namespace Aether
 	enum class eShaderSemantic
 	{
 		kPosition,
-		kNormal,
 		kColour,
+		kNormal,
 		kTexCoord0,
 		kTexCoord1,
 		kTangent,

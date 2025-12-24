@@ -127,28 +127,25 @@ namespace Aether
 
     void Application::CreatePipeline()
     {
-        // Define what layout we want our renderer to use and create pipelines for
-        VertexLayout layout;
-        layout.m_Stride = sizeof(Vertex);
+        // Define what layout we want our renderer to use and create pipelines for. Start with the vertex attributes
 
         VertexAttribute aPos
         {
             .m_Name = eShaderSemantic::kPosition,
             .m_Format = eVertexAttributeFormat::kFloat4,
-            .m_Offset = 0
+            .m_Offset = 0   // Offset is optional and will be calculated by the layout constructor!
         };
 
-        layout.m_Attributes =
-        {
-            aPos,
-            { eShaderSemantic::kColour, eVertexAttributeFormat::kFloat4,offsetof(Vertex, m_Colour) }
-        };
+        VertexAttribute aColour = { eShaderSemantic::kColour, eVertexAttributeFormat::kFloat4 };
+
+        // Construct a layout with these attributes, offset and stride will be calculated internally
+        VertexLayout layout({ aPos, aColour });
 
         // Grab shader library and register shaders or grab handle in the case that they've already been registered (not the case here, but could be when called later!)
         ShaderLibrary& shaders = ShaderLibrary::Get();
         ShaderDesc vsDesc
         {
-            .m_Name = "VertexShader",
+            .m_Name = "VertexShader",       // No extensions, ideally we have identical shaders for both GLSL and HLSL. Let the renderer API figure out which one it needs to loads
             .m_ShaderStage = eShaderStage::kVertex
         };
         ShaderHandle vsHandle = shaders.Register("DefaultVertexShader", vsDesc);
