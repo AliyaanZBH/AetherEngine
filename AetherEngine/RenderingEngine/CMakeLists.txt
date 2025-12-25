@@ -16,16 +16,30 @@ set(SRC
     Input/src/Input.cpp
 
     Window/src/WindowGLFW.cpp
-    
+
+    #
+    # Graphics Primitives
+    #
+
     Graphics/src/GraphicsContext.cpp
     Graphics/src/Shader.cpp
+
+    #
+    # DirectX Implementations
+    #
 
     Renderer/DirectX/src/RendererDX11.cpp
     Renderer/DirectX/src/RendererDX12.cpp
     Renderer/DirectX/src/ShaderDX12.cpp
+    Renderer/DirectX/src/BufferDX12.cpp
+
+    #
+    # OpenGL Implementations
+    #
 
     Renderer/OpenGL/src/RendererOpenGL.cpp
     Renderer/OpenGL/src/ShaderOpenGL.cpp
+    Renderer/OpenGL/src/BufferOpenGL.cpp
 
     Layers/src/ImGuiLayer.cpp
 )
@@ -56,23 +70,30 @@ set(INCLUDE
     Window/include/WindowGLFW.h
 
     #
-    # Rendering
+    # Graphics Primitives
     #
 
-    
-    # Graphics
     Graphics/include/GraphicsContext.h
     Graphics/include/Shader.h
+    Graphics/include/Buffer.h
 
+    #
     # DirectX
+    #
+
     Renderer/DirectX/include/D3DUtils.h
     Renderer/DirectX/include/RendererDX11.h
     Renderer/DirectX/include/RendererDX12.h
     Renderer/DirectX/include/ShaderDX12.h
+    Renderer/DirectX/include/BufferDX12.h
 
+    #
     # OpenGL
+    #
+
     Renderer/OpenGL/include/RendererOpenGL.h
     Renderer/OpenGL/include/ShaderOpenGL.h
+    Renderer/OpenGL/include/BufferOpenGL.h
 
     # Events
     Events/include/KeyEvent.h
@@ -84,9 +105,8 @@ set(INCLUDE
 
     # Miscellaneous third-party includes
     ThirdParty/dx12Helper/include/d3dx12.h
-    
  
-)
+ "Graphics/include/Pipeline.h" "Renderer/DirectX/include/ImGuiDX12.h")
 
 # Specify shaders
 set(HLSL_SHADER_FILES
@@ -128,7 +148,6 @@ target_include_directories(AetherRenderer
                             Window/include
                             Renderer/DirectX/include
                             Renderer/OpenGL/include
-                            Graphics/include
                             Events/include
                             Layers/include
                             ThirdParty/dx12Helper/include
@@ -136,6 +155,7 @@ target_include_directories(AetherRenderer
 # Certain things need to be public as the application target needs to see these interfaces. Detailed implementations can remain private
                     PUBLIC
                             Core/include 
+                            Graphics/include
                             Input/include
 )
 
@@ -158,24 +178,17 @@ endif()
 
 add_subdirectory(ThirdParty/spdlog EXCLUDE_FROM_ALL)
 add_subdirectory(ThirdParty/glad)
-add_subdirectory(ThirdParty/glm EXCLUDE_FROM_ALL)
+add_subdirectory(ThirdParty/glm)
+add_subdirectory(ThirdParty/imgui-1.92.5)
 
 # Link third party modules to renderer
 target_link_libraries(AetherRenderer PRIVATE glfw)
 target_link_libraries(AetherRenderer PRIVATE glad)
-target_link_libraries(AetherRenderer PRIVATE glm::glm-header-only)
-target_link_libraries(AetherRenderer PUBLIC spdlog::spdlog_header_only)
 
-# ImGui requires a bit of extra linking due to multiple backends
-add_subdirectory(ThirdParty/imgui-1.92.5)
-target_link_libraries(AetherRenderer PUBLIC
-    imgui
-    imgui_backend_glfw
-    imgui_backend_gl3
-    imgui_backend_win32
-    imgui_backend_dx11
-    imgui_backend_dx12
-)
+# These ones are public since the application will want to be able to do some maths or logging or create ImGui windows for use in the editor.
+target_link_libraries(AetherRenderer PUBLIC glm::glm-header-only)
+target_link_libraries(AetherRenderer PUBLIC spdlog::spdlog_header_only)
+target_link_libraries(AetherRenderer PUBLIC imgui)
 
 #
 # Platform-specific configurations

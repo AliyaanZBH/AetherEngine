@@ -9,6 +9,7 @@
 #include "IRenderer.h"
 #include "Event.h"
 #include "LayerStack.h"
+#include "GraphicsContext.h"
 //===============================================================================
 
 namespace Aether
@@ -34,9 +35,11 @@ namespace Aether
 		inline static Application& Get() { return *s_Instance; }
 		inline IWindow& GetWindow() { return *m_Window; }
 		inline IRenderer& GetRenderer() { return *m_Renderer; }
+		inline const eRenderAPI GetRenderAPI() { return m_CurrentRenderAPI; }
 
 	private:
 
+		void CreatePipeline();
 		bool OnWindowResize(WindowResizeEvent& e);
 
 		std::unique_ptr<IWindow> m_Window;
@@ -46,7 +49,7 @@ namespace Aether
 		ImGuiLayer* m_ImGuiLayer = nullptr;
 
 		LayerStack m_LayerStack;
-		eRenderAPI m_CurrentRenderAPI = eRenderAPI::kDX12;
+		eRenderAPI m_CurrentRenderAPI = eRenderAPI::kOpenGL;
 
 		// Quick and dirty Singleton-esque implementation
 		static Application* s_Instance;

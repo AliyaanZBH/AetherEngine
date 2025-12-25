@@ -1,3 +1,4 @@
+#include "CoreApp.h"
 //===============================================================================
 // desc: The core engine app that facilitates general use for any application made with Aether!
 // auth: Aliyaan Zulfiqar
@@ -28,6 +29,8 @@
 #include "AppEvent.h"
 #include "ImGuiLayer.h"
 #include "Input.h"
+#include "GraphicsContext.h"
+#include "Pipeline.h"
 //===============================================================================
 namespace Aether
 {
@@ -48,13 +51,13 @@ namespace Aether
         // Later in development, this will be read from a JSON config file so that the user can save and load settings, along with manually changing it from a GUI inside the application!
         IWindow::WinData wd =
         {
-            .m_ClientWidth = 800,
-            .m_ClientHeight = 600
+            .m_ClientWidth = 800u,
+            .m_ClientHeight = 600u
             /*.m_Title = "AetherApp"*/      // Default title is Aether Engine
         };
 
     #ifdef USE_GLFW
-        m_Window = std::make_unique<WindowGLFW>(wd);      // Calls initialise and catches errors inside with assert
+        m_Window = std::make_unique<WindowGLFW>(wd, m_CurrentRenderAPI);      // Calls initialise and catches errors inside with assert
     #elif defined(USE_WIN32)
         m_Window = std::make_unique<WinManWin32>();
     #else
@@ -68,28 +71,37 @@ namespace Aether
             case eRenderAPI::kOpenGL:
             {
                 m_Renderer = std::make_unique<RendererOpenGL>();
-
                 break;
             }
+
+            #ifdef USE_DX11
             case eRenderAPI::kDX11:
             {
                 m_Renderer = std::make_unique<RendererDX11>();
                 break;
             }
+            #endif
+
+            #ifdef USE_DX12
             case eRenderAPI::kDX12:
             {
                 m_Renderer = std::make_unique<RendererDX12>();
                 break;
             }
+            #endif
+
             default:
             {
                 ar = AETHER_FAIL;
-                AETHER_ASSERT(ar, "No rendering API defined. Please enable one of the `USE_X` arguments and select a valid desired rendering API.");
+                AETHER_ASSERT(ar, "No rendering API defined. Please enable one of the `USE_X` arguments to ensure that one is built and then select a valid desired rendering API.");
             }
         }
 
 		// Init rendering API - catch errors out here with assert
 		AETHER_ASSERT(m_Renderer->Initialize(*m_Window));
+
+        // Create default pipeline for the renderer
+        CreatePipeline();
 
 		// Setup ImGui layer for the renderer too
 		m_ImGuiLayer = new ImGuiLayer(m_CurrentRenderAPI);
@@ -113,6 +125,48 @@ namespace Aether
         overlay->OnAttach();
     }
 
+    void Application::CreatePipeline()
+    {
+        // Define what layout we want our renderer to use and create pipelines for. Start with the vertex attributes
+
+        VertexAttribute aPos
+        {
+            .m_Name = eShaderSemantic::kPosition,
+            .m_Format = eVertexAttributeFormat::kFloat4,
+            .m_Offset = 0   // Offset is optional and will be calculated by the layout constructor!
+        };
+
+        VertexAttribute aColour = { eShaderSemantic::kColour, eVertexAttributeFormat::kFloat4 };
+
+        // Construct a layout with these attributes, offset and stride will be calculated internally
+        VertexLayout layout({ aPos, aColour });
+
+        // Grab shader library and register shaders or grab handle in the case that they've already been registered (not the case here, but could be when called later!)
+        ShaderLibrary& shaders = ShaderLibrary::Get();
+        ShaderDesc vsDesc
+        {
+            .m_Name = "VertexShader",       // No extensions, ideally we have identical shaders for both GLSL and HLSL. Let the renderer API figure out which one it needs to loads
+            .m_ShaderStage = eShaderStage::kVertex
+        };
+        ShaderHandle vsHandle = shaders.Register("DefaultVertexShader", vsDesc);
+
+        ShaderDesc psDesc
+        {
+            .m_Name = "PixelShader",
+            .m_ShaderStage = eShaderStage::kPixel
+        };
+        ShaderHandle psHandle = shaders.Register("DefaultIndexShader", psDesc);
+
+        PipelineDesc pipelineDesc =
+        {
+            .m_VertexShader = vsHandle,
+            .m_PixelShader = psHandle,
+            .m_Layout = layout
+        };
+
+        m_Renderer->CreatePipeline(pipelineDesc);
+    }
+
     bool Application::OnWindowResize(WindowResizeEvent& e)
     {
 		// Let the renderer handle it's specific steps for resizing (recreating buffers, contexts, etc.)
@@ -124,7 +178,7 @@ namespace Aether
     void Application::OnEvent(Event& event)
     {
         // Just print the event for now
-        AETHER_CORE_TRACE("{0}", event);
+       // AETHER_CORE_TRACE("{0}", event);
 
         // Handle window resize in DirectX
         EventDispatcher dispatcher(event);
@@ -141,6 +195,29 @@ namespace Aether
         // A local instance that represents possible error codes.
         AETHER_RESULT ar = AETHER_OK;
 
+        std::string m_RendererString = "";
+        switch (m_CurrentRenderAPI)
+        {
+            case eRenderAPI::kOpenGL:
+            {
+                m_RendererString = "OpenGL";
+                break;
+            }
+            case eRenderAPI::kDX11:
+            {
+                m_RendererString = "DirectX 11";
+                break;
+            }
+            case eRenderAPI::kDX12:
+            {
+                m_RendererString = "DirectX 12";
+                break;
+            }
+        };
+
+        AETHER_CORE_INFO("Using Renderer: {0}", m_RendererString);
+
+
         // The game loop!
         while (!m_Window->WindowShouldClose())
         {
@@ -155,6 +232,8 @@ namespace Aether
 
             // Update our layers! Eventually, the renderer will tie in to this aswell as it will render each layer. ImGui renders here too, which is why we clear frame and begin earlier.
             m_LayerStack.UpdateLayers();
+
+            m_LayerStack.RenderLayers();
 
             // Draw anything else we want!
             m_Renderer->Render();

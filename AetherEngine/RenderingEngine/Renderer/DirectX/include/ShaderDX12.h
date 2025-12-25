@@ -8,13 +8,10 @@
 
 namespace Aether
 {
-	class AETHER_API ShaderDX12 : public Shader
+	class AETHER_API ShaderDX12 final : public Shader
 	{
 	public:
-		ShaderDX12(const std::wstring& shaderSrc, const std::string& shaderType);
-
-		void Bind() override {}
-		void Unbind() override {}
+		ShaderDX12(const std::wstring& shaderSrc, const char* shaderType);
 
 		D3D12_SHADER_BYTECODE& Get() { return m_ShaderBinary; }
 	private:

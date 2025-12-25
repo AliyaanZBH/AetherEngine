@@ -29,7 +29,7 @@ namespace Aether
 		const ImVec4 m_HighlightColour = m_AetherGold;
 	};
 
-	class AETHER_API ImGuiLayer : public Layer
+	class AETHER_API ImGuiLayer final : public Layer
 	{
 	public:
 		ImGuiLayer(eRenderAPI backend);
@@ -37,7 +37,7 @@ namespace Aether
 
 		void OnAttach() override;
 		void OnDetach() override;
-		void OnUpdate() override;
+		void Update() override;
 		void OnEvent(Event& event) override;
 
 		void Begin();

@@ -9,7 +9,7 @@
 
 namespace Aether
 {
-	ShaderDX12::ShaderDX12(const std::wstring& shaderSrc, const std::string& shaderType)
+	ShaderDX12::ShaderDX12(const std::wstring& shaderSrc, const char* shaderType)
 	{
 
 		ID3DBlob* shaderBlob;	// D3D blob for holding shader bytecode
@@ -30,7 +30,7 @@ namespace Aether
 			nullptr,
 			&includeHandler,
 			"main",
-			shaderType.c_str(),
+			shaderType,
 			D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
 			0,
 			&shaderBlob,

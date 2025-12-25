@@ -7,6 +7,7 @@
 #include "AppEvent.h"
 #include "KeyEvent.h"
 #include "MouseEvent.h"
+#include "GraphicsContext.h"
 //===============================================================================
 
 namespace Aether
@@ -19,9 +20,10 @@ namespace Aether
         AETHER_CORE_ERROR("GLFW Error ({0}): {1}", error, description);
     }
 
-    WindowGLFW::WindowGLFW(const WinData& winData)
+    WindowGLFW::WindowGLFW(const WinData& winData, const eRenderAPI currentRenderer)
     {
-        AETHER_ASSERT(Initialize(winData), "Failed to initalize GLFW properly.");
+        AETHER_ASSERT(Initialize(winData, currentRenderer), "Failed to initalize GLFW properly.");
+        
         // Don't forget to to set this winData for use later!
         SetData(winData);
     }
@@ -31,7 +33,7 @@ namespace Aether
         Terminate();
     }
 
-    AETHER_RESULT WindowGLFW::Initialize(const WinData& winData)
+    AETHER_RESULT WindowGLFW::Initialize(const WinData& winData, const eRenderAPI currentRenderer)
     {
         AETHER_RESULT ar = AETHER_OK;
         // Get GLFW setup for all our windows - only do this once!
@@ -48,13 +50,26 @@ namespace Aether
             s_bInitGLFW = true;
         }
 
-        // Create a GLFW window without an OpenGL context
-        // glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-       
+        switch (currentRenderer)
+        {
+            // Ensure GLFW window doesn't hijack the hwnd by creating an OpenGL context automatically if we're using DirectX
+            case eRenderAPI::kDX11:
+            case eRenderAPI::kDX12:
+            {
+                glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+                break;
+            }
+            case eRenderAPI::kOpenGL:
+            {
+                // glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+                break;
+            }
+            default:
+                break;
+        }
+        
         // VSync
         //glfwSwapInterval(1);
-
-        // TODO: Dynamic window size
 
         m_pWindow = glfwCreateWindow(winData.m_ClientWidth, winData.m_ClientHeight, winData.m_Title.c_str(), nullptr, nullptr);
         if (m_pWindow == nullptr)

@@ -9,17 +9,23 @@
 
 namespace Aether
 {
-	class RendererDX11 : public IRenderer
+	class RendererDX11 final : public IRenderer
 	{
 	public:
 		// Main start up function
 		AETHER_RESULT Initialize(IWindow& window) override;
+		void CreatePipeline(const PipelineDesc& desc) override;
+
 		void ClearFrame() override;
 		void Render() override;
 		void Present() override;
-
+		
 		void Resize(int newWidth, int newHeight) override;
 		void Terminate() override;
+
+		Buffer* CreateBuffer(const BufferDesc& desc) override;
+
+
 		void* GetNativeDevice() override { return m_pD3DDevice.Get(); }
 		void* GetNativeContext() override { return m_pD3DImmediateContext.Get(); }
 

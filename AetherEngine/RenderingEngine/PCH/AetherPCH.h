@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <stdexcept>
 #include <cassert>
+#include <cstdarg>
 
 #include <functional>
 #include <memory>

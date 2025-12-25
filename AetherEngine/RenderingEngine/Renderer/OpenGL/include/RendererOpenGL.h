@@ -5,20 +5,27 @@
 //===============================================================================
 #include "IRenderer.h"
 #include "ShaderOpenGL.h"
+#include "BufferOpenGL.h"
 //===============================================================================
 namespace Aether
 {
-	class RendererOpenGL : public IRenderer
+	class RendererOpenGL final : public IRenderer
 	{
 	public:
 		// Main start up function
 		AETHER_RESULT Initialize(IWindow& window) override;
+		void CreatePipeline(const PipelineDesc& desc) override;
+
 		void ClearFrame() override;
 		void Render() override;
+		void Render(VertexBufferView* vbv, IndexBufferView* ibv) override;
 		void Present() override;
 
 		void Resize(int newWidth, int newHeight) override {}	// Empty for now since GLFW seemingly handles this for us!
 		void Terminate() override;
+
+		Buffer* CreateBuffer(const BufferDesc& desc) override;
+
 		void* GetNativeDevice() override { return 0; }
 		void* GetNativeContext() override { return 0; }
 
@@ -28,8 +35,12 @@ namespace Aether
 	private:
 		GLFWwindow* m_pWindow;
 
-		unsigned int m_VertexArray, m_VertexBuffer, m_IndexBuffer;
+		unsigned int m_VertexAttributeArray;
 
 		ShaderOpenGL* m_Shader = nullptr;
+		std::unordered_map<ShaderHandle, ShaderOpenGL*> m_ShaderCache;
+
+		BufferOpenGL* m_VertexBuffer = nullptr;
+		BufferOpenGL* m_IndexBuffer = nullptr;
 	};
 };

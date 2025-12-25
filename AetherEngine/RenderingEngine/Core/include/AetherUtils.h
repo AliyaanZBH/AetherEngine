@@ -5,8 +5,6 @@
 //===============================================================================
 #include "Core.h"
 #include "Log.h"
-
-#include <cstdarg>
 //===============================================================================
 
 // Debug stuff - currently tied to windows, will update to be truly cross platform in future :)

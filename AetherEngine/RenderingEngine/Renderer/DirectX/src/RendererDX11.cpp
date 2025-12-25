@@ -40,6 +40,10 @@ namespace Aether
 		return ret;
 	}
 
+	void RendererDX11::CreatePipeline(const PipelineDesc& desc)
+	{
+	}
+
 	void RendererDX11::Render()
 	{} // Currently not rendering any geometry
 
@@ -85,6 +89,11 @@ namespace Aether
 		ID3D11Debug* pD3DDebug;
 		AETHER_HR_ASSERT(m_pD3DDevice->QueryInterface(__uuidof(ID3D11Debug), reinterpret_cast<void**>(&pD3DDebug)));
 		AETHER_HR_ASSERT(pD3DDebug->ReportLiveDeviceObjects(D3D11_RLDO_SUMMARY));
+	}
+
+	Buffer* RendererDX11::CreateBuffer(const BufferDesc& desc)
+	{
+		return nullptr;
 	}
 
 	void RendererDX11::InitImGui()

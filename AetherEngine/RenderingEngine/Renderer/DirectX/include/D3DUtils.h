@@ -3,15 +3,77 @@
 // desc: A collection of handy debug utilies for DirectX/WinAPI, chiefly the ability to get better debugging info from HResults!
 // auth: Aliyaan Zulfiqar
 //===============================================================================
+#include "GraphicsContext.h"
+#include "Shader.h"
+//===============================================================================
 
 
-
-// Re-usable vertex attribute struct
-struct Vertex
+static std::wstring ToWide(const std::string& str)
 {
-	Vertex(float x, float y, float z, float r, float g, float b, float a) : pos(x, y, z), colour(r, g, b, a) {}
-	DirectX::XMFLOAT3 pos;
-	DirectX::XMFLOAT4 colour;
+	int sizeNeeded = MultiByteToWideChar(
+		CP_UTF8, 0,
+		str.c_str(), (int)str.size(),
+		nullptr, 0);
+
+	std::wstring wstr(sizeNeeded, 0);
+
+	MultiByteToWideChar(
+		CP_UTF8, 0,
+		str.c_str(), (int)str.size(),
+		&wstr[0], sizeNeeded);
+
+	return wstr;
+}
+
+
+namespace Aether
+{
+	static std::string ResolveDirectXShaderPath(const std::string& name)
+	{
+		return name + ".hlsl";
+	}
+
+	static const char* ToDirectXSemantic(eShaderSemantic semantic)
+	{
+		switch (semantic)
+		{
+		case eShaderSemantic::kPosition:	return "POSITION";
+		case eShaderSemantic::kNormal:		return "NORMAL";
+		case eShaderSemantic::kColour:		return "COLOR";
+		case eShaderSemantic::kTexCoord0:	return "TEXCOORD";
+		case eShaderSemantic::kTexCoord1:	return "TEXCOORD";
+		case eShaderSemantic::kTangent:		return "TANGENT";
+		case eShaderSemantic::kBitangent:	return "BINORMAL";
+		default:
+			AETHER_ASSERT(false, "Unsupported semantic");
+			return "";
+		}
+	}
+
+	static const char* ShaderStageToCompilerString(eShaderStage stage)
+	{
+		switch (stage)
+		{
+			case eShaderStage::kVertex: return "vs_5_0";
+			case eShaderStage::kPixel: return "ps_5_0";
+			case eShaderStage::kCompute: return "cs_5_0";
+		}
+
+		AETHER_ASSERT(AETHER_FAIL, "Unknown shader stage for DirectX");
+		return "";
+	}
+	
+	static DXGI_FORMAT ToDXGIFormat(eVertexAttributeFormat fmt)
+	{
+		switch (fmt)
+		{
+			case eVertexAttributeFormat::kFloat3: return DXGI_FORMAT_R32G32B32_FLOAT;
+			case eVertexAttributeFormat::kFloat4: return DXGI_FORMAT_R32G32B32A32_FLOAT;
+		}
+	
+		AETHER_ASSERT(false, "Unknown vertex format for DirectX");
+		return DXGI_FORMAT_UNKNOWN;
+	}
 };
 
 // [AZB]: I didn't want to have to keep copy and pasting shader files into all the different directories, so I wrote this in order to get shader files from a single common folder

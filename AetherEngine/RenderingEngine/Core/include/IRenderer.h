@@ -9,16 +9,30 @@
 
 namespace Aether
 {
+    class Buffer;
+    struct BufferDesc;
+    struct PipelineDesc;
+    struct VertexBufferView;
+    struct IndexBufferView;
+
     class AETHER_API IRenderer {
     public:
         virtual ~IRenderer() = default;
 
         virtual AETHER_RESULT Initialize(IWindow& window) = 0;
+        virtual void CreatePipeline(const PipelineDesc& desc) = 0;
+
         virtual void ClearFrame() = 0;
         virtual void Render() = 0;
+        virtual void Render(VertexBufferView* vbv, IndexBufferView* ibv) {};
         virtual void Present() = 0;
+
         virtual void Resize(int newWidth, int newHeight) = 0;
         virtual void Terminate() = 0;
+
+        virtual Buffer* CreateBuffer(const BufferDesc& desc) = 0;
+        virtual void FinalizeUploads() {}; // Not pure virtual as OpenGL and DX11 do not need to implement this, this is a modern render API necessity
+
         virtual void* GetNativeDevice() = 0;
         virtual void* GetNativeContext() = 0;
 
@@ -26,12 +40,5 @@ namespace Aether
         virtual void InitImGui() = 0;
         virtual void BeginImGuiRender() = 0;
         virtual void EndImGuiRender() = 0;
-    };
-
-    enum class eRenderAPI
-    {
-        kOpenGL,
-        kDX11,
-        kDX12
     };
 }

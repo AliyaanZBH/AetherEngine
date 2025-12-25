@@ -5,22 +5,32 @@
 // auth: Aliyaan Zulfiqar
 //===============================================================================
 #include "IRenderer.h"
+#include "ImGuiDX12.h"
 #include "ShaderDX12.h"
+#include "BufferDX12.h"
+#include "GraphicsContext.h"
 //===============================================================================
 
 namespace Aether
 {
-	class RendererDX12 : public IRenderer
+	class RendererDX12 final : public IRenderer
 	{
 	public:
 		// Main start up function
 		AETHER_RESULT Initialize(IWindow& window) override;
+		void CreatePipeline(const PipelineDesc& desc) override;
+
 		void ClearFrame() override;
 		void Render() override;
+		void Render(VertexBufferView* vbv, IndexBufferView* ibv) override;
 		void Present() override;
 
 		void Resize(int newWidth, int newHeight) override;
 		void Terminate() override;
+
+		Buffer* CreateBuffer(const BufferDesc& desc) override;
+		void FinalizeUploads() override;
+
 		void* GetNativeDevice() override { return m_Device.Get(); }
 		void* GetNativeContext() override { return 0; }
 
@@ -47,80 +57,38 @@ namespace Aether
 		
 		AETHER_RESULT CreateDepthStencil();
 
-		AETHER_RESULT CreatePipelines();
+		AETHER_RESULT CreateRootSignature();
 
-		AETHER_RESULT CompileShaders();
+		// Either find or compile a shader
+		ShaderDX12* LoadShader(ShaderHandle handle);
 
-		AETHER_RESULT CreateInputLayoutAndPSO();
+		// Translate API agnostic input layout into DX12 land
+		std::vector<D3D12_INPUT_ELEMENT_DESC> TranslateLayout(const VertexLayout& layout);
+
+		// Create a PSO using
+		void CreatePSO(const D3D12_SHADER_BYTECODE& vs, const D3D12_SHADER_BYTECODE& ps, const VertexLayout& layout);
+
 
 		AETHER_RESULT CreateAndUploadGeo();
 
 		// Extra Methods to help with rendering
 		//
 
+		D3D12_VERTEX_BUFFER_VIEW CreateVertBufView(VertexBufferView* vbv);
+		D3D12_INDEX_BUFFER_VIEW CreateIdxBufView(IndexBufferView* ibv);
+
 		AETHER_RESULT CleanupRenderBuffers();
 
 		AETHER_RESULT UpdateViewportAndScissor();
 
-		// Update command lists and clear the frame
-		AETHER_RESULT ClearAndSyncFrame();
-
 		// Ensure the CPU frame is no longer in use by the GPU to free the command list
 		AETHER_RESULT BeginFrame();
 
+		// Update command lists and clear the frame
+		AETHER_RESULT ClearAndSyncFrame();
+
 		// Wait for all submitted work to finish, fully flushing the GPU
 		AETHER_RESULT WaitForGPU();
-
-
-		//
-		// Temp Structs
-		//
-
-		// Simple free list based allocator - taken from ImGui example
-		// TODO: Write a proper one!
-		struct ImGuiExampleDescriptorHeapAllocator
-		{
-			ID3D12DescriptorHeap* Heap = nullptr;
-			D3D12_DESCRIPTOR_HEAP_TYPE  HeapType = D3D12_DESCRIPTOR_HEAP_TYPE_NUM_TYPES;
-			D3D12_CPU_DESCRIPTOR_HANDLE HeapStartCpu = {};
-			D3D12_GPU_DESCRIPTOR_HANDLE HeapStartGpu = {};
-			UINT                        HeapHandleIncrement = {};
-			ImVector<int>               FreeIndices = {};
-
-			void Create(ID3D12Device* device, ID3D12DescriptorHeap* heap)
-			{
-				IM_ASSERT(Heap == nullptr && FreeIndices.empty());
-				Heap = heap;
-				D3D12_DESCRIPTOR_HEAP_DESC desc = heap->GetDesc();
-				HeapType = desc.Type;
-				HeapStartCpu = Heap->GetCPUDescriptorHandleForHeapStart();
-				HeapStartGpu = Heap->GetGPUDescriptorHandleForHeapStart();
-				HeapHandleIncrement = device->GetDescriptorHandleIncrementSize(HeapType);
-				FreeIndices.reserve((int)desc.NumDescriptors);
-				for (int n = desc.NumDescriptors; n > 0; n--)
-					FreeIndices.push_back(n - 1);
-			}
-			void Destroy()
-			{
-				Heap = nullptr;
-				FreeIndices.clear();
-			}
-			void Alloc(D3D12_CPU_DESCRIPTOR_HANDLE* out_cpu_desc_handle, D3D12_GPU_DESCRIPTOR_HANDLE* out_gpu_desc_handle)
-			{
-				IM_ASSERT(FreeIndices.Size > 0);
-				int idx = FreeIndices.back();
-				FreeIndices.pop_back();
-				out_cpu_desc_handle->ptr = HeapStartCpu.ptr + (idx * HeapHandleIncrement);
-				out_gpu_desc_handle->ptr = HeapStartGpu.ptr + (idx * HeapHandleIncrement);
-			}
-			void Free(D3D12_CPU_DESCRIPTOR_HANDLE out_cpu_desc_handle, D3D12_GPU_DESCRIPTOR_HANDLE out_gpu_desc_handle)
-			{
-				int cpu_idx = (int)((out_cpu_desc_handle.ptr - HeapStartCpu.ptr) / HeapHandleIncrement);
-				int gpu_idx = (int)((out_gpu_desc_handle.ptr - HeapStartGpu.ptr) / HeapHandleIncrement);
-				IM_ASSERT(cpu_idx == gpu_idx);
-				FreeIndices.push_back(cpu_idx);
-			}
-		};
 
 		// Private members to facilitate the above functions
 		//
@@ -179,15 +147,16 @@ namespace Aether
 		// Use our shader wrapper to handle shader files themselves
 		ShaderDX12* m_VS = nullptr;
 		ShaderDX12* m_PS = nullptr;
+		std::unordered_map<ShaderHandle, ShaderDX12*> m_ShaderCache;
 
 		// Our physical VB
-		Microsoft::WRL::ComPtr<ID3D12Resource> m_VertexBuffer;
+		BufferDX12* m_VertexBuffer = nullptr;
 
 		// Structure that points to VB in GPU
 		D3D12_VERTEX_BUFFER_VIEW m_VertBufView;
 
 		// Same for IB!
-		Microsoft::WRL::ComPtr<ID3D12Resource> m_IndexBuffer;
+		BufferDX12* m_IndexBuffer = nullptr;
 		D3D12_INDEX_BUFFER_VIEW m_IdxBufView;
 
 		// Draw bounds stuff

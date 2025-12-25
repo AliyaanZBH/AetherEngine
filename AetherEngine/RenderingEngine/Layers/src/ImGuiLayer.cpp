@@ -95,7 +95,7 @@ namespace Aether
 		ImGui::NewFrame();
 	}
 
-	void ImGuiLayer::OnUpdate()
+	void ImGuiLayer::Update()
 	{
 		// Currently, the only thing our ImGui layer is doing is this
 		bool show = true;

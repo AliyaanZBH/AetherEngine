@@ -6,7 +6,7 @@ struct VS_OUTPUT
 
 float4 main(VS_OUTPUT input) : SV_TARGET
 {
-	// Gimme blue!
-	//return float4(0.0f, 0.2f, 1.0f, 1.0f);
-	return input.colour;
+	// Return vertex colour
+    return input.colour;
+
 }
