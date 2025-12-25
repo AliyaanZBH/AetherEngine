@@ -195,6 +195,29 @@ namespace Aether
         // A local instance that represents possible error codes.
         AETHER_RESULT ar = AETHER_OK;
 
+        std::string m_RendererString = "";
+        switch (m_CurrentRenderAPI)
+        {
+            case eRenderAPI::kOpenGL:
+            {
+                m_RendererString = "OpenGL";
+                break;
+            }
+            case eRenderAPI::kDX11:
+            {
+                m_RendererString = "DirectX 11";
+                break;
+            }
+            case eRenderAPI::kDX12:
+            {
+                m_RendererString = "DirectX 12";
+                break;
+            }
+        };
+
+        AETHER_CORE_INFO("Using Renderer: {0}", m_RendererString);
+
+
         // The game loop!
         while (!m_Window->WindowShouldClose())
         {

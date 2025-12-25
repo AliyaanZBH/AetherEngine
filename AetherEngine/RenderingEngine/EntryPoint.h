@@ -17,15 +17,6 @@ int main(int argc, char** argv)
 	// Test logging with variadic macros!
 	std::string name("NewGame");
 	AETHER_CORE_WARN("Initalised Log!");
-
-	std::string renderAPI = "";
-#ifdef USE_DX11
-	renderAPI = "DirectX 11";
-#endif
-#ifdef USE_DX12
-	renderAPI = "DirectX 12";
-#endif
-	AETHER_CORE_INFO("Using Renderer: {0}", renderAPI);
 	
 	AETHER_TRACE("Hello from an AetherApp! This game is called: {0}", name);
 
