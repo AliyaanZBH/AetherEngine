@@ -136,7 +136,6 @@ namespace Aether
 			glEnableVertexArrayAttrib(m_VertexAttributeArray, location);
 		}
 
-
 		// TMP: Paste simple shader source here for now
 		std::string vertexSrc = R"(
 			#version 430 core
@@ -157,10 +156,13 @@ namespace Aether
 			layout (location = 0) out vec4 colour;
 			
 			in vec4 v_Colour;
+			
+			uniform vec4 dynamicColour;
 
 			void main()
 			{
-			    colour = v_Colour;
+			    //colour = v_Colour;
+			    colour = v_Colour + dynamicColour;
 			}
 		)";
 
@@ -172,6 +174,14 @@ namespace Aether
 
 	void RendererOpenGL::Render()
 	{
+		// Uniform setup for varying colours!
+		float deltaTime = glfwGetTime();
+		float varyingVal = (sin(deltaTime) / 2.0f) + 0.15f;
+
+		int dynamicColourLocation = glGetUniformLocation(m_Shader->GetProgram(), "dynamicColour");
+		glUniform4f(dynamicColourLocation, varyingVal, varyingVal, 0.0f, 1.0f);
+
+
 		// Bind and draw our geo!
 		glBindVertexArray(m_VertexAttributeArray);
 		
