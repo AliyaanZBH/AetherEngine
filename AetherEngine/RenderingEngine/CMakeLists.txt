@@ -76,14 +76,18 @@ set(INCLUDE
     Graphics/include/GraphicsContext.h
     Graphics/include/Shader.h
     Graphics/include/Buffer.h
+    Graphics/include/Pipeline.h
 
     #
     # DirectX
     #
 
     Renderer/DirectX/include/D3DUtils.h
+    
     Renderer/DirectX/include/RendererDX11.h
+    
     Renderer/DirectX/include/RendererDX12.h
+     Renderer/DirectX/include/ImGuiDX12.h
     Renderer/DirectX/include/ShaderDX12.h
     Renderer/DirectX/include/BufferDX12.h
 
@@ -105,19 +109,27 @@ set(INCLUDE
 
     # Miscellaneous third-party includes
     ThirdParty/dx12Helper/include/d3dx12.h
- 
- "Graphics/include/Pipeline.h" "Renderer/DirectX/include/ImGuiDX12.h")
+)
 
 # Specify shaders
 set(HLSL_SHADER_FILES
 
-    Shaders/VertexShader.hlsl
-    Shaders/PixelShader.hlsl
+    Shaders/DirectX/VertexShader.hlsl
+    Shaders/DirectX/PixelShader.hlsl
 )
 
+# Extra steps for HLSL and MSVC
 set_source_files_properties(${HLSL_SHADER_FILES} PROPERTIES ShaderModel "5_0")
-set_source_files_properties(Shaders/VertexShader.hlsl PROPERTIES ShaderType "vs")
-set_source_files_properties(Shaders/PixelShader.hlsl PROPERTIES ShaderType "ps")
+set_source_files_properties(Shaders/DirectX/VertexShader.hlsl PROPERTIES ShaderType "vs")
+set_source_files_properties(Shaders/DirectX/PixelShader.hlsl PROPERTIES ShaderType "ps")
+
+# Repeat for GLSL
+set(GLSL_SHADER_FILES
+
+    Shaders/OpenGL/VertexShader.glsl
+    Shaders/OpenGL/PixelShader.glsl
+)
+
 
 
 # Define the target - we want a DLL for development and a static lib (for the juicy optimisations) when shipping.
@@ -163,7 +175,7 @@ target_include_directories(AetherRenderer
 # Set source groups for VS2022 quality of life
 source_group("src" FILES ${SRC})
 source_group("include" FILES ${INCLUDE})
-source_group("shaders" FILES ${HLSL_SHADER_FILES})
+source_group("shaders" FILES ${HLSL_SHADER_FILES} ${GLSL_SHADER_FILES})
 
 #
 # Third-party libraries and subdirectories (subdirectories only for projects that contain a CMakeLists file)
@@ -260,9 +272,8 @@ endif()
 # Build HLSL shaders
 foreach(FILE ${HLSL_SHADER_FILES})
     get_filename_component(FILE_WE ${FILE} NAME_WE)
-
     # Create list of compiled and raw shader files
-    list(APPEND RAW_SHADER_FILES  ${CMAKE_CURRENT_SOURCE_DIR}/${FILE})
+    list(APPEND RAW_HLSL_SHADER_FILES  ${CMAKE_CURRENT_SOURCE_DIR}/${FILE})
     list(APPEND CSO_SHADER_FILES ${CMAKE_CURRENT_BINARY_DIR}/${FILE_WE}.cso)
     
     get_source_file_property(shadertype ${FILE} ShaderType)
@@ -276,28 +287,35 @@ foreach(FILE ${HLSL_SHADER_FILES})
                 /Fd ${CMAKE_CURRENT_BINARY_DIR}/${FILE_WE}.pdb ${FILE}
         DEPENDS ${FILE}
         COMMENT "Compiling HLSL ${FILE}..."
-        COMMAND ${CMAKE_COMMAND} -E echo "Successfuly compiled shader!"
+        COMMAND ${CMAKE_COMMAND} -E echo "Successfuly compiled HLSL shader!"
         VERBATIM
     )
 endforeach(FILE)
 
+# Create a list of full paths to our GLSL files too
+foreach(FILE ${GLSL_SHADER_FILES})
+    list(APPEND RAW_GLSL_SHADER_FILES  ${CMAKE_CURRENT_SOURCE_DIR}/${FILE})
+endforeach(FILE)
 
 # Create a target for shaders - using snake_case to denote that this is an intermediate target only
-add_custom_target(aether_shaders DEPENDS ${CSO_SHADER_FILES})
+add_custom_target(aether_shaders DEPENDS ${CSO_SHADER_FILES} ${GLSL_SHADER_FILES})
 
 # Make renderer depend on shader compilation
 add_dependencies(AetherRenderer aether_shaders)
 
 # Deployment target for the shaders - use the top level binary directory that we defined.
-set(SHADER_DEST "${BIN_DIR}/Shaders")
+set(SHADER_DEST_DIRECTX "${BIN_DIR}/Shaders/DirectX")
+set(SHADER_DEST_OPENGL "${BIN_DIR}/Shaders/OpenGL")
 
 
 # Copy raw shaders and CSOs to bin folder in build step via another custom intermediate target
 add_custom_target(deploy_shaders ALL
     DEPENDS AetherRenderer aether_shaders
-    COMMAND ${CMAKE_COMMAND} -E make_directory ${SHADER_DEST}
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CSO_SHADER_FILES} ${SHADER_DEST} COMMAND_EXPAND_LISTS
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${RAW_SHADER_FILES} ${SHADER_DEST} COMMAND_EXPAND_LISTS
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${SHADER_DEST_DIRECTX}
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${SHADER_DEST_OPENGL}
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CSO_SHADER_FILES} ${SHADER_DEST_DIRECTX} COMMAND_EXPAND_LISTS
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${RAW_HLSL_SHADER_FILES} ${SHADER_DEST_DIRECTX} COMMAND_EXPAND_LISTS
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${RAW_GLSL_SHADER_FILES} ${SHADER_DEST_OPENGL} COMMAND_EXPAND_LISTS
     COMMENT "Deploying AetherEngine shaders..."
     COMMAND ${CMAKE_COMMAND} -E echo "Engine shader files deployed!"
 )

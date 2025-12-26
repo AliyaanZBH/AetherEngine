@@ -155,7 +155,7 @@ namespace Aether
             .m_Name = "PixelShader",
             .m_ShaderStage = eShaderStage::kPixel
         };
-        ShaderHandle psHandle = shaders.Register("DefaultIndexShader", psDesc);
+        ShaderHandle psHandle = shaders.Register("DefaultPixelShader", psDesc);
 
         PipelineDesc pipelineDesc =
         {

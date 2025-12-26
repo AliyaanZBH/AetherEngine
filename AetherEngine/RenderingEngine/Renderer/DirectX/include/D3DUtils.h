@@ -50,7 +50,7 @@ namespace Aether
 		}
 	}
 
-	static const char* ShaderStageToCompilerString(eShaderStage stage)
+	static const char* ShaderStageToHLSLCompilerString(eShaderStage stage)
 	{
 		switch (stage)
 		{

@@ -9,81 +9,84 @@
 
 namespace Aether
 {
-	ShaderOpenGL::ShaderOpenGL(const std::string& vertSrc, const std::string& fragSrc)
+	ShaderOpenGL::ShaderOpenGL(const std::string& shaderFilename, eShaderStage stage)
 	{
 		//
 		//	Taken more or less verbatim from Khronos doc: https://wikis.khronos.org/opengl/Shader_Compilation
 		//
 
-		// Read our shaders into the appropriate buffers
+		// Modified to only load a single shader from file
 
-		// Create an empty vertex shader handle
-		GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
 
-		// Send the vertex shader source code to GL
+		std::string shaderDir = "Shaders\\OpenGL\\";  // [AZB]: Main GLSL shader directory.
+		std::string fullShaderPath = shaderDir + shaderFilename + ".glsl";
+		std::string shaderSrc = "";
+
+		// Prep the filepath
+		std::ifstream shaderFile;
+		shaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+
+		// Read our shader file and store data into the appropriate buffers
+		// TODO: Doing it old-school with a try catch for now (based off of https://learnopengl.com/Getting-started/Shaders), will modernise later
+		try
+		{
+			// Open the file if it exists
+			shaderFile.open(fullShaderPath.c_str());
+			std::stringstream shaderStream;
+
+			// Read file's buffer contents into streams
+			shaderStream << shaderFile.rdbuf();
+
+			// Close file handlers
+			shaderFile.close();
+			
+			// convert stream into string
+			shaderSrc = shaderStream.str();
+		}
+		catch (std::ifstream::failure e)
+		{
+			AETHER_ASSERT(AETHER_FAIL, "GLSL Shader file could not be read");
+		}
+
+		// Create an empty shader handle - use the passed in type (e.g. kVertex which get's converted to GL_VERTEX_SHADER)
+		GLuint shaderHandle = glCreateShader(ShaderStageToGLSLCompilerEnum(stage));
+
+		// Send the shader source code to GL
 		// Note that std::string's .c_str is NULL character terminated.
-		const GLchar* source = (const GLchar*)vertSrc.c_str();
-		glShaderSource(vertexShader, 1, &source, 0);
+		const GLchar* source = (const GLchar*)shaderSrc.c_str();
+		glShaderSource(shaderHandle, 1, &source, 0);
 
-		// Compile the vertex shader
-		glCompileShader(vertexShader);
+		// Compile the shader
+		glCompileShader(shaderHandle);
 
 		GLint isCompiled = 0;
-		glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &isCompiled);
+		glGetShaderiv(shaderHandle, GL_COMPILE_STATUS, &isCompiled);
 		if (isCompiled == GL_FALSE)
 		{
 			GLint maxLength = 0;
-			glGetShaderiv(vertexShader, GL_INFO_LOG_LENGTH, &maxLength);
+			glGetShaderiv(shaderHandle, GL_INFO_LOG_LENGTH, &maxLength);
 
 			// The maxLength includes the NULL character
 			std::vector<GLchar> infoLog(maxLength);
-			glGetShaderInfoLog(vertexShader, maxLength, &maxLength, &infoLog[0]);
+			glGetShaderInfoLog(shaderHandle, maxLength, &maxLength, &infoLog[0]);
 
 			// We don't need the shader anymore.
-			glDeleteShader(vertexShader);
+			glDeleteShader(shaderHandle);
 
 			// Use the infoLog as you see fit.
-			AETHER_ASSERT(AETHER_FAIL, "Vertex shader failed to compile: {0}", infoLog.data());
+			AETHER_ASSERT(AETHER_FAIL, " GLS Shader failed to compile: {0}", infoLog.data());
 
 			// In this simple program, we'll just leave
 			return;
 		}
 
-		// Create an empty fragment shader handle
-		GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-
-		// Send the fragment shader source code to GL
-		// Note that std::string's .c_str is NULL character terminated.
-		source = (const GLchar*)fragSrc.c_str();
-		glShaderSource(fragmentShader, 1, &source, 0);
-
-		// Compile the fragment shader
-		glCompileShader(fragmentShader);
-
-		glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &isCompiled);
-		if (isCompiled == GL_FALSE)
-		{
-			GLint maxLength = 0;
-			glGetShaderiv(fragmentShader, GL_INFO_LOG_LENGTH, &maxLength);
-			std::vector<GLchar> infoLog(maxLength);
-			glGetShaderInfoLog(fragmentShader, maxLength, &maxLength, &infoLog[0]);
-
-			glDeleteShader(fragmentShader);
-			// Delete both of them. Don't leak shaders.
-			glDeleteShader(vertexShader);
-
-			AETHER_ASSERT(AETHER_FAIL, "Fragment shader failed to compile: {0}", infoLog.data());
-			return;
-		}
-
-		// Vertex and fragment shaders are successfully compiled.
-		// Now time to link them together into a program.
+		// Shader successfully compiled.
+		// Now time to link into a program.
 		// Get a program object.
 		m_GLProgram = glCreateProgram();
 
-		// Attach our shaders to our program
-		glAttachShader(m_GLProgram, vertexShader);
-		glAttachShader(m_GLProgram, fragmentShader);
+		// Attach shader to our program
+		glAttachShader(m_GLProgram, shaderHandle);
 
 		// Link our program
 		glLinkProgram(m_GLProgram);
@@ -102,16 +105,26 @@ namespace Aether
 			// We don't need the program anymore.
 			glDeleteProgram(m_GLProgram);
 			// Don't leak shaders either.
-			glDeleteShader(vertexShader);
-			glDeleteShader(fragmentShader);
+			glDeleteShader(shaderHandle);
 
 			AETHER_ASSERT(AETHER_FAIL, "Shaders failed to link: {0}", infoLog.data());
 			return;
 		}
 
 		// Always detach shaders after a successful link.
-		glDetachShader(m_GLProgram, vertexShader);
-		glDetachShader(m_GLProgram, fragmentShader);
+		glDetachShader(m_GLProgram, shaderHandle);
+	}
+
+	GLenum ShaderOpenGL::ShaderStageToGLSLCompilerEnum(eShaderStage stage)
+	{
+		switch (stage)
+		{
+			case eShaderStage::kVertex: return GL_VERTEX_SHADER;
+			case eShaderStage::kPixel: return GL_FRAGMENT_SHADER;
+		}
+
+		AETHER_ASSERT(AETHER_FAIL, "Unknown shader stage for OpenGL");
+		return GL_SHADER;
 	}
 
 	void ShaderOpenGL::Bind()

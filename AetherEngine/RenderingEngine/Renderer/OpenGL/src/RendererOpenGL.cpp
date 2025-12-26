@@ -20,7 +20,7 @@ namespace Aether
 		case eShaderSemantic::kTexCoord0: return 3;
 		case eShaderSemantic::kTexCoord1: return 4;
 		default:
-			AETHER_ASSERT(false, "Unsupported semantic");
+			AETHER_ASSERT(false, "Unsupported GLSL semantic");
 			return 0;
 		}
 	}
@@ -37,11 +37,6 @@ namespace Aether
 			AETHER_ASSERT(false, "Unsupported format for OpenGL");
 			return 0;
 		}
-	}
-
-	std::string ResolveGLShaderPath(const std::string& name)
-	{
-		return "Shaders/GLSL/" + name + ".glsl";
 	}
 
 	AETHER_RESULT RendererOpenGL::Initialize(IWindow& window)
@@ -98,18 +93,39 @@ namespace Aether
 		};
 		m_IndexBuffer = static_cast<BufferOpenGL*>(CreateBuffer(ibDesc));
 
-		//glEnable(GL_FRAMEBUFFER_SRGB);
 
 		return ar;
+	}
+
+	ShaderOpenGL* RendererOpenGL::LoadShader(ShaderHandle handle)
+	{
+		// See if this shader was already compiled, return it if so
+		auto it = m_ShaderCache.find(handle);
+		if (it != m_ShaderCache.end())
+			return it->second;
+
+		// Doesn't exist yet, let's build it
+		const ShaderDesc& desc = ShaderLibrary::Get().GetDesc(handle);
+
+		ShaderOpenGL* shader = new ShaderOpenGL(desc.m_Name, desc.m_ShaderStage);
+
+		// Register shader in OpenGL cache
+		m_ShaderCache[handle] = shader;
+
+		return shader;
 	}
 
 	void RendererOpenGL::CreatePipeline(const PipelineDesc& desc)
 	{
 		// Grab or create shaders for this openGL "Pipeline"
-		// Currently still using raw shaders in src, skip this for now
 		//
-		//ShaderOpenGL* vs = LoadShader(desc.m_VertexShader);
-		//ShaderOpenGL* ps = LoadShader(desc.m_PixelShader);
+		
+		m_VertShader = LoadShader(desc.m_VertexShader);
+		m_FragShader = LoadShader(desc.m_PixelShader);
+
+		// Bind those bois
+		m_VertShader->Bind();
+		m_FragShader->Bind();
 
 		// Create VAO object to define our input layout
 		glCreateVertexArrays(1, &m_VertexAttributeArray);
@@ -123,7 +139,7 @@ namespace Aether
 			glVertexArrayAttribFormat(
 				m_VertexAttributeArray,
 				location,											// attrib index
-				VertexAttributeComponentCount(attrib.m_Format),				// Size  in OpenGL land actually means `component count`. So we want 4 instead of 16
+				VertexAttributeComponentCount(attrib.m_Format),		// Size  in OpenGL land actually means `component count`. So we want 4 instead of 16
 				ToGLFormat(attrib.m_Format),						// GL enum that matches our format (usually GL_FLOAT)
 				GL_FALSE,											// Force false on normalisation for now
 				attrib.m_Offset										// offset within vertex struct ( e.g. colour would be 16 bytes offset as there are 16 bytes of position data first)
@@ -135,41 +151,6 @@ namespace Aether
 			// Finally, enable the attribute in the vertex array
 			glEnableVertexArrayAttrib(m_VertexAttributeArray, location);
 		}
-
-		// TMP: Paste simple shader source here for now
-		std::string vertexSrc = R"(
-			#version 430 core
-			layout (location = 0) in vec4 a_Pos;
-			layout (location = 1) in vec4 a_Col;
-			
-			out vec4 v_Colour;
-
-			void main()
-			{
-			    gl_Position = a_Pos;
-				v_Colour = a_Col;
-			}
-		)";
-
-		std::string fragSrc = R"(
-			#version 430 core
-			layout (location = 0) out vec4 colour;
-			
-			in vec4 v_Colour;
-			
-			uniform vec4 dynamicColour;
-
-			void main()
-			{
-			    //colour = v_Colour;
-			    colour = v_Colour + dynamicColour;
-			}
-		)";
-
-		// Create shader program by compiling and linking shader files ( or raw source as we have it currently)
-		m_Shader = new ShaderOpenGL(vertexSrc, fragSrc);
-		// Bind that boy
-		m_Shader->Bind();
 	}
 
 	void RendererOpenGL::Render()
@@ -178,7 +159,7 @@ namespace Aether
 		float deltaTime = glfwGetTime();
 		float varyingVal = (sin(deltaTime) / 2.0f) + 0.15f;
 
-		int dynamicColourLocation = glGetUniformLocation(m_Shader->GetProgram(), "dynamicColour");
+		int dynamicColourLocation = glGetUniformLocation(m_FragShader->GetProgram(), "dynamicColour");
 		glUniform4f(dynamicColourLocation, varyingVal, varyingVal, 0.0f, 1.0f);
 
 

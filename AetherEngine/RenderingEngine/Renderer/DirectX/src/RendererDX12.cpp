@@ -528,12 +528,12 @@ namespace Aether
 		if (it != m_ShaderCache.end())
 			return it->second;
 
-		// Doesn't exist yet, let's build it
+		// Doesn't exist yet, let's build it. This will fail if the shader hasn't yet been registered
 		const ShaderDesc& desc = ShaderLibrary::Get().GetDesc(handle);
 
 		// DX12 is weird and windows-y so it wants a wstring
 		std::wstring windowsPath = ToWide(ResolveDirectXShaderPath(desc.m_Name));
-		ShaderDX12* shader = new ShaderDX12(windowsPath, ShaderStageToCompilerString(desc.m_ShaderStage));
+		ShaderDX12* shader = new ShaderDX12(windowsPath, ShaderStageToHLSLCompilerString(desc.m_ShaderStage));
 
 		// Register shader in DX12 cache
 		m_ShaderCache[handle] = shader;
