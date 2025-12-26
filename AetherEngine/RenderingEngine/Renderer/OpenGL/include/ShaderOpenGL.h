@@ -11,7 +11,7 @@ namespace Aether
 	class AETHER_API ShaderOpenGL final : public Shader
 	{
 	public:
-		ShaderOpenGL(const std::string& shaderFilename, eShaderStage stage);
+		ShaderOpenGL(const std::vector<ShaderDesc>& shaderDescs);
 		
 		GLenum ShaderStageToGLSLCompilerEnum(eShaderStage stage);
 

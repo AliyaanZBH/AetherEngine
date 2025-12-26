@@ -97,20 +97,26 @@ namespace Aether
 		return ar;
 	}
 
-	ShaderOpenGL* RendererOpenGL::LoadShader(ShaderHandle handle)
+	ShaderOpenGL* RendererOpenGL::LoadShader(ShaderHandle vertHandle, ShaderHandle fragHandle)
 	{
-		// See if this shader was already compiled, return it if so
-		auto it = m_ShaderCache.find(handle);
+		// See if this shader was already compiled, return it if so. 
+		// Only check for the vert shader, OpenGL shaders are made in pairs so if the vertex shader can't be found, then neither will the frag
+		auto it = m_ShaderCache.find(vertHandle);
 		if (it != m_ShaderCache.end())
 			return it->second;
 
 		// Doesn't exist yet, let's build it
-		const ShaderDesc& desc = ShaderLibrary::Get().GetDesc(handle);
+		const ShaderDesc& vsDesc = ShaderLibrary::Get().GetDesc(vertHandle);
+		const ShaderDesc& psDesc = ShaderLibrary::Get().GetDesc(fragHandle);
 
-		ShaderOpenGL* shader = new ShaderOpenGL(desc.m_Name, desc.m_ShaderStage);
+		// Push into vector
+		const std::vector<ShaderDesc> shaderDescs = { vsDesc, psDesc };
 
-		// Register shader in OpenGL cache
-		m_ShaderCache[handle] = shader;
+		ShaderOpenGL* shader = new ShaderOpenGL(shaderDescs);
+
+		// Register shaders in local OpenGL cache
+		m_ShaderCache[vertHandle] = shader;
+		m_ShaderCache[fragHandle] = shader;
 
 		return shader;
 	}
@@ -120,12 +126,11 @@ namespace Aether
 		// Grab or create shaders for this openGL "Pipeline"
 		//
 		
-		m_VertShader = LoadShader(desc.m_VertexShader);
-		m_FragShader = LoadShader(desc.m_PixelShader);
+		// OpenGL requires that both vert and frag shaders are compiled together into a SINGLE GLprogram object
+		m_DefaultShader = LoadShader(desc.m_VertexShader, desc.m_PixelShader);
 
 		// Bind those bois
-		m_VertShader->Bind();
-		m_FragShader->Bind();
+		m_DefaultShader->Bind();
 
 		// Create VAO object to define our input layout
 		glCreateVertexArrays(1, &m_VertexAttributeArray);
@@ -159,7 +164,7 @@ namespace Aether
 		float deltaTime = glfwGetTime();
 		float varyingVal = (sin(deltaTime) / 2.0f) + 0.15f;
 
-		int dynamicColourLocation = glGetUniformLocation(m_FragShader->GetProgram(), "dynamicColour");
+		int dynamicColourLocation = glGetUniformLocation(m_DefaultShader->GetProgram(), "dynamicColour");
 		glUniform4f(dynamicColourLocation, varyingVal, varyingVal, 0.0f, 1.0f);
 
 

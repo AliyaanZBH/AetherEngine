@@ -33,13 +33,12 @@ namespace Aether
 		void BeginImGuiRender() override;
 		void EndImGuiRender() override;
 	private:
-		ShaderOpenGL* LoadShader(ShaderHandle handle);
+		ShaderOpenGL* LoadShader(ShaderHandle vertHandle, ShaderHandle fragHandle);
 
 		GLFWwindow* m_pWindow;
 
 		unsigned int m_VertexAttributeArray;
-		ShaderOpenGL* m_FragShader = nullptr;
-		ShaderOpenGL* m_VertShader = nullptr;
+		ShaderOpenGL* m_DefaultShader = nullptr;
 		std::unordered_map<ShaderHandle, ShaderOpenGL*> m_ShaderCache;
 
 		BufferOpenGL* m_VertexBuffer = nullptr;
