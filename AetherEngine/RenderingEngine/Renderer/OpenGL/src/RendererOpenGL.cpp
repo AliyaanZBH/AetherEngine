@@ -165,7 +165,7 @@ namespace Aether
 		float varyingVal = (sin(deltaTime) / 2.0f) + 0.15f;
 
 		int dynamicColourLocation = glGetUniformLocation(m_DefaultShader->GetProgram(), "dynamicColour");
-		glUniform4f(dynamicColourLocation, varyingVal, varyingVal, 0.0f, 1.0f);
+		glUniform4f(dynamicColourLocation, varyingVal, varyingVal, varyingVal, 1.0f);
 
 
 		// Bind and draw our geo!
@@ -189,6 +189,10 @@ namespace Aether
 		// Need to rebind vertex array as it is still pointing at the old set of geometry!
 		glBindVertexArray(m_VertexAttributeArray);
 		
+		// Only want the dynamic colour on the other bit of geo, so reset the value to 0 here for the main background
+		int dynamicColourLocation = glGetUniformLocation(m_DefaultShader->GetProgram(), "dynamicColour");
+		glUniform4f(dynamicColourLocation, 0.f, 0.f, 0.f, 1.0f);
+
 		glVertexArrayVertexBuffer(
 			m_VertexAttributeArray,
 			0,   // same index used when binding attributes for the VAO
