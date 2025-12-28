@@ -19,9 +19,6 @@ namespace Aether
 
 
 		ID3D12Resource* GetResource() const { return m_Resource; }
-		size_t GetSize() const override { return m_Desc.m_SizeInBytes; }
-		eBufferType GetType() const override { return m_Desc.m_Type; }
-
 	private:
 		D3D12_RESOURCE_STATES GetFinalState(eBufferType type) const;
 

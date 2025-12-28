@@ -49,7 +49,7 @@ namespace Aether
 		ImGuiLayer* m_ImGuiLayer = nullptr;
 
 		LayerStack m_LayerStack;
-		eRenderAPI m_CurrentRenderAPI = eRenderAPI::kOpenGL;
+		eRenderAPI m_CurrentRenderAPI = eRenderAPI::kDX11;
 
 		// Quick and dirty Singleton-esque implementation
 		static Application* s_Instance;

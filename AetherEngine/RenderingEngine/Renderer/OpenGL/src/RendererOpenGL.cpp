@@ -179,7 +179,7 @@ namespace Aether
 			sizeof(Vertex)
 		);
 
-		// Bind index buffer (this IS VAO state, unavoidable)
+		// Bind index buffer
 		glVertexArrayElementBuffer(m_VertexAttributeArray, m_IndexBuffer->GetHandle());
 		glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, nullptr);
 	}
@@ -238,7 +238,6 @@ namespace Aether
 	
 	void RendererOpenGL::EndImGuiRender()
 	{
-		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 	}
 

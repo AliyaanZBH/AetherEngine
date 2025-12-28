@@ -105,6 +105,7 @@ namespace Aether
 
 	void ImGuiLayer::End()
 	{
+		ImGui::Render();
 		Application::Get().GetRenderer().EndImGuiRender();
 
 		// Necessary ImGui steps when docking and viewports are enabled

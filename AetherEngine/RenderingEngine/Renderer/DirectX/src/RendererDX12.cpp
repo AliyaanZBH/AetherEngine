@@ -183,7 +183,6 @@ namespace Aether
 
 	void RendererDX12::EndImGuiRender()
 	{
-		ImGui::Render();
 		ID3D12DescriptorHeap* pSrvHeaps[] = { m_SRVHeap.Get() };
 		m_CmdList->SetDescriptorHeaps(1, pSrvHeaps);
 
@@ -406,11 +405,8 @@ namespace Aether
 
 
 		// Wait for GPU to safely finish final frames
-		//for (int i = 0; i < m_kNumFrameBuffers; ++i)
-		//{
-		//	m_FrameContextIndex = i;
-		//	Sync();
-		//}
+		//WaitForGPU();
+		
 
 		// Release and then delete everything
 		m_Device->Release();

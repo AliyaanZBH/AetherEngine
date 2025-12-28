@@ -29,9 +29,12 @@ set(SRC
     #
 
     Renderer/DirectX/src/RendererDX11.cpp
+    Renderer/DirectX/src/BufferDX11.cpp
+    Renderer/DirectX/src/ShaderDX11.cpp
+
     Renderer/DirectX/src/RendererDX12.cpp
-    Renderer/DirectX/src/ShaderDX12.cpp
     Renderer/DirectX/src/BufferDX12.cpp
+    Renderer/DirectX/src/ShaderDX12.cpp
 
     #
     # OpenGL Implementations
@@ -85,11 +88,13 @@ set(INCLUDE
     Renderer/DirectX/include/D3DUtils.h
     
     Renderer/DirectX/include/RendererDX11.h
+    Renderer/DirectX/include/BufferDX12.h
+    Renderer/DirectX/include/ShaderDX11.h
     
     Renderer/DirectX/include/RendererDX12.h
-     Renderer/DirectX/include/ImGuiDX12.h
-    Renderer/DirectX/include/ShaderDX12.h
+    Renderer/DirectX/include/ImGuiDX12.h
     Renderer/DirectX/include/BufferDX12.h
+    Renderer/DirectX/include/ShaderDX12.h
 
     #
     # OpenGL

@@ -90,7 +90,7 @@ namespace Aether
 		}
 		else
 		{
-			// Skip upload heap and GPU copy: map & memcpy directly
+			// Skip upload heap and GPU copy: map & memcpy directly from CPU
 			void* mapped = nullptr;
 			m_Resource->Map(0, nullptr, &mapped);
 			memcpy(static_cast<uint8_t*>(mapped) + offset, m_Desc.m_Data, m_Desc.m_SizeInBytes);

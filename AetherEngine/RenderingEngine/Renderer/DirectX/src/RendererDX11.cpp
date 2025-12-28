@@ -4,10 +4,9 @@
 //		 Based upon one I built during a university project, but the goal is to optimize and modernize things going forward.
 // auth: Aliyaan Zulfiqar
 //===============================================================================
-
 #include "RendererDX11.h"
 #include "D3DUtils.h"
-#include "RendererDX12.h"
+#include "Pipeline.h" 
 //===============================================================================
 
 namespace Aether
@@ -21,31 +20,138 @@ namespace Aether
 		// Retrieve the native window handle (HWND on Windows)
 
 		HWND hwnd = static_cast<HWND>(window.GetWin32Handle());
+		m_WinData = window.GetData();
 
 		// Create swapchain description based on the current window
 		DXGI_SWAP_CHAIN_DESC sd;
-		CreateSwapChainDescription(sd, hwnd, true, window.GetData().m_ClientWidth, window.GetData().m_ClientHeight);
+		CreateSwapChainDescription(sd, hwnd, true, m_WinData.m_ClientWidth, m_WinData.m_ClientHeight);
 
 		if (!CreateSwapChain(sd))
 			assert(false, "Failed to initialize DirectX 11 swap chain.");
 
 		// Needs to be executed every time the window is resized
 		// So just call the OnResize method here to avoid code duplication.
-		OnResize(window.GetData().m_ClientWidth, window.GetData().m_ClientHeight, *this);
+		// This calls CreateRenderTargets etc.
+		OnResize(m_WinData.m_ClientWidth, m_WinData.m_ClientHeight, *this);
+
+		D3D11_RASTERIZER_DESC rsDesc = {};
+		rsDesc.FillMode = D3D11_FILL_SOLID;
+		rsDesc.CullMode = D3D11_CULL_NONE;
+		rsDesc.DepthClipEnable = TRUE;
+
+		ID3D11RasterizerState* rasterState = nullptr;
+		m_pD3DDevice->CreateRasterizerState(&rsDesc, &rasterState);
+		m_pD3DImmediateContext->RSSetState(rasterState);
 
 		// Set sampler state
 		CreateWrapSampler(m_pWrapSampler);
+
+		m_Viewport.TopLeftX = 0;
+		m_Viewport.TopLeftY = 0;
+		m_Viewport.Width = m_WinData.m_ClientWidth;
+		m_Viewport.Height = m_WinData.m_ClientHeight;
+		m_Viewport.MinDepth = 0.0f;
+		m_Viewport.MaxDepth = 1.0f;
+		
+		m_pD3DImmediateContext->RSSetViewports(1, &m_Viewport);
 
 		// Return true / positive result if we made all the way here without failing previous functions
 		return ret;
 	}
 
+	ShaderDX11* RendererDX11::LoadShader(ShaderHandle handle)
+	{
+		// See if this shader was already compiled, return it if so
+		auto it = m_ShaderCache.find(handle);
+		if (it != m_ShaderCache.end())
+			return it->second;
+
+		// Doesn't exist yet, let's build it. This will fail if the shader hasn't yet been registered
+		const ShaderDesc& desc = ShaderLibrary::Get().GetDesc(handle);
+
+		// DX is weird and windows-y so it wants a wstring
+		std::wstring windowsPath = ToWide(ResolveDirectXShaderPath(desc.m_Name));
+		ShaderDX11* shader = new ShaderDX11(windowsPath, ShaderStageToHLSLCompilerString(desc.m_ShaderStage));
+
+		// Register shader in DX12 cache
+		m_ShaderCache[handle] = shader;
+
+		return shader;
+	}
+
+	std::vector<D3D11_INPUT_ELEMENT_DESC> RendererDX11::TranslateLayout(const VertexLayout& layout)
+	{
+		std::vector<D3D11_INPUT_ELEMENT_DESC> outLayout;
+		size_t layoutSize = layout.m_Attributes.size();
+		outLayout.reserve(layoutSize);
+
+		// Iterate through each attribute (position, colour, normal, etc) and push back into our output layout
+		for (uint32_t i = 0u; i < layoutSize; ++i)
+		{
+			const VertexAttribute& attr = layout.m_Attributes[i];
+
+			D3D11_INPUT_ELEMENT_DESC desc
+			{
+				.SemanticName = ToDirectXSemantic(attr.m_Name),
+				.SemanticIndex = 0,
+				.Format = ToDXGIFormat(attr.m_Format),
+				.InputSlot = 0,
+				.AlignedByteOffset = attr.m_Offset,
+				.InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA,
+				.InstanceDataStepRate = 0
+			};
+
+			outLayout.push_back(desc);
+		}
+
+		return outLayout;
+	}
+
 	void RendererDX11::CreatePipeline(const PipelineDesc& desc)
 	{
+		// Load shaders into temp objects
+		ShaderDX11* vs = LoadShader(desc.m_VertexShader);
+		ShaderDX11* ps = LoadShader(desc.m_PixelShader);
+
+		// Actually create specific shader from the binary blobs
+		m_pD3DDevice->CreateVertexShader(vs->Get()->GetBufferPointer(), vs->Get()->GetBufferSize(), nullptr, &m_VS);
+		m_pD3DDevice->CreatePixelShader(ps->Get()->GetBufferPointer(), ps->Get()->GetBufferSize(), nullptr, &m_PS);
+
+		// Translate and create the input layout for our device
+		std::vector<D3D11_INPUT_ELEMENT_DESC> inputs = TranslateLayout(desc.m_Layout);
+		m_pD3DDevice->CreateInputLayout(inputs.data(), UINT(inputs.size()), vs->Get()->GetBufferPointer(), vs->Get()->GetBufferSize(), &m_Layout);
+		m_pD3DImmediateContext->IASetInputLayout(m_Layout);
+
+		// Delete danglers
+		delete vs;
+		delete ps;
+
 	}
 
 	void RendererDX11::Render()
 	{} // Currently not rendering any geometry
+
+	void RendererDX11::Render(VertexBufferView * vbv, IndexBufferView * ibv)
+	{
+		// Grab geo buffers
+		BufferDX11* vertBuf = static_cast<BufferDX11*>(vbv->m_Buffer);
+		BufferDX11* indexBuf = static_cast<BufferDX11*>(ibv->m_Buffer);
+
+		ID3D11Buffer* dxVB = vertBuf->GetBuffer();
+		ID3D11Buffer* dxIB = indexBuf->GetBuffer();
+
+		UINT offset = vbv->m_Offset;
+
+		m_pD3DImmediateContext->VSSetShader(m_VS, nullptr, 0);
+		m_pD3DImmediateContext->PSSetShader(m_PS, nullptr, 0);
+		m_pD3DImmediateContext->RSSetViewports(1, &m_Viewport);
+		m_pD3DImmediateContext->IASetInputLayout(m_Layout);
+		m_pD3DImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		m_pD3DImmediateContext->IASetVertexBuffers(0, 1, &dxVB, &vbv->m_Stride, &offset);
+		m_pD3DImmediateContext->IASetIndexBuffer(dxIB, DXGI_FORMAT_R32_UINT, 0);
+	
+		m_pD3DImmediateContext->DrawIndexed(ibv->m_Count, 0, 0);
+	}
 
 	void RendererDX11::Present()
 	{
@@ -59,10 +165,15 @@ namespace Aether
 
 	void RendererDX11::ClearFrame()
 	{
+		// Set render target ready for drawing
+		m_pD3DImmediateContext->OMSetRenderTargets(1, m_pRenderTargetView.GetAddressOf(), m_pDepthStencilView.Get());
+
 		// Clear the back buffer
 		float clearColor[4] = { 1.f, 0.3f, 0.0f, 1.0f };
 		m_pD3DImmediateContext->ClearRenderTargetView(m_pRenderTargetView.Get(), clearColor);
 
+		// Clear depth aswell!
+		m_pD3DImmediateContext->ClearDepthStencilView(m_pDepthStencilView.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
 	}
 
 	void RendererDX11::Terminate()
@@ -93,7 +204,7 @@ namespace Aether
 
 	Buffer* RendererDX11::CreateBuffer(const BufferDesc& desc)
 	{
-		return nullptr;
+		return new BufferDX11(desc, m_pD3DDevice.Get(), m_pD3DImmediateContext.Get());
 	}
 
 	void RendererDX11::InitImGui()
@@ -109,7 +220,6 @@ namespace Aether
 
 	void RendererDX11::EndImGuiRender()
 	{
-		ImGui::Render();
 		ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 	}
 

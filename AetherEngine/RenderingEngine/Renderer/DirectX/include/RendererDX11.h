@@ -5,6 +5,9 @@
 // auth: Aliyaan Zulfiqar
 //===============================================================================
 #include "IRenderer.h"
+#include "ShaderDX11.h"
+#include "BufferDX11.h"
+#include "GraphicsContext.h"
 //===============================================================================
 
 namespace Aether
@@ -18,6 +21,7 @@ namespace Aether
 
 		void ClearFrame() override;
 		void Render() override;
+		void Render(VertexBufferView* vbv, IndexBufferView* ibv) override;
 		void Present() override;
 		
 		void Resize(int newWidth, int newHeight) override;
@@ -68,60 +72,62 @@ namespace Aether
 		// Heavy lifting to start D3D11
 		//
 
-		//	A device is used to create resources, this essentially represents our GPU
 		bool CreateDevice();
-
-		// Specify the type of swapchain needed
 		void CreateSwapChainDescription(DXGI_SWAP_CHAIN_DESC& sd, HWND hMainWnd, bool windowed, int screenWidth, int screenHeight);
-
-		// Once you have a description you can create the swapchain needed
 		bool CreateSwapChain(DXGI_SWAP_CHAIN_DESC& sd);
 
-
-		// Create all render buffers
 		bool CreateRenderTargets();
+
+		void CreateDepthStencilDescription(D3D11_TEXTURE2D_DESC& dsd, int screenWidth, int screenHeight, bool msaa, int count, int maxQuality);;
 		void CreateDepthStencilBufferAndView(D3D11_TEXTURE2D_DESC& dsd);
 
-		// The kind of depth stencil we want
-		void CreateDepthStencilDescription(D3D11_TEXTURE2D_DESC& dsd, int screenWidth, int screenHeight, bool msaa, int count, int maxQuality);;
-
-		// Create the wrap sampler 
 		void CreateWrapSampler(Microsoft::WRL::ComPtr<ID3D11SamplerState>& pSampler);
 
+		//
+		// Private utility functions
+		// 
+		
+		// Either finds an already compiled shader in the cache or compiles and inserts a new one
+		ShaderDX11* LoadShader(ShaderHandle handle);
 
+		// Translate API agnostic input layout into DX11 land
+		std::vector<D3D11_INPUT_ELEMENT_DESC> TranslateLayout(const VertexLayout& layout);
+
+		//
 		// Private members to facillitate the above functions
-			// Main handle used to create resources and access D3D
-		Microsoft::WRL::ComPtr<ID3D11Device> m_pD3DDevice = nullptr;
+		//
 
+
+		Microsoft::WRL::ComPtr<ID3D11Device> m_pD3DDevice = nullptr;
 		// A handle of the device we can use to give rendering commands
 		Microsoft::WRL::ComPtr<ID3D11DeviceContext> m_pD3DImmediateContext = nullptr;
-
-		// A number of surfaces we can render onto and then display
 		Microsoft::WRL::ComPtr<IDXGISwapChain> m_pSwapChain = nullptr;
-
-		// When we render things, where do they go?
 		Microsoft::WRL::ComPtr<ID3D11RenderTargetView> m_pRenderTargetView = nullptr;
-
-		// What sampler state do we want to use?
 		Microsoft::WRL::ComPtr<ID3D11SamplerState> m_pWrapSampler = nullptr;
-
-		// What type of gpu have we got - hopefully a hardware one
 		D3D_DRIVER_TYPE m_D3DDriverType = D3D_DRIVER_TYPE_UNKNOWN;
-
-		// Depth buffer for sorting pixels by distance from camera
 		Microsoft::WRL::ComPtr<ID3D11Texture2D> m_pDepthStencilBuffer = nullptr;
-
-
-		// When rendering we can test the depth of pixels, usually so we
-		//	avoid rendering anything that is behind something else
 		Microsoft::WRL::ComPtr<ID3D11DepthStencilView> m_pDepthStencilView = nullptr;
+
+
+		// Use our shader wrapper to handle shader files themselves
+		std::unordered_map<ShaderHandle, ShaderDX11*> m_ShaderCache;
+
+		ID3D11VertexShader* m_VS = nullptr;
+		ID3D11PixelShader* m_PS = nullptr;
+		ID3D11InputLayout* m_Layout = nullptr;
+		
+		//
+		//	Window data!
+		//
+		Aether::IWindow::WinData m_WinData = {};
+
+		// Position, height, width, min+max depth of the view we are rendering
+		D3D11_VIEWPORT m_Viewport;
 
 		//
 		// Currently unused values that will be implemented soon
 		//
 
-		// Position, height, width, min+max depth of the view we are rendering
-		D3D11_VIEWPORT m_ScreenViewport;
 
 		// Running in a window?
 		bool m_Windowed = false;

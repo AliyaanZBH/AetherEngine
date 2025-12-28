@@ -66,11 +66,13 @@ namespace Aether
     #endif
 
         // Set the desired rendering API, based on the chosen runtime enum. 
+        std::string m_RendererString = "";
         switch (m_CurrentRenderAPI)
         {
             case eRenderAPI::kOpenGL:
             {
                 m_Renderer = std::make_unique<RendererOpenGL>();
+                m_RendererString = "OpenGL";
                 break;
             }
 
@@ -78,6 +80,7 @@ namespace Aether
             case eRenderAPI::kDX11:
             {
                 m_Renderer = std::make_unique<RendererDX11>();
+                m_RendererString = "DirectX 11";
                 break;
             }
             #endif
@@ -86,6 +89,7 @@ namespace Aether
             case eRenderAPI::kDX12:
             {
                 m_Renderer = std::make_unique<RendererDX12>();
+                m_RendererString = "DirectX 12";
                 break;
             }
             #endif
@@ -97,8 +101,11 @@ namespace Aether
             }
         }
 
+        AETHER_CORE_INFO("Using Renderer: {0}", m_RendererString);
+
 		// Init rendering API - catch errors out here with assert
 		AETHER_ASSERT(m_Renderer->Initialize(*m_Window));
+
 
         // Create default pipeline for the renderer
         CreatePipeline();
@@ -174,7 +181,6 @@ namespace Aether
         return true;
     }
 
-
     void Application::OnEvent(Event& event)
     {
         // Just print the event for now
@@ -190,33 +196,11 @@ namespace Aether
         m_LayerStack.HandleEvent(event);
     }
 
+
     AETHER_RESULT Application::Run()
     {
         // A local instance that represents possible error codes.
         AETHER_RESULT ar = AETHER_OK;
-
-        std::string m_RendererString = "";
-        switch (m_CurrentRenderAPI)
-        {
-            case eRenderAPI::kOpenGL:
-            {
-                m_RendererString = "OpenGL";
-                break;
-            }
-            case eRenderAPI::kDX11:
-            {
-                m_RendererString = "DirectX 11";
-                break;
-            }
-            case eRenderAPI::kDX12:
-            {
-                m_RendererString = "DirectX 12";
-                break;
-            }
-        };
-
-        AETHER_CORE_INFO("Using Renderer: {0}", m_RendererString);
-
 
         // The game loop!
         while (!m_Window->WindowShouldClose())
@@ -230,12 +214,13 @@ namespace Aether
             // Refresh ImGui drawing context
             m_ImGuiLayer->Begin();
 
-            // Update our layers! Eventually, the renderer will tie in to this aswell as it will render each layer. ImGui renders here too, which is why we clear frame and begin earlier.
+            // Update our layers!
             m_LayerStack.UpdateLayers();
 
+            // Render our layers!
             m_LayerStack.RenderLayers();
 
-            // Draw anything else we want!
+            // Draw anything else we want! (Perhaps outdated at this point, but I like the idea of each renderer drendering something small and inconsequential like a small watermark as an easter egg)
             m_Renderer->Render();
 
             // Finalise ImGui drawing afterwards

@@ -13,14 +13,15 @@ public:
 
 	void OnAttach() override
 	{
-		// Create vertex - position, colour
+		// Create verts - position, colour
+		// Clockwise verts! Clockwise winding order!
 		Aether::Vertex appVerts[] =
 		{
-			{ {	-0.75f, -0.5f,	0.6f,	1.f	}, {1.f, 0.f, 0.f, 1.f} },	// Bottom Left
-			{ {	-0.5f,  0.5f,	0.6f,	1.f	}, {0.f, 0.f, 1.f, 1.f} },	// Top (and to the right slightly)
-			{ {	-0.4f,	-0.5f,	0.6f,	1.f	}, {0.f, 1.f, 0.f, 1.f} }	// Bottom Right
+			{ {	-0.9f,		-0.9f,		0.8f,	1.f	}, {1.f, 0.f, 0.f, 1.f} },	// Bottom Left
+			{ {	-0.9f,		 0.9f,		0.8f,	1.f	}, {0.f, 1.f, 0.f, 1.f} },	// Top Left
+			{ {	0.9f,		 0.9f,		0.8f,	1.f	}, {0.f, 0.f, 1.f, 1.f} },	// Top Right
+			{ {	0.9f,		-0.9f,		0.8f,	1.f	}, {0.f, 1.f, 1.f, 1.f} }	// Bottom Right
 		};
-		// Clockwise verts! Clockwise winding order!
 
 		Aether::BufferDesc AppVbDesc
 		{
@@ -39,7 +40,8 @@ public:
 		m_VertBufView.m_Offset = 0;
 
 
-		unsigned int indices[] = { 0, 1, 2 };
+		//unsigned int indices[] = { 0, 1, 2 };
+		unsigned int indices[] = { 0, 1, 2, 2, 3, 0 };
 
 		Aether::BufferDesc ibDesc
 		{
@@ -52,7 +54,7 @@ public:
 		m_IndexBuffer = Aether::Application::Get().GetRenderer().CreateBuffer(ibDesc);
 		m_IndexBuffer->Upload(ibDesc.m_Data, ibDesc.m_SizeInBytes);
 		m_IndBufView.m_Buffer = m_IndexBuffer;
-		m_IndBufView.m_Count = 3;
+		m_IndBufView.m_Count = 6;
 		m_IndBufView.m_IndexSize = sizeof(unsigned int);
 		m_IndBufView.m_Offset = 0;
 

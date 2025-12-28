@@ -1,18 +1,17 @@
 #pragma once
 //===============================================================================
-// desc: Shader class implementation for DirectX 12
+// desc: Shader class implementation for DirectX 11
 // auth: Aliyaan Zulfiqar
 //===============================================================================
-#include "ShaderDX12.h"
+#include "ShaderDX11.h"
 #include "D3DUtils.h"
 //===============================================================================
 
 namespace Aether
 {
-	ShaderDX12::ShaderDX12(const std::wstring& shaderSrc, const char* shaderType)
+	ShaderDX11::ShaderDX11(const std::wstring& shaderSrc, const char* shaderType)
 	{
 
-		ID3DBlob* shaderBlob;	// D3D blob for holding shader bytecode
 		ID3DBlob* errorBuff;    // A buffer holding the error data if any
 
 		// [AZB]: Define the list of directories to search for include files
@@ -27,23 +26,19 @@ namespace Aether
 		std::wstring workingShaderDir = includeHandler.GetDirectories().back();
 		std::wstring fullPathToShader = workingShaderDir + L"\\DirectX\\" + shaderSrc;
 
-		D3DCompileFromFile(fullPathToShader.c_str(),
+		AETHER_HR_ASSERT(D3DCompileFromFile(fullPathToShader.c_str(),
 			nullptr,
 			&includeHandler,
 			"main",
 			shaderType,
 			D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
 			0,
-			&shaderBlob,
+			&m_ShaderBinary,
 			&errorBuff
-		);
+		));
 
 		// Print errors!
 		if (errorBuff != nullptr)
 			OutputDebugStringA((char*)errorBuff->GetBufferPointer());
-
-		// Fill out shader bytecode struct, which is basically just a pointer to the shader bytecode and the size of the shader bytecode    
-		m_ShaderBinary.BytecodeLength = shaderBlob->GetBufferSize();
-		m_ShaderBinary.pShaderBytecode = shaderBlob->GetBufferPointer();
 	}
 }

@@ -1,24 +1,22 @@
 #pragma once
 //===============================================================================
-// desc: Implmentation of GPU buffers for OpenGL
+// desc: Shader class implementation for DirectX 11
 // auth: Aliyaan Zulfiqar
 //===============================================================================
-#include "Buffer.h"
+#include "Shader.h"
 //===============================================================================
 
 namespace Aether
 {
-	class AETHER_API BufferOpenGL final : public Buffer
+	class AETHER_API ShaderDX11 final : public Shader
 	{
 	public:
-		BufferOpenGL(const BufferDesc& desc);
-		~BufferOpenGL();
+		ShaderDX11(const std::wstring& shaderSrc, const char* shaderType);
 
-		void Upload(const void* data, size_t size, size_t offset = 0) override;
-		
-		GLuint GetHandle() const { return m_Handle; }
-
+		ID3DBlob* Get() { return m_ShaderBinary; }
 	private:
-		GLuint m_Handle = 0u;
+
+		// Actual binary blob that is our compiled shader
+		ID3DBlob* m_ShaderBinary = nullptr;
 	};
 }

@@ -52,12 +52,13 @@ namespace Aether
 
 		//	A device is used to create resources, this essentially represents our GPU
 		AETHER_RESULT CreateDevice();
-
 		AETHER_RESULT CreateRenderTargets();
-		
 		AETHER_RESULT CreateDepthStencil();
-
 		AETHER_RESULT CreateRootSignature();
+
+		//
+		//	Private utility functions
+		//
 
 		// Either find or compile a shader
 		ShaderDX12* LoadShader(ShaderHandle handle);
@@ -65,7 +66,7 @@ namespace Aether
 		// Translate API agnostic input layout into DX12 land
 		std::vector<D3D12_INPUT_ELEMENT_DESC> TranslateLayout(const VertexLayout& layout);
 
-		// Create a PSO using
+		// Create a PSO using our layout
 		void CreatePSO(const D3D12_SHADER_BYTECODE& vs, const D3D12_SHADER_BYTECODE& ps, const VertexLayout& layout);
 
 
@@ -134,6 +135,7 @@ namespace Aether
 		//	Window data!
 		//
 		Aether::IWindow::WinData m_WinData = {};
+
 
 		//
 		//	Drawing!

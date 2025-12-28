@@ -38,6 +38,8 @@ namespace Aether
 		GLFWwindow* m_pWindow;
 
 		unsigned int m_VertexAttributeArray;
+
+		// In OpenGL, multiple shaders must be linked into a single shader program, this one contains a vertex and pixel shader
 		ShaderOpenGL* m_DefaultShader = nullptr;
 		std::unordered_map<ShaderHandle, ShaderOpenGL*> m_ShaderCache;
 
