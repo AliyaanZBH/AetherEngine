@@ -42,9 +42,6 @@ namespace Aether
 
 		void Begin();
 		void End();
-
-	protected:
-		eRenderAPI m_CurrentRenderAPI;
 	private:
 		void SetStyle();
 	};

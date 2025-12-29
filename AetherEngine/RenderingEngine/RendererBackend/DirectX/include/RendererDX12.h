@@ -8,7 +8,7 @@
 #include "ImGuiDX12.h"
 #include "ShaderDX12.h"
 #include "BufferDX12.h"
-#include "GraphicsContext.h"
+#include "Vertex.h"
 //===============================================================================
 
 namespace Aether

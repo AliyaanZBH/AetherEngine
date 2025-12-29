@@ -5,6 +5,7 @@
 //===============================================================================
 #include "Core.h"
 #include "glm/glm.hpp"
+#include "Pipeline.h"
 //===============================================================================
 
 namespace Aether
@@ -19,8 +20,8 @@ namespace Aether
 		static void Initialise(IWindow& window);
 		static void Terminate();
 
-		static void Begin();
-		static void End();
+		static void BeginFrame();
+		static void EndFrame();
 
 		static void DrawLine();
 		static void DrawTriangle();
@@ -28,7 +29,17 @@ namespace Aether
 		static void DrawCircle();
 		static void DrawMesh();
 
+		// TMP: I feel these are a breal the asbtraction a bit, but I'm putting them here just so we can get back to a stable build fast
+		static void InitImGui();
+		static void BeginImGuiRender();
+		static void EndImGuiRender();
+
+
 	private:
+
+		// Create a default high-level description for a rendering pipeline, built by the backend
+		static void CreateBackendPipeline();
+
 		// Signal to backend API to execute the command queue
 		static void Dispatch();
 

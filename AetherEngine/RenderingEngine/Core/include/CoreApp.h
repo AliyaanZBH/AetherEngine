@@ -5,17 +5,15 @@
 //===============================================================================
 #include "Core.h"
 #include "AetherUtils.h"
-#include "IWindow.h"
-#include "Renderer.h"
 #include "Event.h"
 #include "LayerStack.h"
-#include "GraphicsContext.h"
 //===============================================================================
 
 namespace Aether
 {
 	class ImGuiLayer;
 	class WindowResizeEvent;
+	class IWindow;
 
 	class AETHER_API Application
 	{
@@ -34,19 +32,17 @@ namespace Aether
 
 		inline static Application& Get() { return *s_Instance; }
 		inline IWindow& GetWindow() { return *m_Window; }
-		inline IRendererBackend& GetRenderer() { return *m_Renderer; }
-		inline const eRenderAPI GetRenderAPI() { return m_CurrentRenderAPI; }
-
 	private:
 
-		void CreatePipeline();
 		bool OnWindowResize(WindowResizeEvent& e);
 
+		// Main window interface for our application
 		std::unique_ptr<IWindow> m_Window;
 
 		// Layers all get owned by the layer stack, so we can create this as a raw pointer
 		ImGuiLayer* m_ImGuiLayer = nullptr;
 
+		// Main owner and container for application layers
 		LayerStack m_LayerStack;
 
 		// Quick and dirty Singleton-esque implementation

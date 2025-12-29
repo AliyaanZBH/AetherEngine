@@ -3,8 +3,8 @@
 // desc: A collection of handy debug utilies for DirectX/WinAPI, chiefly the ability to get better debugging info from HResults!
 // auth: Aliyaan Zulfiqar
 //===============================================================================
-#include "GraphicsContext.h"
 #include "Shader.h"
+#include "Vertex.h"
 //===============================================================================
 
 

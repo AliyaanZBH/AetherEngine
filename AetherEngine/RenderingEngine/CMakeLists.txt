@@ -22,7 +22,6 @@ set(SRC
     # Graphics Primitives
     #
 
-    Graphics/src/GraphicsContext.cpp
     Graphics/src/Shader.cpp
 
     #
@@ -162,6 +161,12 @@ endif()
 
 # Include directories for the DLL
 target_include_directories(AetherRenderer
+                    # Certain things need to be public as the application target needs to see these interfaces. Detailed implementations can remain private
+                    PUBLIC
+                            Core/include 
+                            Graphics/include
+                            Input/include
+
                     PRIVATE 
                             ${PROJECT_SOURCE_DIR}/include
                             Window/interface
@@ -172,12 +177,6 @@ target_include_directories(AetherRenderer
                             Events/include
                             Layers/include
                             ThirdParty/dx12Helper/include
-
-# Certain things need to be public as the application target needs to see these interfaces. Detailed implementations can remain private
-                    PUBLIC
-                            Core/include 
-                            Graphics/include
-                            Input/include
 )
 
 

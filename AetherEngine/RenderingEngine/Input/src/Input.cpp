@@ -4,6 +4,7 @@
 //===============================================================================
 #include "Input.h"
 #include "CoreApp.h"	// For singleton to grab window
+#include "IWindow.h"
 //===============================================================================
 namespace Aether
 {

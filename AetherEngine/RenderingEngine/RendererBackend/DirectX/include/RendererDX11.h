@@ -7,7 +7,7 @@
 #include "IRendererBackend.h"
 #include "ShaderDX11.h"
 #include "BufferDX11.h"
-#include "GraphicsContext.h"
+#include "Vertex.h"
 //===============================================================================
 
 namespace Aether

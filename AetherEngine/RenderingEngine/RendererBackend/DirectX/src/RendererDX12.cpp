@@ -7,7 +7,7 @@
 //===============================================================================
 #include "RendererDX12.h"
 #include "D3DUtils.h"
-#include "GraphicsContext.h"
+#include "Vertex.h"
 #include "Pipeline.h"
 //===============================================================================
 namespace Aether

@@ -3,8 +3,11 @@
 // auth: Aliyaan Zulfiqar
 //===============================================================================
 #include "Renderer.h"
+
 #include "IRendererBackend.h"
 #include "AetherUtils.h"
+#include "Vertex.h"
+#include "GraphicsContext.h"
 
 #ifdef USE_OPENGL
 #include "RendererOpenGL.h"
@@ -35,36 +38,36 @@ namespace Aether
         std::string m_RendererString = "";
         switch (GraphicsContext::GetRenderAPI())
         {
-        case eRenderAPI::kOpenGL:
-        {
-            s_RendererBackend = std::make_unique<RendererOpenGL>();
-            m_RendererString = "OpenGL";
-            break;
-        }
+            case eRenderAPI::kOpenGL:
+            {
+                s_RendererBackend = std::make_unique<RendererOpenGL>();
+                m_RendererString = "OpenGL";
+                break;
+            }
 
-        #ifdef USE_DX11
-        case eRenderAPI::kDX11:
-        {
-            s_RendererBackend = std::make_unique<RendererDX11>();
-            m_RendererString = "DirectX 11";
-            break;
-        }
-        #endif
+            #ifdef USE_DX11
+            case eRenderAPI::kDX11:
+            {
+                s_RendererBackend = std::make_unique<RendererDX11>();
+                m_RendererString = "DirectX 11";
+                break;
+            }
+            #endif
 
-        #ifdef USE_DX12
-        case eRenderAPI::kDX12:
-        {
-            s_RendererBackend = std::make_unique<RendererDX12>();
-            m_RendererString = "DirectX 12";
-            break;
-        }
-        #endif
+            #ifdef USE_DX12
+            case eRenderAPI::kDX12:
+            {
+                s_RendererBackend = std::make_unique<RendererDX12>();
+                m_RendererString = "DirectX 12";
+                break;
+            }
+            #endif
 
-        default:
-        {
-            ar = AETHER_FAIL;
-            AETHER_ASSERT(ar, "No rendering API defined. Please enable one of the `USE_X` arguments to ensure that one is built and then select a valid desired rendering API.");
-        }
+            default:
+            {
+                ar = AETHER_FAIL;
+                AETHER_ASSERT(ar, "No rendering API defined. Please enable one of the `USE_X` arguments to ensure that one is built and then select a valid desired rendering API.");
+            }
         }
 
         AETHER_CORE_INFO("Using Renderer: {0}", m_RendererString);
@@ -72,5 +75,89 @@ namespace Aether
         // Init rendering API - catch errors out here with assert
         AETHER_ASSERT(s_RendererBackend->Initialize(window));
 
+        // Create a high-level description of our render pipeline, and let the back-end take it away and build it.
+        CreateBackendPipeline();
+
 	}
+
+    void Renderer::Terminate()
+    {
+        s_RendererBackend->Terminate();
+    }
+
+    void Renderer::BeginFrame()
+    {
+        s_RendererBackend->ClearFrame();
+    }
+
+    void Renderer::EndFrame()
+    {
+        // Dispatch all draw commands collected from the application this frame to the backend
+        Dispatch();
+        // Draw anything else we want! (Perhaps outdated at this point, but I like the idea of each renderer drendering something small and inconsequential like a small watermark as an easter egg)
+        s_RendererBackend->Render();
+        // Show completed frame
+        s_RendererBackend->Present();
+    }
+
+    void Renderer::Dispatch()
+    {
+    }
+
+    void Renderer::InitImGui()
+    {
+        s_RendererBackend->InitImGui();
+    }
+
+    void Renderer::BeginImGuiRender()
+    {
+        s_RendererBackend->BeginImGuiRender();
+    }
+
+    void Renderer::EndImGuiRender()
+    {
+        s_RendererBackend->EndImGuiRender();
+    }
+
+    void Renderer::CreateBackendPipeline()
+    {
+        // Define what layout we want our renderer to use and create pipelines for. Start with the vertex attributes
+
+        VertexAttribute aPos
+        {
+            .m_Name = eShaderSemantic::kPosition,
+            .m_Format = eVertexAttributeFormat::kFloat4,
+            .m_Offset = 0   // Offset is optional and will be calculated by the layout constructor!
+        };
+
+        VertexAttribute aColour = { eShaderSemantic::kColour, eVertexAttributeFormat::kFloat4 };
+
+        // Construct a layout with these attributes, offset and stride will be calculated internally
+        VertexLayout layout({ aPos, aColour });
+
+        // Grab shader library and register shaders or grab handle in the case that they've already been registered (not the case here, but could be when called later!)
+        ShaderLibrary& shaders = ShaderLibrary::Get();
+        ShaderDesc vsDesc
+        {
+            .m_Name = "VertexShader",       // No extensions, ideally we have identical shaders for both GLSL and HLSL. Let the renderer API figure out which one it needs to loads
+            .m_ShaderStage = eShaderStage::kVertex
+        };
+        ShaderHandle vsHandle = shaders.Register("DefaultVertexShader", vsDesc);
+
+        ShaderDesc psDesc
+        {
+            .m_Name = "PixelShader",
+            .m_ShaderStage = eShaderStage::kPixel
+        };
+        ShaderHandle psHandle = shaders.Register("DefaultPixelShader", psDesc);
+
+        PipelineDesc pipelineDesc =
+        {
+            .m_VertexShader = vsHandle,
+            .m_PixelShader = psHandle,
+            .m_Layout = layout
+        };
+
+        s_RendererBackend->CreatePipeline(pipelineDesc);
+    }
 }

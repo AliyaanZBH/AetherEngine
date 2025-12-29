@@ -1,18 +1,20 @@
-#include "CoreApp.h"
 //===============================================================================
 // desc: The core engine app that facilitates general use for any application made with Aether!
 // auth: Aliyaan Zulfiqar
 //===============================================================================
 #include "CoreApp.h"
+
+#include "IWindow.h"
+#include "Renderer.h"
 #include "Log.h"
+#include "Input.h"
 
 #ifdef USE_GLFW
 #include "WindowGLFW.h"
 #endif
 
-#include "AppEvent.h"
 #include "ImGuiLayer.h"
-#include "Input.h"
+#include "AppEvent.h"
 #include "GraphicsContext.h"
 #include "Pipeline.h"
 //===============================================================================
@@ -52,14 +54,11 @@ namespace Aether
         ar = AETHER_FAIL;
     #endif
         
-        // Initialise high-level rendering API, which in turn sets up the low-level backend
-        Renderer::Initialise();
-
-        // Create default pipeline for the renderer
-        CreatePipeline();
+        // Initialise high-level rendering API, which in turn sets up the low-level backend with a default shader pipeline
+        Renderer::Initialise(*m_Window);
 
 		// Setup ImGui layer for the renderer too
-		m_ImGuiLayer = new ImGuiLayer(m_CurrentRenderAPI);
+		m_ImGuiLayer = new ImGuiLayer(GraphicsContext::GetRenderAPI());
 
 		// Push the ImGui layer into the stack at the overlay point
 		PushOverlay(m_ImGuiLayer);
@@ -80,52 +79,10 @@ namespace Aether
         overlay->OnAttach();
     }
 
-    void Application::CreatePipeline()
-    {
-        // Define what layout we want our renderer to use and create pipelines for. Start with the vertex attributes
-
-        VertexAttribute aPos
-        {
-            .m_Name = eShaderSemantic::kPosition,
-            .m_Format = eVertexAttributeFormat::kFloat4,
-            .m_Offset = 0   // Offset is optional and will be calculated by the layout constructor!
-        };
-
-        VertexAttribute aColour = { eShaderSemantic::kColour, eVertexAttributeFormat::kFloat4 };
-
-        // Construct a layout with these attributes, offset and stride will be calculated internally
-        VertexLayout layout({ aPos, aColour });
-
-        // Grab shader library and register shaders or grab handle in the case that they've already been registered (not the case here, but could be when called later!)
-        ShaderLibrary& shaders = ShaderLibrary::Get();
-        ShaderDesc vsDesc
-        {
-            .m_Name = "VertexShader",       // No extensions, ideally we have identical shaders for both GLSL and HLSL. Let the renderer API figure out which one it needs to loads
-            .m_ShaderStage = eShaderStage::kVertex
-        };
-        ShaderHandle vsHandle = shaders.Register("DefaultVertexShader", vsDesc);
-
-        ShaderDesc psDesc
-        {
-            .m_Name = "PixelShader",
-            .m_ShaderStage = eShaderStage::kPixel
-        };
-        ShaderHandle psHandle = shaders.Register("DefaultPixelShader", psDesc);
-
-        PipelineDesc pipelineDesc =
-        {
-            .m_VertexShader = vsHandle,
-            .m_PixelShader = psHandle,
-            .m_Layout = layout
-        };
-
-        m_Renderer->CreatePipeline(pipelineDesc);
-    }
-
     bool Application::OnWindowResize(WindowResizeEvent& e)
     {
 		// Let the renderer handle it's specific steps for resizing (recreating buffers, contexts, etc.)
-        m_Renderer->Resize(e.GetWidth(),e.GetHeight());
+        //m_Renderer->Resize(e.GetWidth(),e.GetHeight());
         return true;
     }
 
@@ -153,8 +110,8 @@ namespace Aether
         // The game loop!
         while (!m_Window->WindowShouldClose())
         {
-            // Clear frame!
-            m_Renderer->ClearFrame();
+            // Start a new rendering frame!
+            Renderer::BeginFrame();
 
             // Handle window events here (e.g., using GLFW or another windowing library)
             m_Window->PollEvents();
@@ -168,21 +125,18 @@ namespace Aether
             // Render our layers!
             m_LayerStack.RenderLayers();
 
-            // Draw anything else we want! (Perhaps outdated at this point, but I like the idea of each renderer drendering something small and inconsequential like a small watermark as an easter egg)
-            m_Renderer->Render();
-
             // Finalise ImGui drawing afterwards
             m_ImGuiLayer->End();
 
-            // Present our finished lovely frame!
-            m_Renderer->Present();
+            // Finish rendering and present our lovely frame!
+            Renderer::EndFrame();
         }
 
         printf("\n\n\n");
         AETHER_CORE_INFO("Thanks for using Aether!\n");
 
         // Make sure we release our resources manually if they aren't already tied in the destructor - everything in here will get deleted and have those called so no need to call things twice!
-        m_Renderer->Terminate();
+        Renderer::Terminate();
 
         // Return the OK!
         return AETHER_OK;
