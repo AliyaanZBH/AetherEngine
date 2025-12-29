@@ -1,6 +1,6 @@
 #pragma once
 //===============================================================================
-// desc: Interface for an abstract renderer, usable by DX11,Vulkan, etc.
+// desc: Interface for an abstract rendering API, to be implemented by DirectX, OpenGL and Vulkan.
 // auth: Aliyaan Zulfiqar
 //===============================================================================
 #include "IWindow.h"
@@ -15,9 +15,9 @@ namespace Aether
     struct VertexBufferView;
     struct IndexBufferView;
 
-    class AETHER_API IRenderer {
+    class AETHER_API IRendererBackend {
     public:
-        virtual ~IRenderer() = default;
+        virtual ~IRendererBackend() = default;
 
         virtual AETHER_RESULT Initialize(IWindow& window) = 0;
         virtual void CreatePipeline(const PipelineDesc& desc) = 0;

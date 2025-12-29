@@ -12,6 +12,7 @@ set(SRC
 
     Core/src/Log.cpp
     Core/src/LayerStack.cpp
+    Core/src/Renderer.cpp
     
     Input/src/Input.cpp
 
@@ -28,21 +29,21 @@ set(SRC
     # DirectX Implementations
     #
 
-    Renderer/DirectX/src/RendererDX11.cpp
-    Renderer/DirectX/src/BufferDX11.cpp
-    Renderer/DirectX/src/ShaderDX11.cpp
+    RendererBackend/DirectX/src/RendererDX11.cpp
+    RendererBackend/DirectX/src/BufferDX11.cpp
+    RendererBackend/DirectX/src/ShaderDX11.cpp
 
-    Renderer/DirectX/src/RendererDX12.cpp
-    Renderer/DirectX/src/BufferDX12.cpp
-    Renderer/DirectX/src/ShaderDX12.cpp
+    RendererBackend/DirectX/src/RendererDX12.cpp
+    RendererBackend/DirectX/src/BufferDX12.cpp
+    RendererBackend/DirectX/src/ShaderDX12.cpp
 
     #
     # OpenGL Implementations
     #
 
-    Renderer/OpenGL/src/RendererOpenGL.cpp
-    Renderer/OpenGL/src/ShaderOpenGL.cpp
-    Renderer/OpenGL/src/BufferOpenGL.cpp
+    RendererBackend/OpenGL/src/RendererOpenGL.cpp
+    RendererBackend/OpenGL/src/ShaderOpenGL.cpp
+    RendererBackend/OpenGL/src/BufferOpenGL.cpp
 
     Layers/src/ImGuiLayer.cpp
 )
@@ -60,15 +61,15 @@ set(INCLUDE
     Core/include/Event.h
     Core/include/Layer.h
     Core/include/LayerStack.h
-
+    Core/include/Renderer.h
     
     # Input
     Input/include/InputCodes.h
     Input/include/Input.h
 
     # Interfaces
-    Core/include/IRenderer.h
-    Core/include/IWindow.h
+    RendererBackend/interface/IRendererBackend.h
+    Window/interface/IWindow.h
 
     Window/include/WindowGLFW.h
 
@@ -79,30 +80,31 @@ set(INCLUDE
     Graphics/include/GraphicsContext.h
     Graphics/include/Shader.h
     Graphics/include/Buffer.h
+    Graphics/include/Vertex.h
     Graphics/include/Pipeline.h
 
     #
     # DirectX
     #
 
-    Renderer/DirectX/include/D3DUtils.h
+    RendererBackend/DirectX/include/D3DUtils.h
     
-    Renderer/DirectX/include/RendererDX11.h
-    Renderer/DirectX/include/BufferDX12.h
-    Renderer/DirectX/include/ShaderDX11.h
+    RendererBackend/DirectX/include/RendererDX11.h
+    RendererBackend/DirectX/include/BufferDX12.h
+    RendererBackend/DirectX/include/ShaderDX11.h
     
-    Renderer/DirectX/include/RendererDX12.h
-    Renderer/DirectX/include/ImGuiDX12.h
-    Renderer/DirectX/include/BufferDX12.h
-    Renderer/DirectX/include/ShaderDX12.h
+    RendererBackend/DirectX/include/RendererDX12.h
+    RendererBackend/DirectX/include/ImGuiDX12.h
+    RendererBackend/DirectX/include/BufferDX12.h
+    RendererBackend/DirectX/include/ShaderDX12.h
 
     #
     # OpenGL
     #
 
-    Renderer/OpenGL/include/RendererOpenGL.h
-    Renderer/OpenGL/include/ShaderOpenGL.h
-    Renderer/OpenGL/include/BufferOpenGL.h
+    RendererBackend/OpenGL/include/RendererOpenGL.h
+    RendererBackend/OpenGL/include/ShaderOpenGL.h
+    RendererBackend/OpenGL/include/BufferOpenGL.h
 
     # Events
     Events/include/KeyEvent.h
@@ -114,7 +116,7 @@ set(INCLUDE
 
     # Miscellaneous third-party includes
     ThirdParty/dx12Helper/include/d3dx12.h
-)
+ )
 
 # Specify shaders
 set(HLSL_SHADER_FILES
@@ -162,9 +164,11 @@ endif()
 target_include_directories(AetherRenderer
                     PRIVATE 
                             ${PROJECT_SOURCE_DIR}/include
+                            Window/interface
                             Window/include
-                            Renderer/DirectX/include
-                            Renderer/OpenGL/include
+                            RendererBackend/interface
+                            RendererBackend/DirectX/include
+                            RendererBackend/OpenGL/include
                             Events/include
                             Layers/include
                             ThirdParty/dx12Helper/include

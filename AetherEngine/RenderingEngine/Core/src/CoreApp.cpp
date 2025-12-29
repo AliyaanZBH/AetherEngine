@@ -10,22 +10,6 @@
 #include "WindowGLFW.h"
 #endif
 
-#ifdef USE_OPENGL
-#include "RendererOpenGL.h"
-#endif
-
-#ifdef USE_DX11
-#include "RendererDX11.h"
-#endif
-
-#ifdef USE_DX12
-#include "RendererDX12.h"
-#endif
-
-#ifdef USE_VULKAN
-#include "Renderer/RendererVulkan.h" // To be implemented
-#endif
-
 #include "AppEvent.h"
 #include "ImGuiLayer.h"
 #include "Input.h"
@@ -47,6 +31,9 @@ namespace Aether
             AETHER_ASSERT(AETHER_FAIL, "An instance of the application is already running!");
         s_Instance = this;
 
+        // Select rendering API
+        GraphicsContext::SelectRenderAPI(eRenderAPI::kOpenGL);
+
         // Set which type of window we are creating and pass in some data for it
         // Later in development, this will be read from a JSON config file so that the user can save and load settings, along with manually changing it from a GUI inside the application!
         IWindow::WinData wd =
@@ -57,55 +44,16 @@ namespace Aether
         };
 
     #ifdef USE_GLFW
-        m_Window = std::make_unique<WindowGLFW>(wd, m_CurrentRenderAPI);      // Calls initialise and catches errors inside with assert
+        m_Window = std::make_unique<WindowGLFW>(wd, GraphicsContext::GetRenderAPI());      // Calls initialise and catches errors inside with assert
     #elif defined(USE_WIN32)
         m_Window = std::make_unique<WinManWin32>();
     #else
     #error No window API defined. Please enable USE_GLFW or USE_WIN32."
         ar = AETHER_FAIL;
     #endif
-
-        // Set the desired rendering API, based on the chosen runtime enum. 
-        std::string m_RendererString = "";
-        switch (m_CurrentRenderAPI)
-        {
-            case eRenderAPI::kOpenGL:
-            {
-                m_Renderer = std::make_unique<RendererOpenGL>();
-                m_RendererString = "OpenGL";
-                break;
-            }
-
-            #ifdef USE_DX11
-            case eRenderAPI::kDX11:
-            {
-                m_Renderer = std::make_unique<RendererDX11>();
-                m_RendererString = "DirectX 11";
-                break;
-            }
-            #endif
-
-            #ifdef USE_DX12
-            case eRenderAPI::kDX12:
-            {
-                m_Renderer = std::make_unique<RendererDX12>();
-                m_RendererString = "DirectX 12";
-                break;
-            }
-            #endif
-
-            default:
-            {
-                ar = AETHER_FAIL;
-                AETHER_ASSERT(ar, "No rendering API defined. Please enable one of the `USE_X` arguments to ensure that one is built and then select a valid desired rendering API.");
-            }
-        }
-
-        AETHER_CORE_INFO("Using Renderer: {0}", m_RendererString);
-
-		// Init rendering API - catch errors out here with assert
-		AETHER_ASSERT(m_Renderer->Initialize(*m_Window));
-
+        
+        // Initialise high-level rendering API, which in turn sets up the low-level backend
+        Renderer::Initialise();
 
         // Create default pipeline for the renderer
         CreatePipeline();

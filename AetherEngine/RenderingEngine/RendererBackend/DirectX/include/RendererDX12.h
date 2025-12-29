@@ -4,7 +4,7 @@
 //		 Based upon one built for a short challenge, but the goal is to optimize and modernize things going forward.
 // auth: Aliyaan Zulfiqar
 //===============================================================================
-#include "IRenderer.h"
+#include "IRendererBackend.h"
 #include "ImGuiDX12.h"
 #include "ShaderDX12.h"
 #include "BufferDX12.h"
@@ -13,7 +13,7 @@
 
 namespace Aether
 {
-	class RendererDX12 final : public IRenderer
+	class RendererDX12 final : public IRendererBackend
 	{
 	public:
 		// Main start up function

@@ -7,7 +7,7 @@
 //===============================================================================
 
 // Forward declare for renderer
-class IRenderer;
+class IRendererBackend;
 
 // WinMan - Window Manager.
 namespace Aether

@@ -3,13 +3,13 @@
 // desc: The OpenGL rendering engine, leveraging GLAD.
 // auth: Aliyaan Zulfiqar
 //===============================================================================
-#include "IRenderer.h"
+#include "IRendererBackend.h"
 #include "ShaderOpenGL.h"
 #include "BufferOpenGL.h"
 //===============================================================================
 namespace Aether
 {
-	class RendererOpenGL final : public IRenderer
+	class RendererOpenGL final : public IRendererBackend
 	{
 	public:
 		// Main start up function

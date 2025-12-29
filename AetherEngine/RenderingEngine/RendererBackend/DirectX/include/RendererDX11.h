@@ -4,7 +4,7 @@
 //		 Based upon one I built during a university project, but the goal is to optimize and modernize things going forward.
 // auth: Aliyaan Zulfiqar
 //===============================================================================
-#include "IRenderer.h"
+#include "IRendererBackend.h"
 #include "ShaderDX11.h"
 #include "BufferDX11.h"
 #include "GraphicsContext.h"
@@ -12,7 +12,7 @@
 
 namespace Aether
 {
-	class RendererDX11 final : public IRenderer
+	class RendererDX11 final : public IRendererBackend
 	{
 	public:
 		// Main start up function

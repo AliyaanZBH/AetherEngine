@@ -6,7 +6,7 @@
 #include "Core.h"
 #include "AetherUtils.h"
 #include "IWindow.h"
-#include "IRenderer.h"
+#include "Renderer.h"
 #include "Event.h"
 #include "LayerStack.h"
 #include "GraphicsContext.h"
@@ -34,7 +34,7 @@ namespace Aether
 
 		inline static Application& Get() { return *s_Instance; }
 		inline IWindow& GetWindow() { return *m_Window; }
-		inline IRenderer& GetRenderer() { return *m_Renderer; }
+		inline IRendererBackend& GetRenderer() { return *m_Renderer; }
 		inline const eRenderAPI GetRenderAPI() { return m_CurrentRenderAPI; }
 
 	private:
@@ -43,13 +43,11 @@ namespace Aether
 		bool OnWindowResize(WindowResizeEvent& e);
 
 		std::unique_ptr<IWindow> m_Window;
-		std::unique_ptr<IRenderer> m_Renderer;
 
 		// Layers all get owned by the layer stack, so we can create this as a raw pointer
 		ImGuiLayer* m_ImGuiLayer = nullptr;
 
 		LayerStack m_LayerStack;
-		eRenderAPI m_CurrentRenderAPI = eRenderAPI::kOpenGL;
 
 		// Quick and dirty Singleton-esque implementation
 		static Application* s_Instance;
