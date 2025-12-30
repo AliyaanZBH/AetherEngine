@@ -13,7 +13,6 @@ namespace Aether
 {
 	class ImGuiLayer;
 	class WindowResizeEvent;
-	class IWindow;
 
 	class AETHER_API Application
 	{
@@ -31,13 +30,9 @@ namespace Aether
 		void PushOverlay(Layer* overlay);
 
 		inline static Application& Get() { return *s_Instance; }
-		inline IWindow& GetWindow() { return *m_Window; }
 	private:
 
 		bool OnWindowResize(WindowResizeEvent& e);
-
-		// Main window interface for our application
-		std::unique_ptr<IWindow> m_Window;
 
 		// Layers all get owned by the layer stack, so we can create this as a raw pointer
 		ImGuiLayer* m_ImGuiLayer = nullptr;

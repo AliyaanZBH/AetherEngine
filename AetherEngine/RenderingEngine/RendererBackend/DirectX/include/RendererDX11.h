@@ -16,7 +16,7 @@ namespace Aether
 	{
 	public:
 		// Main start up function
-		AETHER_RESULT Initialize(IWindow& window) override;
+		AETHER_RESULT Initialize(const IWindow& window) override;
 		void CreatePipeline(const PipelineDesc& desc) override;
 
 		void ClearFrame() override;
@@ -119,7 +119,7 @@ namespace Aether
 		//
 		//	Window data!
 		//
-		Aether::IWindow::WinData m_WinData = {};
+		WindowContext::WinData m_WinData = {};
 
 		// Position, height, width, min+max depth of the view we are rendering
 		D3D11_VIEWPORT m_Viewport;

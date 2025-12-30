@@ -13,7 +13,7 @@ namespace Aether
 	{
 	public:
 		// Main start up function
-		AETHER_RESULT Initialize(IWindow& window) override;
+		AETHER_RESULT Initialize(const IWindow& window) override;
 		void CreatePipeline(const PipelineDesc& desc) override;
 
 		void ClearFrame() override;

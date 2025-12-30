@@ -11,7 +11,7 @@
 
 namespace Aether
 {
-	AETHER_RESULT RendererDX11::Initialize(IWindow& window)
+	AETHER_RESULT RendererDX11::Initialize(const IWindow& window)
 	{
 		AETHER_RESULT ret = AETHER_OK;
 

@@ -1,6 +1,6 @@
 #pragma once
 //===============================================================================
-// desc: A collection of common graphics and rendering primitives
+// desc: A small helper class and enum to keep track of the current context for rendering
 // auth: Aliyaan Zulfiqar
 //===============================================================================
 
@@ -16,7 +16,7 @@ namespace Aether
 	class GraphicsContext {
 	public:
 		static void SelectRenderAPI(eRenderAPI api) { s_CurrentRenderAPI = api; }
-		static eRenderAPI  GetRenderAPI() { return s_CurrentRenderAPI; }
+		static eRenderAPI GetRenderAPI() { return s_CurrentRenderAPI; }
 	private:
 		static inline eRenderAPI s_CurrentRenderAPI = eRenderAPI::kOpenGL;
 	};

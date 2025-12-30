@@ -4,6 +4,8 @@
 // auth: Aliyaan Zulfiqar
 //===============================================================================
 #include "Core.h"
+#include "WindowContext.h"
+#include "EventContext.h"
 //===============================================================================
 
 
@@ -14,34 +16,9 @@ namespace Aether
 
 	class AETHER_API IWindow {
 	public:
-		using EventCallbackFn = std::function<void(Event&)>;
-
-		// Nifty struct to setup and access window data. Public so that the renderer can see this too
-		struct WinData
-		{
-			// All windows apps have these handles
-		/*	HINSTANCE hAppInst = 0;
-			HWND      hMainWnd = 0;
-			HICON     hIcon = 0;*/
-
-			EventCallbackFn m_EventCallback;
-
-			std::string m_Title = "Aether Engine";
-			uint16_t m_ClientWidth = 800u;
-			uint16_t m_ClientHeight = 600u;
-			bool m_bAppPaused = false;
-			bool m_bMinimized = false;
-			bool m_bMaximized = false;
-			bool m_bResizing = false;
-			bool m_bFullscreen = false;
-		};
-	protected:
-		WinData m_WinData;
-	public:
-
 		virtual ~IWindow() = default;
 
-		virtual AETHER_RESULT Initialize(const WinData& winData, const eRenderAPI currentRenderer) = 0;
+		virtual AETHER_RESULT Initialize(const WindowContext::WinData& winData, const eRenderAPI currentRenderer) = 0;
 		virtual bool WindowShouldClose() = 0;
 		virtual void PollEvents() = 0;
 		virtual void Terminate() = 0;
@@ -58,13 +35,13 @@ namespace Aether
 		inline int GetHeight() { return m_WinData.m_ClientHeight; }
 
 		// Accessor for full WinData struct
-		const WinData& GetData() const
+		const WindowContext::WinData& GetData() const
 		{
 			return m_WinData;
 		}
 
 		// Default copy sett for WinData struct
-		void SetData(const WinData& wd)
+		void SetData(const WindowContext::WinData& wd)
 		{
 			m_WinData = wd;
 		}
@@ -76,5 +53,7 @@ namespace Aether
 			m_WinData.m_ClientHeight = height;
 			m_WinData.m_Title = name;
 		}
+	protected:
+		WindowContext::WinData m_WinData;
 	};
 };

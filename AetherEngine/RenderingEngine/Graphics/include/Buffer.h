@@ -49,14 +49,14 @@ namespace Aether
 
 	// Different kinds of views into the abstract buffer that we may want
 
-	struct VertexBufferView
+	struct AETHER_API VertexBufferView
 	{
 		Buffer*		m_Buffer;
 		uint32_t	m_Stride;
 		size_t		m_Offset;
 	};
 
-	struct IndexBufferView
+	struct AETHER_API IndexBufferView
 	{
 		Buffer*		m_Buffer;
 		uint32_t	m_IndexSize; // 16 or 32 bit (currently only 32 bit supported)

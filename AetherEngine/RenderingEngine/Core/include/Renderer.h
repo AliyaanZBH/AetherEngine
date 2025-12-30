@@ -5,19 +5,20 @@
 //===============================================================================
 #include "Core.h"
 #include "glm/glm.hpp"
+
 #include "Pipeline.h"
+#include "Buffer.h"
 //===============================================================================
 
 namespace Aether
 {
-	enum class eRenderAPI;
 	class IRendererBackend;
 	class IWindow;
 
 	class AETHER_API Renderer
 	{
 	public:
-		static void Initialise(IWindow& window);
+		static void Initialise();
 		static void Terminate();
 
 		static void BeginFrame();
@@ -37,6 +38,13 @@ namespace Aether
 
 	private:
 
+		//
+		//	Set of lower-level functions that are hidden from the app to maintain the high-level abstraction, but must be implemented to facilitate the above.
+		//
+
+		static void CreateTriangleGeometry();
+		static void CreateQuadGeometry();
+
 		// Create a default high-level description for a rendering pipeline, built by the backend
 		static void CreateBackendPipeline();
 
@@ -45,6 +53,10 @@ namespace Aether
 
 		// Clears command queue ready for the next frame
 		static void Flush();
+
+		// Currently running renderer backend
+		static std::unique_ptr<IRendererBackend> s_RendererBackend;
+
 
 		// Instead of submitting draw functions immediately, submit them to a queue so that they can all be drawn safely at the correct time for each rendering API.
 		// This abstraction helps with app users not having to worry about when they call a draw function
@@ -59,7 +71,16 @@ namespace Aether
 		// Per-frame render list
 		static std::vector<DrawCommand> s_CommandQueue;
 
-		static std::unique_ptr<IRendererBackend> s_RendererBackend;
+		//
+		// Geometry containers - shared between renderer backends
+		//
 
+		// Quads
+		//
+
+		static Buffer* s_QuadVertexBuffer;
+		static VertexBufferView s_QuadVBView;
+		static Buffer* s_QuadIndexBuffer;
+		static IndexBufferView s_QuadIBView;
 	};
 }

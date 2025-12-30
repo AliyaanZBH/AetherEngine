@@ -9,6 +9,8 @@
 #include "ShaderDX12.h"
 #include "BufferDX12.h"
 #include "Vertex.h"
+
+#include "WindowContext.h"
 //===============================================================================
 
 namespace Aether
@@ -17,7 +19,7 @@ namespace Aether
 	{
 	public:
 		// Main start up function
-		AETHER_RESULT Initialize(IWindow& window) override;
+		AETHER_RESULT Initialize(const IWindow& window) override;
 		void CreatePipeline(const PipelineDesc& desc) override;
 
 		void ClearFrame() override;
@@ -134,7 +136,7 @@ namespace Aether
 		//
 		//	Window data!
 		//
-		Aether::IWindow::WinData m_WinData = {};
+		WindowContext::WinData m_WinData = {};
 
 
 		//

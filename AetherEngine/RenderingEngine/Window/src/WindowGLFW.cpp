@@ -20,7 +20,7 @@ namespace Aether
         AETHER_CORE_ERROR("GLFW Error ({0}): {1}", error, description);
     }
 
-    WindowGLFW::WindowGLFW(const WinData& winData, const eRenderAPI currentRenderer)
+    WindowGLFW::WindowGLFW(const WindowContext::WinData& winData, const eRenderAPI currentRenderer)
     {
         AETHER_ASSERT(Initialize(winData, currentRenderer), "Failed to initalize GLFW properly.");
         
@@ -33,7 +33,7 @@ namespace Aether
         Terminate();
     }
 
-    AETHER_RESULT WindowGLFW::Initialize(const WinData& winData, const eRenderAPI currentRenderer)
+    AETHER_RESULT WindowGLFW::Initialize(const WindowContext::WinData& winData, const eRenderAPI currentRenderer)
     {
         AETHER_RESULT ar = AETHER_OK;
         // Get GLFW setup for all our windows - only do this once!
@@ -91,7 +91,7 @@ namespace Aether
         glfwSetWindowSizeCallback(m_pWindow, [] (GLFWwindow* window, int width, int height)
         {
             // Pull out user data blob, cast it to our custom struct and then dereference
-            WinData& data = *(WinData*)glfwGetWindowUserPointer(window);
+            WindowContext::WinData& data = *(WindowContext::WinData*)glfwGetWindowUserPointer(window);
 
             // Update sizes then create event  and dispatch via the callback member
             data.m_ClientWidth = width;
@@ -106,9 +106,9 @@ namespace Aether
         //  Repeat for all events!
         //
 
-        glfwSetWindowCloseCallback(m_pWindow, [] (GLFWwindow* window)
+        glfwSetWindowCloseCallback(m_pWindow, [](GLFWwindow* window)
         {
-            WinData& data = *(WinData*)glfwGetWindowUserPointer(window);
+            WindowContext::WinData& data = *(WindowContext::WinData*)glfwGetWindowUserPointer(window);
 
             WindowCloseEvent event;
             data.m_EventCallback(event);
@@ -116,12 +116,12 @@ namespace Aether
             // Also, close window! 
             glfwSetWindowShouldClose(window, GLFW_TRUE);
         });
-        
+
         // Key Callback
         //
         glfwSetKeyCallback(m_pWindow, [](GLFWwindow* window, int key, int scancode, int action, int mods)
         {
-            WinData& data = *(WinData*)glfwGetWindowUserPointer(window);
+            WindowContext::WinData& data = *(WindowContext::WinData*)glfwGetWindowUserPointer(window);
 
             // Map GLFW input events to our own
             switch (action)
@@ -151,10 +151,10 @@ namespace Aether
                 glfwSetWindowShouldClose(window, GLFW_TRUE);
         });
 
-        glfwSetMouseButtonCallback(m_pWindow, [](GLFWwindow* window, int button,int action, int mods)
+        glfwSetMouseButtonCallback(m_pWindow, [](GLFWwindow* window, int button, int action, int mods)
         {
-            WinData& data = *(WinData*)glfwGetWindowUserPointer(window);
-       
+            WindowContext::WinData& data = *(WindowContext::WinData*)glfwGetWindowUserPointer(window);
+
             // Map GLFW mouse events - these are actually the same as keyboard presses!
             switch (action)
             {
@@ -175,7 +175,7 @@ namespace Aether
 
         glfwSetScrollCallback(m_pWindow, [](GLFWwindow* window, double xOffset, double yOffset)
         {
-            WinData& data = *(WinData*)glfwGetWindowUserPointer(window);
+            WindowContext::WinData& data = *(WindowContext::WinData*)glfwGetWindowUserPointer(window);
 
             MouseScrollEvent event((float)xOffset, (float)yOffset);
             data.m_EventCallback(event);
@@ -183,7 +183,7 @@ namespace Aether
 
         glfwSetCursorPosCallback(m_pWindow, [](GLFWwindow* window, double xPos, double yPos)
         {
-            WinData& data = *(WinData*)glfwGetWindowUserPointer(window);
+            WindowContext::WinData& data = *(WindowContext::WinData*)glfwGetWindowUserPointer(window);
 
             MouseMoveEvent event((float)xPos, (float)yPos);
             data.m_EventCallback(event);

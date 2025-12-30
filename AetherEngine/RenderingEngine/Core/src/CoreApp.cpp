@@ -4,19 +4,16 @@
 //===============================================================================
 #include "CoreApp.h"
 
-#include "IWindow.h"
-#include "Renderer.h"
 #include "Log.h"
 #include "Input.h"
+#include "Renderer.h"
+#include "Window.h"
 
-#ifdef USE_GLFW
-#include "WindowGLFW.h"
-#endif
+#include "WindowContext.h"
+#include "GraphicsContext.h"
 
 #include "ImGuiLayer.h"
 #include "AppEvent.h"
-#include "GraphicsContext.h"
-#include "Pipeline.h"
 //===============================================================================
 namespace Aether
 {
@@ -36,26 +33,19 @@ namespace Aether
         // Select rendering API
         GraphicsContext::SelectRenderAPI(eRenderAPI::kOpenGL);
 
-        // Set which type of window we are creating and pass in some data for it
         // Later in development, this will be read from a JSON config file so that the user can save and load settings, along with manually changing it from a GUI inside the application!
-        IWindow::WinData wd =
+        WindowContext::WinData wd =
         {
             .m_ClientWidth = 800u,
             .m_ClientHeight = 600u
             /*.m_Title = "AetherApp"*/      // Default title is Aether Engine
         };
 
-    #ifdef USE_GLFW
-        m_Window = std::make_unique<WindowGLFW>(wd, GraphicsContext::GetRenderAPI());      // Calls initialise and catches errors inside with assert
-    #elif defined(USE_WIN32)
-        m_Window = std::make_unique<WinManWin32>();
-    #else
-    #error No window API defined. Please enable USE_GLFW or USE_WIN32."
-        ar = AETHER_FAIL;
-    #endif
+        // Initialise high-level window API, which sets up a low-level backend window platform. Inside this function you'll find the values for the default window size
+        Window::Initialise(wd);
         
         // Initialise high-level rendering API, which in turn sets up the low-level backend with a default shader pipeline
-        Renderer::Initialise(*m_Window);
+        Renderer::Initialise();
 
 		// Setup ImGui layer for the renderer too
 		m_ImGuiLayer = new ImGuiLayer(GraphicsContext::GetRenderAPI());
@@ -64,7 +54,7 @@ namespace Aether
 		PushOverlay(m_ImGuiLayer);
 
         // Bind event callback for our window
-        m_Window->SetEventCallback(BIND_APP_FN(OnEvent));
+        Window::SetEventCallback(BIND_APP_FN(OnEvent));
     }
 
     void Application::PushLayer(Layer* layer)
@@ -108,13 +98,13 @@ namespace Aether
         AETHER_RESULT ar = AETHER_OK;
 
         // The game loop!
-        while (!m_Window->WindowShouldClose())
+        while (!Window::ShouldClose())
         {
             // Start a new rendering frame!
             Renderer::BeginFrame();
 
-            // Handle window events here (e.g., using GLFW or another windowing library)
-            m_Window->PollEvents();
+            // Handle window events here (e.g., using GLFW or another backend window library)
+            Window::Poll();
 
             // Refresh ImGui drawing context
             m_ImGuiLayer->Begin();

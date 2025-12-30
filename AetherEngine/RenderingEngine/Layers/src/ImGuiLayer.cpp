@@ -4,6 +4,8 @@
 //===============================================================================
 #include "ImGuiLayer.h"
 #include "Renderer.h"
+#include "Window.h"
+
 #include "GraphicsContext.h"
 #include "CoreApp.h"	// TODO: still need this to grab window, fix this!
 //===============================================================================
@@ -38,13 +40,13 @@ namespace Aether
 		{
 			case eRenderAPI::kOpenGL:
 			{
-				ImGui_ImplGlfw_InitForOpenGL(static_cast<GLFWwindow*>(Application::Get().GetWindow().GetNativeWindowHandle()), true);
+				ImGui_ImplGlfw_InitForOpenGL(static_cast<GLFWwindow*>(Window::GetNativeWindowHandle()), true);
 				break;
 			}
 			case eRenderAPI::kDX11:
 			case eRenderAPI::kDX12:
 			{
-				ImGui_ImplGlfw_InitForOther(static_cast<GLFWwindow*>(Application::Get().GetWindow().GetNativeWindowHandle()), true);    // Other is needed for DX
+				ImGui_ImplGlfw_InitForOther(static_cast<GLFWwindow*>(Window::GetNativeWindowHandle()), true);    // Other is needed for DX
 				break;
 			}
 			default:
@@ -87,7 +89,7 @@ namespace Aether
 	{
 		// Update ImGui data 
 		ImGuiIO& io = ImGui::GetIO();
-		io.DisplaySize = ImVec2((float)Application::Get().GetWindow().GetWidth(), (float)Application::Get().GetWindow().GetHeight());
+		io.DisplaySize = ImVec2((float)Window::GetWidth(), (float)Window::GetHeight());
 		io.DeltaTime = (float)glfwGetTime();
 
 		// Call the specific rendering API implementation to begin new frames

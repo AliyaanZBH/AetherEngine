@@ -39,7 +39,7 @@ namespace Aether
 		}
 	}
 
-	AETHER_RESULT RendererOpenGL::Initialize(IWindow& window)
+	AETHER_RESULT RendererOpenGL::Initialize(const IWindow& window)
 	{
 		AETHER_RESULT ar = AETHER_OK;
 	

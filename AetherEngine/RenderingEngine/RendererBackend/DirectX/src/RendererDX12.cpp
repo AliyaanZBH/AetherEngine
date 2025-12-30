@@ -12,7 +12,7 @@
 //===============================================================================
 namespace Aether
 {
-	AETHER_RESULT RendererDX12::Initialize(IWindow& window)
+	AETHER_RESULT RendererDX12::Initialize(const IWindow& window)
 	{
 		AETHER_RESULT ar = AETHER_OK;
 

@@ -11,9 +11,10 @@ set(SRC
     Core/src/CoreApp.cpp 
 
     Core/src/Log.cpp
-    Core/src/LayerStack.cpp
+    Core/src/Window.cpp
     Core/src/Renderer.cpp
-    
+    Core/src/LayerStack.cpp
+
     Input/src/Input.cpp
 
     Window/src/WindowGLFW.cpp
@@ -61,6 +62,7 @@ set(INCLUDE
     Core/include/Layer.h
     Core/include/LayerStack.h
     Core/include/Renderer.h
+    Core/include/Window.h
     
     # Input
     Input/include/InputCodes.h
@@ -70,6 +72,7 @@ set(INCLUDE
     RendererBackend/interface/IRendererBackend.h
     Window/interface/IWindow.h
 
+    Window/include/WindowContext.h
     Window/include/WindowGLFW.h
 
     #
@@ -106,6 +109,7 @@ set(INCLUDE
     RendererBackend/OpenGL/include/BufferOpenGL.h
 
     # Events
+    Events/include/EventContext.h
     Events/include/KeyEvent.h
     Events/include/MouseEvent.h
     Events/include/AppEvent.h

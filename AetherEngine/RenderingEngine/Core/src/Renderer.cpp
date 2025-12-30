@@ -8,6 +8,8 @@
 #include "AetherUtils.h"
 #include "Vertex.h"
 #include "GraphicsContext.h"
+#include "WindowContext.h"
+#include "Window.h"
 
 #ifdef USE_OPENGL
 #include "RendererOpenGL.h"
@@ -29,10 +31,16 @@
 namespace Aether
 {
     std::unique_ptr<IRendererBackend> Renderer::s_RendererBackend = nullptr;
+    Buffer* Renderer::s_QuadVertexBuffer = nullptr;
+    Buffer* Renderer::s_QuadIndexBuffer = nullptr;
+    VertexBufferView Renderer::s_QuadVBView = {};
+    IndexBufferView Renderer::s_QuadIBView = {};
 
-	void Renderer::Initialise(IWindow& window)
+	void Renderer::Initialise()
 	{
+
         AETHER_RESULT ar = AETHER_OK;
+
 
         // Set the desired rendering API, based on the chosen runtime enum. 
         std::string m_RendererString = "";
@@ -73,7 +81,7 @@ namespace Aether
         AETHER_CORE_INFO("Using Renderer: {0}", m_RendererString);
 
         // Init rendering API - catch errors out here with assert
-        AETHER_ASSERT(s_RendererBackend->Initialize(window));
+        AETHER_ASSERT(s_RendererBackend->Initialize(Window::GetInterface()));
 
         // Create a high-level description of our render pipeline, and let the back-end take it away and build it.
         CreateBackendPipeline();
@@ -117,6 +125,61 @@ namespace Aether
     void Renderer::EndImGuiRender()
     {
         s_RendererBackend->EndImGuiRender();
+    }
+
+    void Renderer::CreateTriangleGeometry()
+    {
+    }
+
+    void Renderer::CreateQuadGeometry()
+    {
+
+        // Create verts - position, colour
+        // Clockwise verts! Clockwise winding order!
+        Vertex verts[] =
+        {
+            { {	-0.9f,		-0.9f,		0.8f,	1.f	}, {1.f, 0.f, 0.f, 1.f} },	// Bottom Left
+            { {	-0.9f,		 0.9f,		0.8f,	1.f	}, {0.f, 1.f, 0.f, 1.f} },	// Top Left
+            { {	0.9f,		 0.9f,		0.8f,	1.f	}, {0.f, 0.f, 1.f, 1.f} },	// Top Right
+            { {	0.9f,		-0.9f,		0.8f,	1.f	}, {0.f, 1.f, 1.f, 1.f} }	// Bottom Right
+        };
+
+        BufferDesc AppVbDesc
+        {
+            .m_Data = verts,
+            .m_SizeInBytes = sizeof(verts),
+            .m_Type = eBufferType::kVertex,
+            .m_CPUVisible = true
+        };
+
+        s_QuadVertexBuffer = s_RendererBackend->CreateBuffer(AppVbDesc);
+        s_QuadVertexBuffer->Upload(AppVbDesc.m_Data, AppVbDesc.m_SizeInBytes);
+
+        s_QuadVBView.m_Buffer = s_QuadVertexBuffer;
+        s_QuadVBView.m_Stride = sizeof(Vertex);
+        s_QuadVBView.m_Offset = 0;
+
+
+        //unsigned int indices[] = { 0, 1, 2 };
+        unsigned int indices[] = { 0, 1, 2, 2, 3, 0 };
+
+        BufferDesc ibDesc
+        {
+            .m_Data = indices,
+            .m_SizeInBytes = sizeof(indices),
+            .m_Type = eBufferType::kIndex,
+            .m_CPUVisible = true
+        };
+
+        s_QuadIndexBuffer = s_RendererBackend->CreateBuffer(ibDesc);
+        s_QuadIndexBuffer->Upload(ibDesc.m_Data, ibDesc.m_SizeInBytes);
+        s_QuadIBView.m_Buffer = s_QuadIndexBuffer;
+        s_QuadIBView.m_Count = 6;
+        s_QuadIBView.m_IndexSize = sizeof(unsigned int);
+        s_QuadIBView.m_Offset = 0;
+
+        // Finalise our upload to the renderer
+        s_RendererBackend->FinalizeUploads();
     }
 
     void Renderer::CreateBackendPipeline()

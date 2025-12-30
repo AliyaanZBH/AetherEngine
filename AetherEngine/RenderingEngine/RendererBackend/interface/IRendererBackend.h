@@ -19,7 +19,7 @@ namespace Aether
     public:
         virtual ~IRendererBackend() = default;
 
-        virtual AETHER_RESULT Initialize(IWindow& window) = 0;
+        virtual AETHER_RESULT Initialize(const IWindow& window) = 0;
         virtual void CreatePipeline(const PipelineDesc& desc) = 0;
 
         virtual void ClearFrame() = 0;

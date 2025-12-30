@@ -6,6 +6,7 @@
 #include "CoreApp.h"
 #include "Log.h"
 #include "Input.h"
+#include "Renderer.h"
 #include "Buffer.h"
 #include "GraphicsContext.h"
 #include "Vertex.h"
