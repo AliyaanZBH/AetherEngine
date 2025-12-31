@@ -27,7 +27,6 @@ public:
 	void Render() override
 	{
 		Aether::Renderer::DrawQuad();
-		//Aether::Application::Get().GetRenderer().Render(&m_VertBufView, &m_IndBufView);
 	}
 };
 

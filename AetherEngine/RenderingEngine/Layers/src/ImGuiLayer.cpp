@@ -7,7 +7,6 @@
 #include "Window.h"
 
 #include "GraphicsContext.h"
-#include "CoreApp.h"	// TODO: still need this to grab window, fix this!
 //===============================================================================
 
 namespace Aether
