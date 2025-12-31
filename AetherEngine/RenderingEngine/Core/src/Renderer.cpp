@@ -95,6 +95,11 @@ namespace Aether
 
     void Renderer::Terminate()
     {
+        // Delete all buffers we allocated
+        delete s_QuadVertexBuffer;
+        delete s_QuadIndexBuffer;
+
+        // Tear down renderer backend too
         s_RendererBackend->Terminate();
     }
 
@@ -114,15 +119,15 @@ namespace Aether
         s_RendererBackend->Present();
     }
 
-    void Renderer::DrawQuad(const glm::mat4& transform, const glm::vec4& colour)
+    void Renderer::DrawQuad(const Transform& transform, const glm::vec4& colour)
     {
         // Register a draw command for quad geometry
         DrawCommand cmd;
         cmd.m_Type = eDrawCommandType::kQuad;
         cmd.m_VBV = &s_QuadVBView;
         cmd.m_IBV = &s_QuadIBView;
-        cmd.m_Transform = transform;
-        cmd.m_Colour = colour;
+        cmd.m_ModelMatrix = transform.CreateModelMatrix();
+        cmd.m_SolidColour = colour;
         s_CommandQueue.push_back(cmd);
     }
 

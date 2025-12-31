@@ -27,13 +27,11 @@ public:
 
 	void Render() override
 	{
-		// Create identity mat
-		glm::mat4 transform = glm::mat4(1.f);
-		
-		// Scale
-		transform = glm::scale(transform,glm::vec3(1.75f, 1.75f, 0.f));
-		glm::vec4 colour = glm::vec4({0.5f, 0.5f, 0.f, 1.f});
-		Aether::Renderer::DrawQuad(transform, colour);
+		// Define where and how we want to draw using transform helper
+		Aether::Transform trans;
+		trans.m_Scale = { 1.75f, 1.75f, 0.f };
+
+		Aether::Renderer::DrawQuad(trans, Aether::Colours::kMagenta);
 	}
 };
 

@@ -120,6 +120,10 @@ set(INCLUDE
     # Layers
     Layers/include/ImGuiLayer.h
 
+    # Drawing
+    Drawing/include/Drawing.h
+
+
     # Miscellaneous third-party includes
     ThirdParty/dx12Helper/include/d3dx12.h
  )
@@ -175,6 +179,7 @@ target_include_directories(AetherRenderer
                     PUBLIC
                             Core/include 
                             Graphics/include
+                            Drawing/include
                             Input/include
 
                     PRIVATE 

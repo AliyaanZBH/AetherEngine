@@ -162,7 +162,7 @@ namespace Aether
 		// Store uniform locations
 		m_DynamicColourLocation = glGetUniformLocation(m_DefaultShader->GetProgram(), "u_DynamicColour");
 		m_TransformLocation = glGetUniformLocation(m_DefaultShader->GetProgram(), "u_Transform");
-		//m_DynamicColourLocation = glGetUniformLocation(m_DefaultShader->GetProgram(), "u_Colour");
+		m_SolidColourLocation = glGetUniformLocation(m_DefaultShader->GetProgram(), "u_SolidColour");
 
 	}
 
@@ -173,6 +173,7 @@ namespace Aether
 		float varyingVal = (sin(deltaTime) / 2.0f) + 0.15f;
 
 		glUniform4f(m_DynamicColourLocation, varyingVal, varyingVal, varyingVal, 1.0f);
+		
 		// No transform on this guy
 		glUniformMatrix4fv(m_TransformLocation, 1, GL_FALSE, glm::value_ptr(glm::mat4(1.f)));
 
@@ -194,8 +195,11 @@ namespace Aether
 
 	void RendererOpenGL::Submit(const DrawCommand& cmd)
 	{
-		// Read the transformation matrix into the uniform buffer,
-		glUniformMatrix4fv(m_TransformLocation, 1, GL_FALSE, glm::value_ptr(cmd.m_Transform));
+		// Write the transformation matrix into the uniform buffer
+		glUniformMatrix4fv(m_TransformLocation, 1, GL_FALSE, glm::value_ptr(cmd.m_ModelMatrix));
+		// Same for colour
+		glUniform4f(m_SolidColourLocation, cmd.m_SolidColour.x, cmd.m_SolidColour.y, cmd.m_SolidColour.z, 1.0f);
+
 
 		// OpenGL is immediate mode so we can render immediately
 		Render(cmd.m_VBV, cmd.m_IBV);

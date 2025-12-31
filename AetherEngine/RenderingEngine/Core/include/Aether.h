@@ -7,9 +7,7 @@
 #include "Log.h"
 #include "Input.h"
 #include "Renderer.h"
-#include "Buffer.h"
-#include "GraphicsContext.h"
-#include "Vertex.h"
+#include "Drawing.h"
 
 // This is our main.cpp equivalent with extra setup due to being a DLL
 #include "EntryPoint.h"

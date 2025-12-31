@@ -9,6 +9,7 @@
 #include "DrawCommand.h"
 #include "Pipeline.h"
 #include "Buffer.h"
+#include "Drawing.h"
 //===============================================================================
 
 namespace Aether
@@ -27,7 +28,7 @@ namespace Aether
 
 		static void DrawLine();
 		static void DrawTriangle();
-		static void DrawQuad(const glm::mat4& transform, const glm::vec4& colour);
+		static void DrawQuad(const Transform& transform, const glm::vec4& colour);
 		static void DrawCircle();
 		static void DrawMesh();
 

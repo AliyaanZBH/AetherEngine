@@ -41,7 +41,7 @@ namespace Aether
 		unsigned int m_VertexAttributeArray = 0;
 		int m_DynamicColourLocation = 0;
 		int m_TransformLocation = 0;
-		int m_ColourLocation = 0;
+		int m_SolidColourLocation = 0;
 
 		// In OpenGL, multiple shaders must be linked into a single shader program, this one contains a vertex and pixel shader
 		ShaderOpenGL* m_DefaultShader = nullptr;

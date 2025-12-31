@@ -17,8 +17,9 @@ namespace Aether
 		eDrawCommandType m_Type;
 		VertexBufferView* m_VBV;
 		IndexBufferView* m_IBV;
-		glm::mat4 m_Transform;
-		glm::vec4 m_Colour;
+		glm::mat4 m_ModelMatrix;
+		glm::vec4 m_SolidColour;
+		//glm::vec4[4] m_PerVertexColour;
 		//const Mesh* m_Mesh = nullptr;
 	};
 }
