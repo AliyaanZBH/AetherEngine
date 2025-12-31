@@ -6,6 +6,7 @@
 #include "Core.h"
 #include "glm/glm.hpp"
 
+#include "DrawCommand.h"
 #include "Pipeline.h"
 #include "Buffer.h"
 //===============================================================================
@@ -26,7 +27,7 @@ namespace Aether
 
 		static void DrawLine();
 		static void DrawTriangle();
-		static void DrawQuad();
+		static void DrawQuad(const glm::mat4& transform, const glm::vec4& colour);
 		static void DrawCircle();
 		static void DrawMesh();
 
@@ -56,17 +57,6 @@ namespace Aether
 
 		// Currently running renderer backend
 		static std::unique_ptr<IRendererBackend> s_RendererBackend;
-
-
-		// Instead of submitting draw functions immediately, submit them to a queue so that they can all be drawn safely at the correct time for each rendering API.
-		// This abstraction helps with app users not having to worry about when they call a draw function
-		struct DrawCommand
-		{
-			enum class eDrawType { kLine, kTri, kQuad, kCircle, kMesh} m_Type;
-			glm::mat4 m_Transform;
-			glm::vec4 m_Colour;
-			//const Mesh* m_Mesh = nullptr;
-		};
 
 		// Per-frame render list
 		static std::vector<DrawCommand> s_CommandQueue;

@@ -24,6 +24,7 @@ namespace Aether
 
 		void ClearFrame() override;
 		void Render() override;
+		void Submit(const DrawCommand& cmd) override {}
 		void Render(VertexBufferView* vbv, IndexBufferView* ibv) override;
 		void Present() override;
 

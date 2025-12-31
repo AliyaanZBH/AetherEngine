@@ -32,6 +32,7 @@
 namespace Aether
 {
     std::unique_ptr<IRendererBackend> Renderer::s_RendererBackend = nullptr;
+    std::vector<DrawCommand> Renderer::s_CommandQueue = {};
     Buffer* Renderer::s_QuadVertexBuffer = nullptr;
     Buffer* Renderer::s_QuadIndexBuffer = nullptr;
     VertexBufferView Renderer::s_QuadVBView = {};
@@ -87,6 +88,9 @@ namespace Aether
         // Create a high-level description of our render pipeline, and let the back-end take it away and build it.
         CreateBackendPipeline();
 
+        // Create primitive geometry buffers that can be reused
+        CreateQuadGeometry();
+
 	}
 
     void Renderer::Terminate()
@@ -103,18 +107,45 @@ namespace Aether
     {
         // Dispatch all draw commands collected from the application this frame to the backend
         Dispatch();
+        Flush();
         // Draw anything else we want! (Perhaps outdated at this point, but I like the idea of each renderer drendering something small and inconsequential like a small watermark as an easter egg)
         s_RendererBackend->Render();
         // Show completed frame
         s_RendererBackend->Present();
     }
 
-    void Renderer::DrawQuad()
+    void Renderer::DrawQuad(const glm::mat4& transform, const glm::vec4& colour)
     {
+        // Register a draw command for quad geometry
+        DrawCommand cmd;
+        cmd.m_Type = eDrawCommandType::kQuad;
+        cmd.m_VBV = &s_QuadVBView;
+        cmd.m_IBV = &s_QuadIBView;
+        cmd.m_Transform = transform;
+        cmd.m_Colour = colour;
+        s_CommandQueue.push_back(cmd);
     }
 
     void Renderer::Dispatch()
     {
+        for (DrawCommand& cmd : s_CommandQueue)
+        {
+            s_RendererBackend->Submit(cmd);
+            
+            // Maybe save this for render passes like Opaque and Transparent?
+            //switch (cmd.m_Type)
+            //{
+            //    case eDrawCommandType::kQuad:
+            //    {
+            //        s_RendererBackend->Submit(cmd);
+            //    }
+            //}
+        }
+    }
+
+    void Renderer::Flush()
+    {
+        s_CommandQueue.clear();
     }
 
     void Renderer::InitImGui()
@@ -132,6 +163,13 @@ namespace Aether
         s_RendererBackend->EndImGuiRender();
     }
 
+
+
+    //
+    // Private low-levelish implementations that are hidden from the application
+    //
+
+
     void Renderer::CreateTriangleGeometry()
     {
     }
@@ -141,43 +179,41 @@ namespace Aether
 
         // Create verts - position, colour
         // Clockwise verts! Clockwise winding order!
-        Vertex verts[] =
+        Vertex quadVerts[] =
         {
-            { {	-0.9f,		-0.9f,		0.8f,	1.f	}, {1.f, 0.f, 0.f, 1.f} },	// Bottom Left
-            { {	-0.9f,		 0.9f,		0.8f,	1.f	}, {0.f, 1.f, 0.f, 1.f} },	// Top Left
-            { {	0.9f,		 0.9f,		0.8f,	1.f	}, {0.f, 0.f, 1.f, 1.f} },	// Top Right
-            { {	0.9f,		-0.9f,		0.8f,	1.f	}, {0.f, 1.f, 1.f, 1.f} }	// Bottom Right
+            { {	-0.5f,		-0.5f,		0.5f,	1.f	}, {1.f, 0.f, 0.f, 1.f} },	// Bottom Left
+            { {	-0.5f,		 0.5f,		0.5f,	1.f	}, {0.f, 1.f, 0.f, 1.f} },	// Top Left
+            { {	 0.5f,		 0.5f,		0.5f,	1.f	}, {0.f, 0.f, 1.f, 1.f} },	// Top Right
+            { {	 0.5f,		-0.5f,		0.5f,	1.f	}, {0.f, 1.f, 1.f, 1.f} }	// Bottom Right
         };
 
-        BufferDesc AppVbDesc
+        BufferDesc quadVBDesc
         {
-            .m_Data = verts,
-            .m_SizeInBytes = sizeof(verts),
+            .m_Data = quadVerts,
+            .m_SizeInBytes = sizeof(quadVerts),
             .m_Type = eBufferType::kVertex,
             .m_CPUVisible = true
         };
 
-        s_QuadVertexBuffer = s_RendererBackend->CreateBuffer(AppVbDesc);
-        s_QuadVertexBuffer->Upload(AppVbDesc.m_Data, AppVbDesc.m_SizeInBytes);
+        s_QuadVertexBuffer = s_RendererBackend->CreateBuffer(quadVBDesc);
+        s_QuadVertexBuffer->Upload(quadVBDesc.m_Data, quadVBDesc.m_SizeInBytes);
 
         s_QuadVBView.m_Buffer = s_QuadVertexBuffer;
         s_QuadVBView.m_Stride = sizeof(Vertex);
         s_QuadVBView.m_Offset = 0;
 
+        unsigned int quadIndices[6] = { 0, 1, 2, 2, 3, 0 };
 
-        //unsigned int indices[] = { 0, 1, 2 };
-        unsigned int indices[] = { 0, 1, 2, 2, 3, 0 };
-
-        BufferDesc ibDesc
+        BufferDesc quadIBDesc
         {
-            .m_Data = indices,
-            .m_SizeInBytes = sizeof(indices),
+            .m_Data = quadIndices,
+            .m_SizeInBytes = sizeof(quadIndices),
             .m_Type = eBufferType::kIndex,
             .m_CPUVisible = true
         };
 
-        s_QuadIndexBuffer = s_RendererBackend->CreateBuffer(ibDesc);
-        s_QuadIndexBuffer->Upload(ibDesc.m_Data, ibDesc.m_SizeInBytes);
+        s_QuadIndexBuffer = s_RendererBackend->CreateBuffer(quadIBDesc);
+        s_QuadIndexBuffer->Upload(quadIBDesc.m_Data, quadIBDesc.m_SizeInBytes);
         s_QuadIBView.m_Buffer = s_QuadIndexBuffer;
         s_QuadIBView.m_Count = 6;
         s_QuadIBView.m_IndexSize = sizeof(unsigned int);

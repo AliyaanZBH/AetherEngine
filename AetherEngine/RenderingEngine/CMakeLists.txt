@@ -82,6 +82,7 @@ set(INCLUDE
     #
 
     Graphics/include/GraphicsContext.h
+    Graphics/include/DrawCommand.h
     Graphics/include/Shader.h
     Graphics/include/Buffer.h
     Graphics/include/Vertex.h

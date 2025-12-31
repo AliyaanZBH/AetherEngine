@@ -3,6 +3,7 @@
 // auth: Aliyaan Zulfiqar
 //===============================================================================
 #include <Aether.h>
+#include "glm/gtc/matrix_transform.hpp"
 //===============================================================================
 
 class DemoLayer : public Aether::Layer
@@ -26,7 +27,13 @@ public:
 
 	void Render() override
 	{
-		Aether::Renderer::DrawQuad();
+		// Create identity mat
+		glm::mat4 transform = glm::mat4(1.f);
+		
+		// Scale
+		transform = glm::scale(transform,glm::vec3(1.75f, 1.75f, 0.f));
+		glm::vec4 colour = glm::vec4({0.5f, 0.5f, 0.f, 1.f});
+		Aether::Renderer::DrawQuad(transform, colour);
 	}
 };
 
