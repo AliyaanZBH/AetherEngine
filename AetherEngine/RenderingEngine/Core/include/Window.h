@@ -10,6 +10,7 @@
 namespace Aether
 {
 	class IWindow;
+	class Event;
 
 	class AETHER_API Window
 	{
@@ -19,8 +20,12 @@ namespace Aether
 
 
 		static void Poll();
-		static void SetEventCallback(const EventCallbackFn& callback);
-		static bool ShouldClose();
+		static void SetEventCallback(const std::function<void(Event&)>& callback);
+
+		static inline bool ShouldClose();
+		static inline int GetWidth();
+		static inline int GetHeight();
+
 
 		// This will return a native handle (HWND on Windows or a GLFW window handle on Linux)
 		static void* GetNativeWindowHandle();

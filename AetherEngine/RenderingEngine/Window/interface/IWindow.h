@@ -5,7 +5,7 @@
 //===============================================================================
 #include "Core.h"
 #include "WindowContext.h"
-#include "EventContext.h"
+//#include "EventContext.h"
 //===============================================================================
 
 
@@ -23,7 +23,7 @@ namespace Aether
 		virtual void PollEvents() = 0;
 		virtual void Terminate() = 0;
 
-		virtual void SetEventCallback(const EventCallbackFn& callback) = 0;
+		virtual void SetEventCallback(const std::function<void(Event&)>& callback) = 0;
 
 		// This will return a native handle (HWND on Windows or a GLFW window handle on Linux)
 		virtual void* GetNativeWindowHandle() const = 0;

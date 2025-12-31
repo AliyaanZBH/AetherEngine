@@ -46,13 +46,25 @@ namespace Aether
 		s_WindowBackend->PollEvents();
 	}
 
-	void SetEventCallback(const EventCallbackFn& callback)
+	void Window::SetEventCallback(const std::function<void(Event&)>& callback)
 	{
-
+		s_WindowBackend->SetEventCallback(callback);
 	}
 
-	bool Window::ShouldClose()
+
+	inline bool Window::ShouldClose()
 	{
 		return s_WindowBackend->WindowShouldClose();
 	}
+
+	inline int Window::GetWidth()
+	{ 
+		return s_WindowBackend->GetWidth(); 
+	}
+
+	inline int Window::GetHeight()
+	{ 
+		return s_WindowBackend->GetHeight();
+	}
+
 };

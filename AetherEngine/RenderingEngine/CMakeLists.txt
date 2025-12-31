@@ -68,6 +68,8 @@ set(INCLUDE
     Input/include/InputCodes.h
     Input/include/Input.h
 
+
+
     # Interfaces
     RendererBackend/interface/IRendererBackend.h
     Window/interface/IWindow.h
@@ -159,8 +161,11 @@ endif()
 target_link_libraries(AetherRenderer PRIVATE AetherConfig)
 
 # Enable PCH for Visual Studio
-if (MSVC)  # Check if we're on Visual Studio
+if (MSVC) 
     target_precompile_headers(AetherRenderer PRIVATE ${PCH_HEADER})
+    # Neat little debug helper to check our includer order when things are being weird
+    #target_compile_options(AetherRenderer PRIVATE /showIncludes)
+    #target_compile_options(AetherRenderer PRIVATE /sourceDependencies)
 endif()
 
 # Include directories for the DLL

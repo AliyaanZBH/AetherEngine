@@ -3,11 +3,13 @@
 // desc: A small helper class and enum to keep track of the current Window context
 // auth: Aliyaan Zulfiqar
 //===============================================================================
-#include "EventContext.h"
+//#include "EventContext.h"
 //===============================================================================
 
 namespace Aether
 {
+	class Event;
+
 	enum class eWindowAPI
 	{
 		kGLFW,
@@ -30,7 +32,8 @@ namespace Aether
 			HWND      hMainWnd = 0;
 			HICON     hIcon = 0;*/
 
-			EventCallbackFn m_EventCallback;
+			//EventCallbackFn m_EventCallback;
+			std::function<void(Event&)> m_EventCallback;
 
 			std::string m_Title = "Aether Engine";
 			uint16_t m_ClientWidth = 800u;

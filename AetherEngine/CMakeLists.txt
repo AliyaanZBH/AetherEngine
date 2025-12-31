@@ -69,6 +69,8 @@ endforeach()
 
 # Intermediate interface target to handle config-specific macros across engine, app, and third-party libs, ensuring we don't get ABI or symbol mismatch
 add_library(AetherConfig INTERFACE)
+# Neat little debug helper to check our includer order when things are being weird
+# target_compile_options(AetherConfig INTERFACE /showIncludes)
 
 target_compile_definitions(AetherConfig INTERFACE
     $<$<CONFIG:Debug>:AETHER_DEBUG>

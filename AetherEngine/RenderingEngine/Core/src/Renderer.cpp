@@ -1,3 +1,4 @@
+#include "Renderer.h"
 //===============================================================================
 // desc: High-level API for applications using Aether to render games with ease
 // auth: Aliyaan Zulfiqar
@@ -106,6 +107,10 @@ namespace Aether
         s_RendererBackend->Render();
         // Show completed frame
         s_RendererBackend->Present();
+    }
+
+    void Renderer::DrawQuad()
+    {
     }
 
     void Renderer::Dispatch()

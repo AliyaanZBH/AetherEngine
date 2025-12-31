@@ -27,7 +27,7 @@ namespace Aether
 			glfwPollEvents();
 		}
 
-		inline void SetEventCallback(const EventCallbackFn& callback) override { m_WinData.m_EventCallback = callback; }
+		inline void SetEventCallback(const std::function<void(Event&)>& callback) override { m_WinData.m_EventCallback = callback; }
 
 
 		void Terminate() override;
