@@ -25,6 +25,7 @@ namespace Aether
 		static void Resize(const uint16_t width, const uint16_t height);
 
 		static void BeginFrame();
+		static void Render();
 		static void EndFrame();
 
 		static void DrawLine();

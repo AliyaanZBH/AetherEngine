@@ -160,9 +160,9 @@ namespace Aether
 		}
 
 		// Store uniform locations
-		m_DynamicColourLocation = glGetUniformLocation(m_DefaultShader->GetProgram(), "u_DynamicColour");
 		m_TransformLocation = glGetUniformLocation(m_DefaultShader->GetProgram(), "u_Transform");
 		m_SolidColourLocation = glGetUniformLocation(m_DefaultShader->GetProgram(), "u_SolidColour");
+		m_DynamicColourLocation = glGetUniformLocation(m_DefaultShader->GetProgram(), "u_DynamicColour");
 
 	}
 

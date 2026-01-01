@@ -58,22 +58,22 @@ namespace Aether
 		// Check if our buffer is able to be written to by the CPU
 		if (m_Desc.m_CPUVisible)
 		{
-			//// DX11 uses the device context to map the buffer
-			//D3D11_MAPPED_SUBRESOURCE mapped = {};
-			//AETHER_HR_ASSERT(m_Context->Map(
-			//	m_Buffer,
-			//	0,
-			//	//D3D11_MAP_WRITE_DISCARD,	// This flag replaces the entire buffer contents.
-			//	D3D11_MAP_WRITE_NO_OVERWRITE,
-			//	0,
-			//	&mapped
-			//));
-			//
-			//// Copy into the mapped CPU pointer, just like DX12
-			//memcpy(static_cast<uint8_t*>(mapped.pData) + offset, data, size);
-			//
-			//// Unmap and commit the write
-			//m_Context->Unmap(m_Buffer, 0);
+			// DX11 uses the device context to map the buffer
+			D3D11_MAPPED_SUBRESOURCE mapped = {};
+			AETHER_HR_ASSERT(m_Context->Map(
+				m_Buffer,
+				0,
+				D3D11_MAP_WRITE_DISCARD,	// This flag replaces the entire buffer contents.
+				//D3D11_MAP_WRITE_NO_OVERWRITE,
+				0,
+				&mapped
+			));
+			
+			// Copy into the mapped CPU pointer, just like DX12
+			memcpy(static_cast<uint8_t*>(mapped.pData) + offset, data, size);
+			
+			// Unmap and commit the write
+			m_Context->Unmap(m_Buffer, 0);
 		}
 		else
 		{

@@ -31,7 +31,7 @@ namespace Aether
         s_Instance = this;
 
         // Select rendering API
-        GraphicsContext::SelectRenderAPI(eRenderAPI::kDX11);
+        GraphicsContext::SelectRenderAPI(eRenderAPI::kOpenGL);
 
         // Later in development, this will be read from a JSON config file so that the user can save and load settings, along with manually changing it from a GUI inside the application!
         WindowContext::WinData wd =
@@ -115,10 +115,13 @@ namespace Aether
             // Render our layers!
             m_LayerStack.RenderLayers();
 
-            // Finalise ImGui drawing afterwards
+            // Finalize rendering by submitting all registered draw commands to the backend
+            Renderer::Render();
+
+            // Finalise ImGui drawing last, as it will invalidate renderer state.
             m_ImGuiLayer->End();
 
-            // Finish rendering and present our lovely frame!
+            // Now present our lovely frame!
             Renderer::EndFrame();
         }
 

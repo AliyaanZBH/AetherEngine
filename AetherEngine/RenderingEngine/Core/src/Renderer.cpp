@@ -146,14 +146,18 @@ namespace Aether
         s_RendererBackend->ClearFrame();
     }
 
-    void Renderer::EndFrame()
+    void Renderer::Render()
     {
         // Dispatch all draw commands collected from the application this frame to the backend
         Dispatch();
         Flush();
         // Draw anything else we want! (Perhaps outdated at this point, but I like the idea of each renderer drendering something small and inconsequential like a small watermark as an easter egg)
         s_RendererBackend->Render();
-        // Show completed frame
+    }
+
+    void Renderer::EndFrame()
+    {
+        // Show completed frame - ImGui will have finished by this point.
         s_RendererBackend->Present();
     }
 
@@ -205,10 +209,10 @@ namespace Aether
         for (DrawCommand& cmd : s_CommandQueue)
         {
             // Update constant buffer with data for this draww
-            //PerDrawData data;
-            //data.m_ModelMatrix = cmd.m_ModelMatrix;
-            //data.m_Colour = cmd.m_SolidColour;
-           // s_PerDrawBuffer->Upload(&data, sizeof(PerDrawData));
+            PerDrawData data;
+            data.m_ModelMatrix = cmd.m_ModelMatrix;
+            data.m_Colour = cmd.m_SolidColour;
+            s_PerDrawBuffer->Upload(&data, sizeof(PerDrawData));
 
             // Submit the view on this buffer together with the command
             s_RendererBackend->Submit(cmd, &s_CBView);

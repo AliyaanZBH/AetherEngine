@@ -123,12 +123,12 @@ namespace Aether
 
 	void RendererDX11::Submit(const DrawCommand& cmd, ConstantBufferView* cbv)
 	{
-		//uint32_t cbSlot = cbv->m_Slot;
-		//ID3D11Buffer* conBuf = static_cast<BufferDX11*>(cbv->m_Buffer)->GetBuffer();
+		uint32_t cbSlot = cbv->m_Slot;
+		ID3D11Buffer* conBuf = static_cast<BufferDX11*>(cbv->m_Buffer)->GetBuffer();
 
 		// Set constant buffer
-		//m_pD3DImmediateContext->VSSetConstantBuffers(cbSlot, 1, &conBuf);
-		//m_pD3DImmediateContext->PSSetConstantBuffers(cbSlot, 1, &conBuf);
+		m_pD3DImmediateContext->VSSetConstantBuffers(cbSlot, 1, &conBuf);
+		m_pD3DImmediateContext->PSSetConstantBuffers(cbSlot, 1, &conBuf);
 
 		// DX11 is immediate mode so we can render immediately
 		Render(cmd.m_VBV, cmd.m_IBV);
@@ -155,7 +155,6 @@ namespace Aether
 
 		m_pD3DImmediateContext->RSSetViewports(1, &m_Viewport);
 		m_pD3DImmediateContext->RSSetScissorRects(1, &m_Scissor);
-		m_pD3DImmediateContext->RSSetState(m_pRasterState.Get());
 
 		m_pD3DImmediateContext->DrawIndexed(ibv->m_Count, 0, 0);
 
@@ -178,9 +177,8 @@ namespace Aether
 		float clearColor[4] = { 1.f, 0.3f, 0.0f, 1.0f };
 		m_pD3DImmediateContext->ClearRenderTargetView(m_pRenderTargetView.Get(), clearColor);
 
-		//m_pD3DImmediateContext->OMSetRenderTargets(1, m_pRenderTargetView.GetAddressOf(), m_pDepthStencilView.Get());
 		// Set render target ready for drawing
-		m_pD3DImmediateContext->OMSetRenderTargets(1, m_pRenderTargetView.GetAddressOf(),nullptr);
+		m_pD3DImmediateContext->OMSetRenderTargets(1, m_pRenderTargetView.GetAddressOf(), m_pDepthStencilView.Get());
 
 		// Clear depth aswell!
 		m_pD3DImmediateContext->ClearDepthStencilView(m_pDepthStencilView.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);

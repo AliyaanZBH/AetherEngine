@@ -29,13 +29,14 @@ public:
 	{
 		// Define where and how we want to draw using transform helper
 		Aether::Transform trans;
-		trans.m_Scale = { 1.75f, 1.75f, 0.5f };
+		trans.m_Scale = { 1.75f, 1.75f, 1.f };
+		//trans.m_Position = { 0.5f, 0.5f, 1.f };
 
 		Aether::Renderer::DrawQuad(trans, Aether::Colours::kYellow);
 
 		// Can re-use transform for another draw!
-		trans.m_Scale = { 1.1f, 1.f, 0.5f };
-		trans.m_Position = { 0.5f, 0.5f, 0.5f };
+		trans.m_Scale = { 1.5f, 1.5f, 1.f };
+		trans.m_Position = { 0.5f, 0.5f, 0.3f };
 		Aether::Renderer::DrawTriangle(trans, Aether::Colours::kPureGreen);
 	}
 };

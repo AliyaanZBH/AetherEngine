@@ -115,10 +115,19 @@ namespace Aether
 		ImGuiIO& io = ImGui::GetIO();
 		if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
 		{
-			GLFWwindow* backup_current_context = glfwGetCurrentContext();
+			// We need to backup context for OpenGL
+			eRenderAPI current = GraphicsContext::GetRenderAPI();
+			GLFWwindow* backupCurrentContext;
+			if (current == eRenderAPI::kOpenGL)
+				backupCurrentContext = glfwGetCurrentContext();
+
+			// Update ImGui windows
 			ImGui::UpdatePlatformWindows();
 			ImGui::RenderPlatformWindowsDefault();
-			glfwMakeContextCurrent(backup_current_context);
+
+			// Restore context for OpenGL
+			if (current == eRenderAPI::kOpenGL)
+				glfwMakeContextCurrent(backupCurrentContext);
 		}
 	}
 
