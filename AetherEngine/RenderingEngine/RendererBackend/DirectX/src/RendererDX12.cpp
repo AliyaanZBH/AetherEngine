@@ -10,7 +10,6 @@
 #include "Vertex.h"
 #include "Pipeline.h"
 #include "DrawCommand.h"
-#include "GraphicsCommon.h"
 //===============================================================================
 namespace Aether
 {
@@ -229,35 +228,12 @@ namespace Aether
 		cbData.m_ModelMatrix = cmd.m_ModelMatrix;
 		cbData.m_Colour = cmd.m_SolidColour;
 
-		D3D12_GPU_VIRTUAL_ADDRESS cbGPUAddr = m_CBAllocator.Alloc(&cbData);
-		D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc{};
-		cbvDesc.BufferLocation = cbGPUAddr;
-		cbvDesc.SizeInBytes = static_cast<UINT>(AETHER_ALIGN256(sizeof(PerDrawData)));
+		CreateConstBufView(cbv, cbData);
 
-		CD3DX12_CPU_DESCRIPTOR_HANDLE handle(
-			m_MainDescriptorHeap->GetCPUDescriptorHandleForHeapStart(),
-			m_CurrentCBVIndex,
-			m_DescriptorSize
-		);
-
-		m_Device->CreateConstantBufferView(&cbvDesc, handle);
-
-		m_CmdList->SetPipelineState(m_PipelineStateObject);
-		m_CmdList->SetGraphicsRootSignature(m_RootSig);                             // Set the root signature
-
-		// Bind descriptor to b0 in our root signature
-		ID3D12DescriptorHeap* heaps[] = { m_MainDescriptorHeap.Get() };
-		m_CmdList->SetDescriptorHeaps(1, heaps);
-		//m_CmdList->SetGraphicsRootDescriptorTable(0,m_MainDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
-		m_CmdList->SetGraphicsRootDescriptorTable(0, CD3DX12_GPU_DESCRIPTOR_HANDLE(
-			m_MainDescriptorHeap->GetGPUDescriptorHandleForHeapStart(),
-			m_CurrentCBVIndex,
-			m_DescriptorSize
-		));
+		
 
 		Render(cmd.m_VBV, cmd.m_IBV);
 
-		m_CurrentCBVIndex++;
 	}
 
 	void RendererDX12::Render(VertexBufferView* vbv, IndexBufferView* ibv)
@@ -377,18 +353,37 @@ namespace Aether
 	}
 
 
-	void RendererDX12::CreateConstBufView(ConstantBufferView* cbv)
+	void RendererDX12::CreateConstBufView(ConstantBufferView* cbv, PerDrawData& cbData)
 	{
 		BufferDX12* dxBuf = static_cast<BufferDX12*>(cbv->m_Buffer);
 
-		D3D12_CONSTANT_BUFFER_VIEW_DESC dxCBVDesc;
-		dxCBVDesc.BufferLocation = dxBuf->GetResource()->GetGPUVirtualAddress();
-		dxCBVDesc.SizeInBytes = AETHER_ALIGN256(dxBuf->GetSize());
+		D3D12_GPU_VIRTUAL_ADDRESS cbGPUAddr = m_CBAllocator.Alloc(&cbData);
+		D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc{};
+		cbvDesc.BufferLocation = cbGPUAddr;
+		cbvDesc.SizeInBytes = static_cast<UINT>(AETHER_ALIGN256(sizeof(PerDrawData)));
 
-		// Use helper to calculate handle safer for us
-		CD3DX12_CPU_DESCRIPTOR_HANDLE handle(m_MainDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), cbv->m_Slot, m_DescriptorSize);
+		uint8_t currentDescriptorIndex = m_CBAllocator.GetIndex();
+		CD3DX12_CPU_DESCRIPTOR_HANDLE handle(
+			m_MainDescriptorHeap->GetCPUDescriptorHandleForHeapStart(),
+			currentDescriptorIndex,
+			m_DescriptorSize
+		);
 
-		m_Device->CreateConstantBufferView(&dxCBVDesc, handle);
+		m_Device->CreateConstantBufferView(&cbvDesc, handle);
+
+		m_CmdList->SetPipelineState(m_PipelineStateObject);
+		m_CmdList->SetGraphicsRootSignature(m_RootSig);                             // Set the root signature
+
+		// Bind descriptor to b0 in our root signature
+		ID3D12DescriptorHeap* heaps[] = { m_MainDescriptorHeap.Get() };
+		m_CmdList->SetDescriptorHeaps(1, heaps);
+		m_CmdList->SetGraphicsRootDescriptorTable(0, CD3DX12_GPU_DESCRIPTOR_HANDLE(
+			m_MainDescriptorHeap->GetGPUDescriptorHandleForHeapStart(),
+			currentDescriptorIndex,
+			m_DescriptorSize
+		));
+
+		m_CBAllocator.IncrementIndex();
 	}
 
 	D3D12_VERTEX_BUFFER_VIEW RendererDX12::CreateVertBufView(VertexBufferView* vbv)
@@ -833,9 +828,8 @@ namespace Aether
 
 		}
 
-		// Clear our allocator offsets too
+		// Clear our allocator offsets and indices too
 		m_CBAllocator.Reset();
-		m_CurrentCBVIndex = 0; // reset per frame
 		return ar;
 	}
 

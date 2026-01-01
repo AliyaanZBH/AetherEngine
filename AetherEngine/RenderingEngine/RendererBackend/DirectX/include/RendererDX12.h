@@ -11,6 +11,7 @@
 #include "LinearAllocatorDX12.h"
 #include "Vertex.h"
 
+#include "GraphicsCommon.h"
 #include "WindowContext.h"
 //===============================================================================
 
@@ -80,7 +81,7 @@ namespace Aether
 		//
 
 		
-		void CreateConstBufView(ConstantBufferView* cbv);
+		void CreateConstBufView(ConstantBufferView* cbv, PerDrawData& cbData);
 		D3D12_VERTEX_BUFFER_VIEW CreateVertBufView(VertexBufferView* vbv);
 		D3D12_INDEX_BUFFER_VIEW CreateIdxBufView(IndexBufferView* ibv);
 
@@ -125,7 +126,6 @@ namespace Aether
 
 		Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_MainDescriptorHeap;												// SRVs and now CBVs!
 		UINT m_DescriptorSize = 0u;																						// Descriptor size for our heap, used to map registers b0, b1, t0 etc. 
-		uint32_t m_CurrentCBVIndex = 0;
 		LinearAllocatorDX12 m_CBAllocator;																				// Small linear allocator for constant buffers
 		
 		Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_ImGuiDescriptorHeap;												// Dedicated heap ImGui (mainly just for SRVs)
