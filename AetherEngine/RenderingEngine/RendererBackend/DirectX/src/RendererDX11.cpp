@@ -134,7 +134,7 @@ namespace Aether
 		Render(cmd.m_VBV, cmd.m_IBV);
 	}
 
-	void RendererDX11::Render(VertexBufferView * vbv, IndexBufferView * ibv)
+	void RendererDX11::Render(VertexBufferView* vbv, IndexBufferView* ibv)
 	{
 		// Grab geo buffers
 		BufferDX11* vertBuf = static_cast<BufferDX11*>(vbv->m_Buffer);
@@ -183,7 +183,9 @@ namespace Aether
 		m_pD3DImmediateContext->OMSetRenderTargets(1, m_pRenderTargetView.GetAddressOf(),nullptr);
 
 		// Clear depth aswell!
-		m_pD3DImmediateContext->ClearDepthStencilView(m_pDepthStencilView.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
+		m_pD3DImmediateContext->ClearDepthStencilView(m_pDepthStencilView.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+
+		UpdateViewportAndScissor();
 	}
 
 	void RendererDX11::Terminate()
