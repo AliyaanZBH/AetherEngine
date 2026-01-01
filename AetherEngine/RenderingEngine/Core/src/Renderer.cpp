@@ -104,6 +104,9 @@ namespace Aether
         CreateTriangleGeometry();
         CreateQuadGeometry();
 
+        // Finalise our uploads to the renderer
+        s_RendererBackend->FinalizeUploads();
+
         // Reserve some space for our command queue up-front, to avoid re-allocations
         s_CommandQueue.reserve(128);
 
@@ -273,7 +276,7 @@ namespace Aether
             .m_Data = triVerts,
             .m_SizeInBytes = sizeof(triVerts),
             .m_Type = eBufferType::kVertex,
-            .m_CPUVisible = true
+            .m_CPUVisible = false
         };
 
         s_TriVertexBuffer = s_RendererBackend->CreateBuffer(triVBDesc);
@@ -291,7 +294,7 @@ namespace Aether
             .m_Data = triIndices,
             .m_SizeInBytes = sizeof(triIndices),
             .m_Type = eBufferType::kIndex,
-            .m_CPUVisible = true
+            .m_CPUVisible = false
         };
 
         s_TriIndexBuffer = s_RendererBackend->CreateBuffer(triIBDesc);
@@ -301,9 +304,6 @@ namespace Aether
         s_TriIBView->m_Count = 3;
         s_TriIBView->m_IndexSize = sizeof(unsigned int);
         s_TriIBView->m_Offset = 0;
-
-        // Finalise our upload to the renderer
-        s_RendererBackend->FinalizeUploads();
     }
 
     void Renderer::CreateQuadGeometry()
@@ -321,7 +321,7 @@ namespace Aether
             .m_Data = quadVerts,
             .m_SizeInBytes = sizeof(quadVerts),
             .m_Type = eBufferType::kVertex,
-            .m_CPUVisible = true
+            .m_CPUVisible = false
         };
 
         s_QuadVertexBuffer = s_RendererBackend->CreateBuffer(quadVBDesc);
@@ -339,7 +339,7 @@ namespace Aether
             .m_Data = quadIndices,
             .m_SizeInBytes = sizeof(quadIndices),
             .m_Type = eBufferType::kIndex,
-            .m_CPUVisible = true
+            .m_CPUVisible = false
         };
 
         s_QuadIndexBuffer = s_RendererBackend->CreateBuffer(quadIBDesc);
@@ -349,8 +349,6 @@ namespace Aether
         s_QuadIBView->m_Count = 6;
         s_QuadIBView->m_IndexSize = sizeof(unsigned int);
         s_QuadIBView->m_Offset = 0;
-
-        s_RendererBackend->FinalizeUploads();
     }
 
     void Renderer::CreateBackendPipeline()

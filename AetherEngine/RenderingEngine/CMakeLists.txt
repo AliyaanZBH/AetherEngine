@@ -101,6 +101,7 @@ set(INCLUDE
     
     RendererBackend/DirectX/include/RendererDX12.h
     RendererBackend/DirectX/include/ImGuiDX12.h
+    RendererBackend/DirectX/include/LinearAllocatorDX12.h
     RendererBackend/DirectX/include/BufferDX12.h
     RendererBackend/DirectX/include/ShaderDX12.h
 

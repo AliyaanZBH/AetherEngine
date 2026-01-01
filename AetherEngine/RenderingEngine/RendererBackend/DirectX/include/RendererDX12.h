@@ -8,6 +8,7 @@
 #include "ImGuiDX12.h"
 #include "ShaderDX12.h"
 #include "BufferDX12.h"
+#include "LinearAllocatorDX12.h"
 #include "Vertex.h"
 
 #include "WindowContext.h"
@@ -78,6 +79,8 @@ namespace Aether
 		// Extra Methods to help with rendering
 		//
 
+		
+		void CreateConstBufView(ConstantBufferView* cbv);
 		D3D12_VERTEX_BUFFER_VIEW CreateVertBufView(VertexBufferView* vbv);
 		D3D12_INDEX_BUFFER_VIEW CreateIdxBufView(IndexBufferView* ibv);
 
@@ -99,7 +102,7 @@ namespace Aether
 
 		static const DXGI_FORMAT m_kRTVFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
 		static const DXGI_FORMAT m_kDSVFormat = DXGI_FORMAT_D32_FLOAT;
-		static const UINT8 m_kSRVHeapSize = 64u;
+		static const UINT8 m_kHeapSize = 64u;
 		static const UINT8 m_kNumFrameBuffers = 2u;
 		const float m_kClearColour[3] = { 0.1f, 0.2f, 1.0f };
 
@@ -120,8 +123,15 @@ namespace Aether
 		Microsoft::WRL::ComPtr<ID3D12Resource> m_DepthStencilBuffer;													// Depth stencil!
 		Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_DSBHeap;
 
-		Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_SRVHeap;															// SRVs!
-		static inline ImGuiExampleDescriptorHeapAllocator m_SRVHeapAllocator;											// SRVs allocator - currently using the stock ImGui example one
+		Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_MainDescriptorHeap;												// SRVs and now CBVs!
+		UINT m_DescriptorSize = 0u;																						// Descriptor size for our heap, used to map registers b0, b1, t0 etc. 
+		uint32_t m_CurrentCBVIndex = 0;
+		LinearAllocatorDX12 m_CBAllocator;																				// Small linear allocator for constant buffers
+		
+		Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_ImGuiDescriptorHeap;												// Dedicated heap ImGui (mainly just for SRVs)
+		static inline ImGuiExampleDescriptorHeapAllocator m_SRVHeapAllocator;											// SRV allocator for ImGui - currently using the stock example one
+
+
 
 		Microsoft::WRL::ComPtr<ID3D12Fence> m_Fence;																	// Sync object, only using one to simplify sync between CPU and GPU
 		HANDLE m_FenceEvent;																							// Handle that is used when the fence is locked or unlocked

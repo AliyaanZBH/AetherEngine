@@ -10,6 +10,7 @@
 #include "Vertex.h"
 #include "Pipeline.h"
 #include "DrawCommand.h"
+#include "GraphicsCommon.h"
 //===============================================================================
 namespace Aether
 {
@@ -84,20 +85,33 @@ namespace Aether
 		AETHER_ASSERT(CreateRenderTargets());
 		 
 
+
 		//
 		//
-		//  SRV Descriptor Heaps
+		//  Main Descriptor Heap
 		// 
 		//
 
-		D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
-        srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-        srvHeapDesc.NumDescriptors = m_kSRVHeapSize;
-        srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-		AETHER_HR_ASSERT(m_Device->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&m_SRVHeap)));
-        m_SRVHeapAllocator.Create(m_Device.Get(), m_SRVHeap.Get());
-    
+		D3D12_DESCRIPTOR_HEAP_DESC descriptorHeapDesc = {};
+        descriptorHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+        descriptorHeapDesc.NumDescriptors = m_kHeapSize;
+        descriptorHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+		AETHER_HR_ASSERT(m_Device->CreateDescriptorHeap(&descriptorHeapDesc, IID_PPV_ARGS(&m_MainDescriptorHeap)));
+		m_DescriptorSize = m_Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+        
+		// Initialise our allocator for the CB
+		size_t cbSliceSize = sizeof(PerDrawData);
+		size_t maxDrawsPerFrame = 1024; // adjust as needed
+		m_CBAllocator.Init(m_Device.Get(), cbSliceSize, maxDrawsPerFrame);
 
+
+		//
+		//  ImGui Descriptor Heap - Reuse same description
+		// 
+
+		AETHER_HR_ASSERT(m_Device->CreateDescriptorHeap(&descriptorHeapDesc, IID_PPV_ARGS(&m_ImGuiDescriptorHeap)));
+		// Allocator for ImGUI
+		m_SRVHeapAllocator.Create(m_Device.Get(), m_ImGuiDescriptorHeap.Get());
 
 		//
 		// Command Allocators
@@ -131,7 +145,7 @@ namespace Aether
 		//
 
 		AETHER_HR_ASSERT(m_Device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_Fence)));
-		
+
 		// Init fence values to 0
 		m_FenceValue[0] = 0;
 		m_FenceValue[1] = 0;
@@ -170,7 +184,7 @@ namespace Aether
 		init_info.NumFramesInFlight = m_kNumFrameBuffers;
 		init_info.RTVFormat = m_kRTVFormat;
 		init_info.DSVFormat = m_kDSVFormat;
-		init_info.SrvDescriptorHeap = m_SRVHeap.Get();
+		init_info.SrvDescriptorHeap = m_ImGuiDescriptorHeap.Get();
 		init_info.SrvDescriptorAllocFn = [](ImGui_ImplDX12_InitInfo*, D3D12_CPU_DESCRIPTOR_HANDLE* out_cpu_handle, D3D12_GPU_DESCRIPTOR_HANDLE* out_gpu_handle) { return m_SRVHeapAllocator.Alloc(out_cpu_handle, out_gpu_handle); };
 		init_info.SrvDescriptorFreeFn = [](ImGui_ImplDX12_InitInfo*, D3D12_CPU_DESCRIPTOR_HANDLE cpu_handle, D3D12_GPU_DESCRIPTOR_HANDLE gpu_handle) { return m_SRVHeapAllocator.Free(cpu_handle, gpu_handle); };
 		ImGui_ImplDX12_Init(&init_info);
@@ -184,7 +198,7 @@ namespace Aether
 
 	void RendererDX12::EndImGuiRender()
 	{
-		ID3D12DescriptorHeap* pSrvHeaps[] = { m_SRVHeap.Get() };
+		ID3D12DescriptorHeap* pSrvHeaps[] = { m_ImGuiDescriptorHeap.Get() };
 		m_CmdList->SetDescriptorHeaps(1, pSrvHeaps);
 
 		// Render ImGui on top of everything else!
@@ -208,7 +222,42 @@ namespace Aether
 
 	void RendererDX12::Submit(const DrawCommand& cmd, ConstantBufferView* cbv)
 	{
+		// Create CBV this frame
+		//CreateConstBufView(cbv);
+		
+		PerDrawData cbData{};
+		cbData.m_ModelMatrix = cmd.m_ModelMatrix;
+		cbData.m_Colour = cmd.m_SolidColour;
+
+		D3D12_GPU_VIRTUAL_ADDRESS cbGPUAddr = m_CBAllocator.Alloc(&cbData);
+		D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc{};
+		cbvDesc.BufferLocation = cbGPUAddr;
+		cbvDesc.SizeInBytes = static_cast<UINT>(AETHER_ALIGN256(sizeof(PerDrawData)));
+
+		CD3DX12_CPU_DESCRIPTOR_HANDLE handle(
+			m_MainDescriptorHeap->GetCPUDescriptorHandleForHeapStart(),
+			m_CurrentCBVIndex,
+			m_DescriptorSize
+		);
+
+		m_Device->CreateConstantBufferView(&cbvDesc, handle);
+
+		m_CmdList->SetPipelineState(m_PipelineStateObject);
+		m_CmdList->SetGraphicsRootSignature(m_RootSig);                             // Set the root signature
+
+		// Bind descriptor to b0 in our root signature
+		ID3D12DescriptorHeap* heaps[] = { m_MainDescriptorHeap.Get() };
+		m_CmdList->SetDescriptorHeaps(1, heaps);
+		//m_CmdList->SetGraphicsRootDescriptorTable(0,m_MainDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
+		m_CmdList->SetGraphicsRootDescriptorTable(0, CD3DX12_GPU_DESCRIPTOR_HANDLE(
+			m_MainDescriptorHeap->GetGPUDescriptorHandleForHeapStart(),
+			m_CurrentCBVIndex,
+			m_DescriptorSize
+		));
+
 		Render(cmd.m_VBV, cmd.m_IBV);
+
+		m_CurrentCBVIndex++;
 	}
 
 	void RendererDX12::Render(VertexBufferView* vbv, IndexBufferView* ibv)
@@ -216,8 +265,6 @@ namespace Aether
 		D3D12_VERTEX_BUFFER_VIEW dxVBView = CreateVertBufView(vbv);
 		D3D12_INDEX_BUFFER_VIEW dxIBView = CreateIdxBufView(ibv);
 
-		m_CmdList->SetPipelineState(m_PipelineStateObject);
-		m_CmdList->SetGraphicsRootSignature(m_RootSig);                             // Set the root signature
 		m_CmdList->RSSetViewports(1, &m_Viewport);                                  // Set the viewports
 		m_CmdList->RSSetScissorRects(1, &m_Scissor);                                // Set the scissor rects
 		m_CmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);     // Set the primitive topology
@@ -329,6 +376,20 @@ namespace Aether
 		return AETHER_OK;
 	}
 
+
+	void RendererDX12::CreateConstBufView(ConstantBufferView* cbv)
+	{
+		BufferDX12* dxBuf = static_cast<BufferDX12*>(cbv->m_Buffer);
+
+		D3D12_CONSTANT_BUFFER_VIEW_DESC dxCBVDesc;
+		dxCBVDesc.BufferLocation = dxBuf->GetResource()->GetGPUVirtualAddress();
+		dxCBVDesc.SizeInBytes = AETHER_ALIGN256(dxBuf->GetSize());
+
+		// Use helper to calculate handle safer for us
+		CD3DX12_CPU_DESCRIPTOR_HANDLE handle(m_MainDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), cbv->m_Slot, m_DescriptorSize);
+
+		m_Device->CreateConstantBufferView(&dxCBVDesc, handle);
+	}
 
 	D3D12_VERTEX_BUFFER_VIEW RendererDX12::CreateVertBufView(VertexBufferView* vbv)
 	{
@@ -511,13 +572,22 @@ namespace Aether
 	{
 		AETHER_RESULT ar = AETHER_OK;
 
-		// Create root signature
+		// Create descriptor table to describe the range of descriptors inside our main descriptor heap
+		// For now, create a range that represents a single CBV at register b0
+		CD3DX12_DESCRIPTOR_RANGE cbvRange;
+		cbvRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0);
+
+		CD3DX12_ROOT_PARAMETER rootParam;
+		rootParam.InitAsDescriptorTable(1, &cbvRange);
+
+		// Create root signature - now using root params
 		CD3DX12_ROOT_SIGNATURE_DESC rootDesc = {};
-		rootDesc.Init(0, nullptr, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+		rootDesc.Init(1, &rootParam, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
 		// For error checking
 		ID3DBlob* signature;
-		AETHER_HR_ASSERT(D3D12SerializeRootSignature(&rootDesc, D3D_ROOT_SIGNATURE_VERSION_1, &signature, nullptr));
+		ID3DBlob* error;
+		AETHER_HR_ASSERT(D3D12SerializeRootSignature(&rootDesc, D3D_ROOT_SIGNATURE_VERSION_1, &signature, &error));
 
 		AETHER_HR_ASSERT(m_Device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&m_RootSig)));
 		return ar;
@@ -763,6 +833,9 @@ namespace Aether
 
 		}
 
+		// Clear our allocator offsets too
+		m_CBAllocator.Reset();
+		m_CurrentCBVIndex = 0; // reset per frame
 		return ar;
 	}
 
