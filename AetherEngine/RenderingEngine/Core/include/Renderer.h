@@ -22,12 +22,13 @@ namespace Aether
 	public:
 		static void Initialise();
 		static void Terminate();
+		static void Resize(const uint16_t width, const uint16_t height);
 
 		static void BeginFrame();
 		static void EndFrame();
 
 		static void DrawLine();
-		static void DrawTriangle();
+		static void DrawTriangle(const Transform& transform, const glm::vec4& colour);
 		static void DrawQuad(const Transform& transform, const glm::vec4& colour);
 		static void DrawCircle();
 		static void DrawMesh();
@@ -66,12 +67,24 @@ namespace Aether
 		// Geometry containers - shared between renderer backends
 		//
 
-		// Quads
+		static Buffer* s_PerDrawBuffer;
+		static ConstantBufferView s_CBView;
+
+		// Tri
+		//
+
+		static Buffer* s_TriVertexBuffer;
+		static VertexBufferView* s_TriVBView;
+		static Buffer* s_TriIndexBuffer;
+		static IndexBufferView* s_TriIBView;
+
+
+		// Quad
 		//
 
 		static Buffer* s_QuadVertexBuffer;
-		static VertexBufferView s_QuadVBView;
+		static VertexBufferView* s_QuadVBView;
 		static Buffer* s_QuadIndexBuffer;
-		static IndexBufferView s_QuadIBView;
+		static IndexBufferView* s_QuadIBView;
 	};
 }

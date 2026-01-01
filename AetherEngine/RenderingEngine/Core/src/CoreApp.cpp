@@ -31,7 +31,7 @@ namespace Aether
         s_Instance = this;
 
         // Select rendering API
-        GraphicsContext::SelectRenderAPI(eRenderAPI::kOpenGL);
+        GraphicsContext::SelectRenderAPI(eRenderAPI::kDX11);
 
         // Later in development, this will be read from a JSON config file so that the user can save and load settings, along with manually changing it from a GUI inside the application!
         WindowContext::WinData wd =
@@ -72,7 +72,7 @@ namespace Aether
     bool Application::OnWindowResize(WindowResizeEvent& e)
     {
 		// Let the renderer handle it's specific steps for resizing (recreating buffers, contexts, etc.)
-        //m_Renderer->Resize(e.GetWidth(),e.GetHeight());
+        Renderer::Resize(e.GetWidth(),e.GetHeight());
         return true;
     }
 

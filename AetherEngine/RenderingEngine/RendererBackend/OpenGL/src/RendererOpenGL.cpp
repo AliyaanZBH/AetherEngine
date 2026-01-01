@@ -193,7 +193,7 @@ namespace Aether
 		glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, nullptr);
 	}
 
-	void RendererOpenGL::Submit(const DrawCommand& cmd)
+	void RendererOpenGL::Submit(const DrawCommand& cmd, ConstantBufferView* cbv)
 	{
 		// Write the transformation matrix into the uniform buffer
 		glUniformMatrix4fv(m_TransformLocation, 1, GL_FALSE, glm::value_ptr(cmd.m_ModelMatrix));

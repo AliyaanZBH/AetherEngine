@@ -1,4 +1,5 @@
 #include "Renderer.h"
+#include "Renderer.h"
 //===============================================================================
 // desc: High-level API for applications using Aether to render games with ease
 // auth: Aliyaan Zulfiqar
@@ -9,6 +10,7 @@
 #include "AetherUtils.h"
 #include "Vertex.h"
 #include "GraphicsContext.h"
+#include "GraphicsCommon.h"
 #include "WindowContext.h"
 #include "Window.h"
 
@@ -33,10 +35,20 @@ namespace Aether
 {
     std::unique_ptr<IRendererBackend> Renderer::s_RendererBackend = nullptr;
     std::vector<DrawCommand> Renderer::s_CommandQueue = {};
+
+    // Buffer instances
+    Buffer* Renderer::s_PerDrawBuffer = nullptr;
+    ConstantBufferView Renderer::s_CBView = {};
+
+    Buffer* Renderer::s_TriVertexBuffer = nullptr;
+    Buffer* Renderer::s_TriIndexBuffer = nullptr;
+    VertexBufferView* Renderer::s_TriVBView = nullptr;
+    IndexBufferView* Renderer::s_TriIBView = nullptr;
+
     Buffer* Renderer::s_QuadVertexBuffer = nullptr;
     Buffer* Renderer::s_QuadIndexBuffer = nullptr;
-    VertexBufferView Renderer::s_QuadVBView = {};
-    IndexBufferView Renderer::s_QuadIBView = {};
+    VertexBufferView* Renderer::s_QuadVBView = nullptr;
+    IndexBufferView* Renderer::s_QuadIBView = nullptr;
 
 	void Renderer::Initialise()
 	{
@@ -89,18 +101,44 @@ namespace Aether
         CreateBackendPipeline();
 
         // Create primitive geometry buffers that can be reused
+        CreateTriangleGeometry();
         CreateQuadGeometry();
 
+        // Reserve some space for our command queue up-front, to avoid re-allocations
+        s_CommandQueue.reserve(128);
+
+        // Create a re-usable and generic constant buffer
+        BufferDesc conBufDesc;
+        conBufDesc.m_Type = eBufferType::kConstant;
+        conBufDesc.m_SizeInBytes = sizeof(PerDrawData);
+        conBufDesc.m_CPUVisible = true;
+       
+        // We'll crash in DX if we try to create a constant buffer with empty data, so supply basic identity data for now
+        PerDrawData tmpData;
+        conBufDesc.m_Data = &tmpData;
+
+        s_PerDrawBuffer = s_RendererBackend->CreateBuffer(conBufDesc);
+        // Fill in the view too
+        s_CBView.m_Buffer = s_PerDrawBuffer;
+        s_CBView.m_Size = s_PerDrawBuffer->GetSize();
+        s_CBView.m_Slot = 0u;
 	}
 
     void Renderer::Terminate()
     {
         // Delete all buffers we allocated
+        delete s_TriVertexBuffer;
+        delete s_TriIndexBuffer;
         delete s_QuadVertexBuffer;
         delete s_QuadIndexBuffer;
 
         // Tear down renderer backend too
         s_RendererBackend->Terminate();
+    }
+
+    void Renderer::Resize(const uint16_t width, const uint16_t height)
+    {
+        s_RendererBackend->Resize(width, height);
     }
 
     void Renderer::BeginFrame()
@@ -119,23 +157,61 @@ namespace Aether
         s_RendererBackend->Present();
     }
 
-    void Renderer::DrawQuad(const Transform& transform, const glm::vec4& colour)
+    //
+    // Drawing Functions!
+    //
+
+    void Renderer::DrawLine()
     {
-        // Register a draw command for quad geometry
+    }
+
+    void Renderer::DrawTriangle(const Transform& transform, const glm::vec4& colour)
+    {
         DrawCommand cmd;
-        cmd.m_Type = eDrawCommandType::kQuad;
-        cmd.m_VBV = &s_QuadVBView;
-        cmd.m_IBV = &s_QuadIBView;
+        cmd.m_Type = eDrawCommandType::kTri;
+        cmd.m_VBV = s_TriVBView;
+        cmd.m_IBV = s_TriIBView;
         cmd.m_ModelMatrix = transform.CreateModelMatrix();
         cmd.m_SolidColour = colour;
         s_CommandQueue.push_back(cmd);
     }
 
+    void Renderer::DrawQuad(const Transform& transform, const glm::vec4& colour)
+    {
+        // Register a draw command for geometry
+        DrawCommand cmd;
+        cmd.m_Type = eDrawCommandType::kQuad;
+        cmd.m_VBV = s_QuadVBView;
+        cmd.m_IBV = s_QuadIBView;
+        cmd.m_ModelMatrix = transform.CreateModelMatrix();
+        cmd.m_SolidColour = colour;
+        s_CommandQueue.push_back(cmd);
+    }
+
+    void Renderer::DrawCircle()
+    {
+    }
+
+    void Renderer::DrawMesh()
+    {
+    }
+
+    //
+    // Dispatch rendering
+    //
+
     void Renderer::Dispatch()
     {
         for (DrawCommand& cmd : s_CommandQueue)
         {
-            s_RendererBackend->Submit(cmd);
+            // Update constant buffer with data for this draww
+            //PerDrawData data;
+            //data.m_ModelMatrix = cmd.m_ModelMatrix;
+            //data.m_Colour = cmd.m_SolidColour;
+           // s_PerDrawBuffer->Upload(&data, sizeof(PerDrawData));
+
+            // Submit the view on this buffer together with the command
+            s_RendererBackend->Submit(cmd, &s_CBView);
             
             // Maybe save this for render passes like Opaque and Transparent?
             //switch (cmd.m_Type)
@@ -146,6 +222,8 @@ namespace Aether
             //    }
             //}
         }
+
+
     }
 
     void Renderer::Flush()
@@ -177,13 +255,55 @@ namespace Aether
 
     void Renderer::CreateTriangleGeometry()
     {
+        // Create verts - position, colour
+        // Clockwise verts! Clockwise winding order!
+        Vertex triVerts[] =
+        {
+            { {	-0.5f,		-0.5f,		0.5f,	1.f	}, {1.f, 0.f, 0.f, 1.f} },	// Bottom Left
+            { {	 0.0f,		 0.5f,		0.5f,	1.f	}, {0.f, 1.f, 0.f, 1.f} },	// Top
+            { {	 0.5f,		-0.5f,		0.5f,	1.f	}, {0.f, 0.f, 1.f, 1.f} },	// Bottom Right
+        };
+
+        BufferDesc triVBDesc
+        {
+            .m_Data = triVerts,
+            .m_SizeInBytes = sizeof(triVerts),
+            .m_Type = eBufferType::kVertex,
+            .m_CPUVisible = true
+        };
+
+        s_TriVertexBuffer = s_RendererBackend->CreateBuffer(triVBDesc);
+        s_TriVertexBuffer->Upload(triVBDesc.m_Data, triVBDesc.m_SizeInBytes);
+
+        s_TriVBView = new VertexBufferView();
+        s_TriVBView->m_Buffer = s_TriVertexBuffer;
+        s_TriVBView->m_Stride = sizeof(Vertex);
+        s_TriVBView->m_Offset = 0;
+
+        unsigned int triIndices[3] = { 0, 1, 2 };
+
+        BufferDesc triIBDesc
+        {
+            .m_Data = triIndices,
+            .m_SizeInBytes = sizeof(triIndices),
+            .m_Type = eBufferType::kIndex,
+            .m_CPUVisible = true
+        };
+
+        s_TriIndexBuffer = s_RendererBackend->CreateBuffer(triIBDesc);
+        s_TriIndexBuffer->Upload(triIBDesc.m_Data, triIBDesc.m_SizeInBytes);
+        s_TriIBView = new IndexBufferView();
+        s_TriIBView->m_Buffer = s_TriIndexBuffer;
+        s_TriIBView->m_Count = 3;
+        s_TriIBView->m_IndexSize = sizeof(unsigned int);
+        s_TriIBView->m_Offset = 0;
+
+        // Finalise our upload to the renderer
+        s_RendererBackend->FinalizeUploads();
     }
 
     void Renderer::CreateQuadGeometry()
     {
-
-        // Create verts - position, colour
-        // Clockwise verts! Clockwise winding order!
         Vertex quadVerts[] =
         {
             { {	-0.5f,		-0.5f,		0.5f,	1.f	}, {1.f, 0.f, 0.f, 1.f} },	// Bottom Left
@@ -203,9 +323,10 @@ namespace Aether
         s_QuadVertexBuffer = s_RendererBackend->CreateBuffer(quadVBDesc);
         s_QuadVertexBuffer->Upload(quadVBDesc.m_Data, quadVBDesc.m_SizeInBytes);
 
-        s_QuadVBView.m_Buffer = s_QuadVertexBuffer;
-        s_QuadVBView.m_Stride = sizeof(Vertex);
-        s_QuadVBView.m_Offset = 0;
+        s_QuadVBView = new VertexBufferView();
+        s_QuadVBView->m_Buffer = s_QuadVertexBuffer;
+        s_QuadVBView->m_Stride = sizeof(Vertex);
+        s_QuadVBView->m_Offset = 0;
 
         unsigned int quadIndices[6] = { 0, 1, 2, 2, 3, 0 };
 
@@ -219,12 +340,12 @@ namespace Aether
 
         s_QuadIndexBuffer = s_RendererBackend->CreateBuffer(quadIBDesc);
         s_QuadIndexBuffer->Upload(quadIBDesc.m_Data, quadIBDesc.m_SizeInBytes);
-        s_QuadIBView.m_Buffer = s_QuadIndexBuffer;
-        s_QuadIBView.m_Count = 6;
-        s_QuadIBView.m_IndexSize = sizeof(unsigned int);
-        s_QuadIBView.m_Offset = 0;
+        s_QuadIBView = new IndexBufferView();
+        s_QuadIBView->m_Buffer = s_QuadIndexBuffer;
+        s_QuadIBView->m_Count = 6;
+        s_QuadIBView->m_IndexSize = sizeof(unsigned int);
+        s_QuadIBView->m_Offset = 0;
 
-        // Finalise our upload to the renderer
         s_RendererBackend->FinalizeUploads();
     }
 

@@ -14,6 +14,7 @@ namespace Aether
     struct PipelineDesc;
     struct VertexBufferView;
     struct IndexBufferView;
+    struct ConstantBufferView;
     struct DrawCommand;
 
     class AETHER_API IRendererBackend {
@@ -26,7 +27,7 @@ namespace Aether
         virtual void ClearFrame() = 0;
         virtual void Render() = 0;
         // Take a high-level draw call and break it down into an optimised render call for each API.
-        virtual void Submit(const DrawCommand& cmd) = 0;
+        virtual void Submit(const DrawCommand& cmd, ConstantBufferView* cbv) = 0;
         virtual void Render(VertexBufferView* vbv, IndexBufferView* ibv) {};
         virtual void Present() = 0;
 
