@@ -179,6 +179,7 @@ namespace Aether
 
 		// Set render target ready for drawing
 		m_pD3DImmediateContext->OMSetRenderTargets(1, m_pRenderTargetView.GetAddressOf(), m_pDepthStencilView.Get());
+		//m_pD3DImmediateContext->OMSetRenderTargets(1, m_pRenderTargetView.GetAddressOf(),nullptr);
 
 		// Clear depth aswell!
 		m_pD3DImmediateContext->ClearDepthStencilView(m_pDepthStencilView.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
@@ -338,10 +339,8 @@ namespace Aether
 	{
 		D3D11_RASTERIZER_DESC rsDesc = {};
 		rsDesc.FillMode = D3D11_FILL_SOLID;
-		//rsDesc.CullMode = D3D11_CULL_BACK;
-		rsDesc.CullMode = D3D11_CULL_NONE;
-		//rsDesc.DepthClipEnable = TRUE;
-		rsDesc.DepthClipEnable = FALSE;
+		rsDesc.CullMode = D3D11_CULL_BACK;
+		rsDesc.DepthClipEnable = TRUE;
 
 		m_pD3DDevice->CreateRasterizerState(&rsDesc, &m_pRasterState);
 		m_pD3DImmediateContext->RSSetState(m_pRasterState.Get());

@@ -22,6 +22,6 @@ VS_OUTPUT main(VS_INPUT input)
     //output.pos = input.pos;
     //output.colour = input.colour;
     output.colour = colour;
-    output.pos = mul(input.pos, model);
+    output.pos = mul(model, input.pos);
     return output;
 }
