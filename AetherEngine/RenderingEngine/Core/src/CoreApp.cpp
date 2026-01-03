@@ -12,6 +12,8 @@
 #include "WindowContext.h"
 #include "GraphicsContext.h"
 
+#include "Camera.h"
+
 #include "ImGuiLayer.h"
 #include "AppEvent.h"
 //===============================================================================
@@ -46,6 +48,9 @@ namespace Aether
         
         // Initialise high-level rendering API, which in turn sets up the low-level backend with a default shader pipeline
         Renderer::Initialise();
+
+        // Create a camera too
+        m_Camera = new Camera(eProjectionType::kPerspective);
 
 		// Setup ImGui layer for the renderer too
 		m_ImGuiLayer = new ImGuiLayer(GraphicsContext::GetRenderAPI());
@@ -101,7 +106,7 @@ namespace Aether
         while (!Window::ShouldClose())
         {
             // Start a new rendering frame!
-            Renderer::BeginFrame();
+            Renderer::BeginFrame(*m_Camera);
 
             // Handle window events here (e.g., using GLFW or another backend window library)
             Window::Poll();

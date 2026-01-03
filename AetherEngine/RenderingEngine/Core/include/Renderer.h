@@ -16,6 +16,7 @@ namespace Aether
 {
 	class IRendererBackend;
 	class IWindow;
+	class Camera;
 
 	class AETHER_API Renderer
 	{
@@ -24,7 +25,7 @@ namespace Aether
 		static void Terminate();
 		static void Resize(const uint16_t width, const uint16_t height);
 
-		static void BeginFrame();
+		static void BeginFrame(const Camera& camera);
 		static void Render();
 		static void EndFrame();
 
@@ -49,6 +50,10 @@ namespace Aether
 		static void CreateTriangleGeometry();
 		static void CreateQuadGeometry();
 
+
+		template <typename T>
+		static void CreateConstantBuffer(Buffer* buf, ConstantBufferView cbv, uint8_t slot);
+
 		// Create a default high-level description for a rendering pipeline, built by the backend
 		static void CreateBackendPipeline();
 
@@ -68,8 +73,10 @@ namespace Aether
 		// Geometry containers - shared between renderer backends
 		//
 
+		static Buffer* s_PerFrameBuffer;
+		static ConstantBufferView s_PerFrameCBView;
 		static Buffer* s_PerDrawBuffer;
-		static ConstantBufferView s_CBView;
+		static ConstantBufferView s_PerDrawCBView;
 
 		// Tri
 		//
@@ -88,4 +95,6 @@ namespace Aether
 		static Buffer* s_QuadIndexBuffer;
 		static IndexBufferView* s_QuadIBView;
 	};
+
+
 }
