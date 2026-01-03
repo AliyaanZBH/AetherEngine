@@ -31,6 +31,8 @@ namespace Aether
 		void PushOverlay(Layer* overlay);
 
 		inline static Application& Get() { return *s_Instance; }
+
+		inline Camera* GetCamera() { return m_Camera; }
 	private:
 
 		bool OnWindowResize(WindowResizeEvent& e);

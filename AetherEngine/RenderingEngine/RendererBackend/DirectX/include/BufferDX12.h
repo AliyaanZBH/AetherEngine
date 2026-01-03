@@ -26,6 +26,9 @@ namespace Aether
 		ID3D12GraphicsCommandList* m_CmdList = nullptr;
 		ID3D12Resource* m_Resource = nullptr;
 
+		// Store the map point so we don't have to constantly map and unmap frequently updating data (constant buffers)
+		void* m_MappedPtr = nullptr;
+
 		// Intermediate upload heap for buffers that don't change frequently
 		ID3D12Resource* m_IntermediateUploadHeap = nullptr;
 	};

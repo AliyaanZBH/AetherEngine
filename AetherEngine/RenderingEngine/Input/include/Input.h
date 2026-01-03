@@ -5,6 +5,7 @@
 //===============================================================================
 #include "Core.h"
 #include "InputCodes.h"
+#include "glm/vec2.hpp"
 //===============================================================================
 
 namespace Aether
@@ -15,7 +16,7 @@ namespace Aether
 		static bool IsKeyPressed(KeyCode key);
 	
 		static bool IsMouseButtonPressed(MouseCode button);
-		static std::pair<float, float> GetMousePosition();
+		static glm::vec2 GetMousePosition();
 		static float GetMouseX();
 		static float GetMouseY();
 	};

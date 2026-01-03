@@ -25,13 +25,15 @@ namespace Aether
 
 		void SetPosition(const glm::vec3& pos);
 
-		const glm::mat4& GetView() const { return m_View; }
-		const glm::mat4& GetProjection() const { return m_Projection; }
-		const glm::mat4& GetViewProj() const { return m_Projection * m_View; }
+		const eProjectionType GetProjectionType()	const { return m_ProjectionType; }
 
-		const glm::vec3 GetForward()	const	{ return m_Rotation * m_Forward; }
-		const glm::vec3 GetRight()		const	{ return m_Rotation * m_Right; }
-		const glm::vec3 GetUp()			const	{ return m_Rotation * m_Up; }
+		const glm::mat4& GetView()			const { return m_View; }
+		const glm::mat4& GetProjection()	const { return m_Projection; }
+		const glm::mat4 GetViewProj()		const { return m_Projection * m_View; }
+
+		const glm::vec3 GetForward()	const { return m_Rotation * m_Forward; }
+		const glm::vec3 GetRight()		const { return m_Rotation * m_Right; }
+		const glm::vec3 GetUp()			const { return m_Rotation * m_Up; }
 
 	private:
 		void CalculateView();

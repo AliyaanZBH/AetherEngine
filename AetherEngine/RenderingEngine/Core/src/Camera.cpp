@@ -37,13 +37,13 @@ namespace Aether
 
 	void Camera::SetPerspectiveCamera()
 	{
-		m_ProjectionType == eProjectionType::kPerspective;
+		m_ProjectionType = eProjectionType::kPerspective;
 		CalculateProjection();
 	}
 
 	void Camera::SetOrthographicCamera()
 	{
-		m_ProjectionType == eProjectionType::kOrthographic;
+		m_ProjectionType = eProjectionType::kOrthographic;
 		CalculateProjection();
 	}
 

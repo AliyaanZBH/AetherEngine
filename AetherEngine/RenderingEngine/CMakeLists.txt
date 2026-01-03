@@ -17,6 +17,7 @@ set(SRC
     Core/src/LayerStack.cpp
 
     Input/src/Input.cpp
+    Input/src/CameraController.cpp
 
     Window/src/WindowGLFW.cpp
 
@@ -60,6 +61,7 @@ set(INCLUDE
     Core/include/CoreApp.h
     Core/include/Camera.h
     Core/include/Log.h
+    Core/include/AetherTime.h
     Core/include/Event.h
     Core/include/Layer.h
     Core/include/LayerStack.h
@@ -69,7 +71,7 @@ set(INCLUDE
     # Input
     Input/include/InputCodes.h
     Input/include/Input.h
-
+    Input/include/CameraController.h
 
 
     # Interfaces

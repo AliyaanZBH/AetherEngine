@@ -9,8 +9,8 @@ namespace Aether
 	enum class MouseCode : uint8_t
 	{
 		// From glfw3.h
-		kButton0 = 0,
-		kButton1 = 1,
+		kLMB = 0,
+		kRMB = 1,
 		kButton2 = 2,
 		kButton3 = 3,
 		kButton4 = 4,
@@ -19,8 +19,8 @@ namespace Aether
 		kButton7 = 7,
 
 		kButtonLast = kButton7,
-		kButtonLeft = kButton0,
-		kButtonRight = kButton1,
+		kButtonLeft = kLMB,
+		kButtonRight = kRMB,
 		kButtonMiddle = kButton2
 	};
 

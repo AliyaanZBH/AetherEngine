@@ -10,11 +10,19 @@ class DemoLayer : public Aether::Layer
 {
 public:
 	DemoLayer()
-		: Layer("Demo") {}
+		: Layer("Demo") 
+	{
+		m_CameraController = new Aether::CameraController(*Aether::Application::Get().GetCamera());
+	}
 
 	void OnAttach() override
 	{
 
+	}
+
+	void OnDetach() override
+	{
+		delete m_CameraController;
 	}
 
 	void OnEvent(Aether::Event& event) override { /*AETHER_TRACE("{0}", event);*/ }
@@ -23,6 +31,8 @@ public:
 	{
 		if (Aether::Input::IsKeyPressed(Aether::KeyCode::kSpace))
 			AETHER_INFO("Space is pressed! (Our polling!)"); 
+
+		m_CameraController->Update(Aether::Time::GetDT());
 	}
 
 	void Render() override
@@ -39,6 +49,9 @@ public:
 		trans.m_Position = { 0.3f, 0.3f, 1.0f };
 		Aether::Renderer::DrawTriangle(trans, Aether::Colours::kPureGreen);
 	}
+
+private:
+	Aether::CameraController* m_CameraController;
 };
 
 class AetherGame : public Aether::Application

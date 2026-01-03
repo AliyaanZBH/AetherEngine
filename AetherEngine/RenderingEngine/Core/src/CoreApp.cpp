@@ -4,6 +4,7 @@
 //===============================================================================
 #include "CoreApp.h"
 
+#include "AetherTime.h"
 #include "Log.h"
 #include "Input.h"
 #include "Renderer.h"
@@ -33,7 +34,7 @@ namespace Aether
         s_Instance = this;
 
         // Select rendering API
-        GraphicsContext::SelectRenderAPI(eRenderAPI::kDX12);
+        GraphicsContext::SelectRenderAPI(eRenderAPI::kOpenGL);
 
         // Later in development, this will be read from a JSON config file so that the user can save and load settings, along with manually changing it from a GUI inside the application!
         WindowContext::WinData wd =
@@ -50,7 +51,7 @@ namespace Aether
         Renderer::Initialise();
 
         // Create a camera too
-        m_Camera = new Camera(eProjectionType::kOrthographic);
+        m_Camera = new Camera(eProjectionType::kPerspective);
 
         // Set aspect ratio
         const float aspect = (float)wd.m_ClientWidth / (float)wd.m_ClientHeight;
@@ -58,7 +59,9 @@ namespace Aether
 
         // Move it back a tad
         m_Camera->SetPosition({ 0.f, 0.f, -1.f });
-		// Setup ImGui layer for the renderer too
+       // m_Camera->RotateEuler({ 0.f, 0.f, 45.f });
+       
+		// Setup ImGui layer
 		m_ImGuiLayer = new ImGuiLayer(GraphicsContext::GetRenderAPI());
 
 		// Push the ImGui layer into the stack at the overlay point
@@ -119,6 +122,8 @@ namespace Aether
         // The game loop!
         while (!Window::ShouldClose())
         {
+            Time::Update();
+
             // Start a new rendering frame!
             Renderer::BeginFrame(*m_Camera);
 
@@ -153,5 +158,4 @@ namespace Aether
         // Return the OK!
         return AETHER_OK;
     }
-
 };

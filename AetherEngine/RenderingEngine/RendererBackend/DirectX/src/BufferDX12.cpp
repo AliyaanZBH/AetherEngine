@@ -55,12 +55,25 @@ namespace Aether
 				IID_PPV_ARGS(&m_IntermediateUploadHeap)
 			));
 		}
+		else
+		{
+			// Map the upload heap once here to be optimal
+			m_Resource->Map(0, nullptr, &m_MappedPtr);
+		}
 	}
 
 	BufferDX12::~BufferDX12()
 	{
 		if (m_Resource)
+		{
+			if (m_MappedPtr)
+			{
+				m_Resource->Unmap(0, nullptr);
+				m_MappedPtr = nullptr;
+			}
+
 			m_Resource->Release();
+		}
 	}
 
 	D3D12_RESOURCE_STATES BufferDX12::GetFinalState(eBufferType type) const
@@ -110,10 +123,7 @@ namespace Aether
 		else // If there is no intermediate upload heap, that means our buffer is already an upload heap, and we can map from CPU to GPU directly.
 		{
 			// Skip intermediate upload heap and GPU copy: map & memcpy directly from CPU
-			void* mapped = nullptr;
-			m_Resource->Map(0, nullptr, &mapped);
-			memcpy(static_cast<uint8_t*>(mapped) + offset, data, size);
-			m_Resource->Unmap(0, nullptr);
+			memcpy(static_cast<uint8_t*>(m_MappedPtr) + offset, data, size);
 		}
 	}
 
