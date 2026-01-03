@@ -5,11 +5,8 @@
 //===============================================================================
 #include "Core.h"
 #include "AetherUtils.h"
-#include "IWindow.h"
-#include "IRenderer.h"
 #include "Event.h"
 #include "LayerStack.h"
-#include "GraphicsContext.h"
 //===============================================================================
 
 namespace Aether
@@ -33,23 +30,15 @@ namespace Aether
 		void PushOverlay(Layer* overlay);
 
 		inline static Application& Get() { return *s_Instance; }
-		inline IWindow& GetWindow() { return *m_Window; }
-		inline IRenderer& GetRenderer() { return *m_Renderer; }
-		inline const eRenderAPI GetRenderAPI() { return m_CurrentRenderAPI; }
-
 	private:
 
-		void CreatePipeline();
 		bool OnWindowResize(WindowResizeEvent& e);
-
-		std::unique_ptr<IWindow> m_Window;
-		std::unique_ptr<IRenderer> m_Renderer;
 
 		// Layers all get owned by the layer stack, so we can create this as a raw pointer
 		ImGuiLayer* m_ImGuiLayer = nullptr;
 
+		// Main owner and container for application layers
 		LayerStack m_LayerStack;
-		eRenderAPI m_CurrentRenderAPI = eRenderAPI::kOpenGL;
 
 		// Quick and dirty Singleton-esque implementation
 		static Application* s_Instance;

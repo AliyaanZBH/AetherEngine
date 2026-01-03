@@ -11,8 +11,10 @@ set(SRC
     Core/src/CoreApp.cpp 
 
     Core/src/Log.cpp
+    Core/src/Window.cpp
+    Core/src/Renderer.cpp
     Core/src/LayerStack.cpp
-    
+
     Input/src/Input.cpp
 
     Window/src/WindowGLFW.cpp
@@ -21,28 +23,27 @@ set(SRC
     # Graphics Primitives
     #
 
-    Graphics/src/GraphicsContext.cpp
     Graphics/src/Shader.cpp
 
     #
     # DirectX Implementations
     #
 
-    Renderer/DirectX/src/RendererDX11.cpp
-    Renderer/DirectX/src/BufferDX11.cpp
-    Renderer/DirectX/src/ShaderDX11.cpp
+    RendererBackend/DirectX/src/RendererDX11.cpp
+    RendererBackend/DirectX/src/BufferDX11.cpp
+    RendererBackend/DirectX/src/ShaderDX11.cpp
 
-    Renderer/DirectX/src/RendererDX12.cpp
-    Renderer/DirectX/src/BufferDX12.cpp
-    Renderer/DirectX/src/ShaderDX12.cpp
+    RendererBackend/DirectX/src/RendererDX12.cpp
+    RendererBackend/DirectX/src/BufferDX12.cpp
+    RendererBackend/DirectX/src/ShaderDX12.cpp
 
     #
     # OpenGL Implementations
     #
 
-    Renderer/OpenGL/src/RendererOpenGL.cpp
-    Renderer/OpenGL/src/ShaderOpenGL.cpp
-    Renderer/OpenGL/src/BufferOpenGL.cpp
+    RendererBackend/OpenGL/src/RendererOpenGL.cpp
+    RendererBackend/OpenGL/src/ShaderOpenGL.cpp
+    RendererBackend/OpenGL/src/BufferOpenGL.cpp
 
     Layers/src/ImGuiLayer.cpp
 )
@@ -60,16 +61,20 @@ set(INCLUDE
     Core/include/Event.h
     Core/include/Layer.h
     Core/include/LayerStack.h
-
+    Core/include/Renderer.h
+    Core/include/Window.h
     
     # Input
     Input/include/InputCodes.h
     Input/include/Input.h
 
-    # Interfaces
-    Core/include/IRenderer.h
-    Core/include/IWindow.h
 
+
+    # Interfaces
+    RendererBackend/interface/IRendererBackend.h
+    Window/interface/IWindow.h
+
+    Window/include/WindowContext.h
     Window/include/WindowGLFW.h
 
     #
@@ -77,34 +82,39 @@ set(INCLUDE
     #
 
     Graphics/include/GraphicsContext.h
+    Graphics/include/DrawCommand.h
+    Graphics/include/GraphicsCommon.h
     Graphics/include/Shader.h
     Graphics/include/Buffer.h
+    Graphics/include/Vertex.h
     Graphics/include/Pipeline.h
 
     #
     # DirectX
     #
 
-    Renderer/DirectX/include/D3DUtils.h
+    RendererBackend/DirectX/include/D3DUtils.h
     
-    Renderer/DirectX/include/RendererDX11.h
-    Renderer/DirectX/include/BufferDX12.h
-    Renderer/DirectX/include/ShaderDX11.h
+    RendererBackend/DirectX/include/RendererDX11.h
+    RendererBackend/DirectX/include/BufferDX12.h
+    RendererBackend/DirectX/include/ShaderDX11.h
     
-    Renderer/DirectX/include/RendererDX12.h
-    Renderer/DirectX/include/ImGuiDX12.h
-    Renderer/DirectX/include/BufferDX12.h
-    Renderer/DirectX/include/ShaderDX12.h
+    RendererBackend/DirectX/include/RendererDX12.h
+    RendererBackend/DirectX/include/ImGuiDX12.h
+    RendererBackend/DirectX/include/LinearAllocatorDX12.h
+    RendererBackend/DirectX/include/BufferDX12.h
+    RendererBackend/DirectX/include/ShaderDX12.h
 
     #
     # OpenGL
     #
 
-    Renderer/OpenGL/include/RendererOpenGL.h
-    Renderer/OpenGL/include/ShaderOpenGL.h
-    Renderer/OpenGL/include/BufferOpenGL.h
+    RendererBackend/OpenGL/include/RendererOpenGL.h
+    RendererBackend/OpenGL/include/ShaderOpenGL.h
+    RendererBackend/OpenGL/include/BufferOpenGL.h
 
     # Events
+    Events/include/EventContext.h
     Events/include/KeyEvent.h
     Events/include/MouseEvent.h
     Events/include/AppEvent.h
@@ -112,9 +122,13 @@ set(INCLUDE
     # Layers
     Layers/include/ImGuiLayer.h
 
+    # Drawing
+    Drawing/include/Drawing.h
+
+
     # Miscellaneous third-party includes
     ThirdParty/dx12Helper/include/d3dx12.h
-)
+ )
 
 # Specify shaders
 set(HLSL_SHADER_FILES
@@ -154,26 +168,32 @@ endif()
 target_link_libraries(AetherRenderer PRIVATE AetherConfig)
 
 # Enable PCH for Visual Studio
-if (MSVC)  # Check if we're on Visual Studio
+if (MSVC) 
     target_precompile_headers(AetherRenderer PRIVATE ${PCH_HEADER})
+    # Neat little debug helper to check our includer order when things are being weird
+    #target_compile_options(AetherRenderer PRIVATE /showIncludes)
+    #target_compile_options(AetherRenderer PRIVATE /sourceDependencies)
 endif()
 
 # Include directories for the DLL
 target_include_directories(AetherRenderer
-                    PRIVATE 
-                            ${PROJECT_SOURCE_DIR}/include
-                            Window/include
-                            Renderer/DirectX/include
-                            Renderer/OpenGL/include
-                            Events/include
-                            Layers/include
-                            ThirdParty/dx12Helper/include
-
-# Certain things need to be public as the application target needs to see these interfaces. Detailed implementations can remain private
+                    # Certain things need to be public as the application target needs to see these interfaces. Detailed implementations can remain private
                     PUBLIC
                             Core/include 
                             Graphics/include
+                            Drawing/include
                             Input/include
+
+                    PRIVATE 
+                            ${PROJECT_SOURCE_DIR}/include
+                            Window/interface
+                            Window/include
+                            RendererBackend/interface
+                            RendererBackend/DirectX/include
+                            RendererBackend/OpenGL/include
+                            Events/include
+                            Layers/include
+                            ThirdParty/dx12Helper/include
 )
 
 

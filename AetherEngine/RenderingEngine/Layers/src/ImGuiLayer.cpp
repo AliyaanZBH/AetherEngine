@@ -3,13 +3,16 @@
 // auth: Aliyaan Zulfiqar
 //===============================================================================
 #include "ImGuiLayer.h"
-#include "CoreApp.h"
+#include "Renderer.h"
+#include "Window.h"
+
+#include "GraphicsContext.h"
 //===============================================================================
 
 namespace Aether
 {
 	ImGuiLayer::ImGuiLayer(eRenderAPI backend)
-		: m_CurrentRenderAPI(backend), Layer("ImGui Layer")
+		: Layer("ImGui Layer")
 	{
 		// Setup ImGui Context
 		ImGui::CreateContext();
@@ -32,27 +35,27 @@ namespace Aether
 	void ImGuiLayer::OnAttach()
 	{
 		// Create appropriate backend
-		switch (m_CurrentRenderAPI)
+		switch (GraphicsContext::GetRenderAPI())
 		{
-		case eRenderAPI::kOpenGL:
-		{
-			ImGui_ImplGlfw_InitForOpenGL(static_cast<GLFWwindow*>(Application::Get().GetWindow().GetNativeWindowHandle()), true);
-			break;
-		}
-		case eRenderAPI::kDX11:
-		case eRenderAPI::kDX12:
-		{
-			ImGui_ImplGlfw_InitForOther(static_cast<GLFWwindow*>(Application::Get().GetWindow().GetNativeWindowHandle()), true);    // Other is needed for DX
-			break;
-		}
-		default:
-		{
-			AETHER_ASSERT(AETHER_FAIL, "No rendering backend for ImGui defined.");
-		}
+			case eRenderAPI::kOpenGL:
+			{
+				ImGui_ImplGlfw_InitForOpenGL(static_cast<GLFWwindow*>(Window::GetNativeWindowHandle()), true);
+				break;
+			}
+			case eRenderAPI::kDX11:
+			case eRenderAPI::kDX12:
+			{
+				ImGui_ImplGlfw_InitForOther(static_cast<GLFWwindow*>(Window::GetNativeWindowHandle()), true);    // Other is needed for DX
+				break;
+			}
+			default:
+			{
+				AETHER_ASSERT(AETHER_FAIL, "No rendering backend for ImGui defined.");
+			}
 		};
 
 		// Bit more work is needed to get DX12 up and running with ImGui, so created a virtual function in the interface that accounts for all of them now! 
-		Application::Get().GetRenderer().InitImGui();
+		Renderer::InitImGui();
 	}
 
 	void ImGuiLayer::OnDetach()
@@ -60,7 +63,7 @@ namespace Aether
 		ImGui_ImplGlfw_Shutdown();
 
 		// Make sure we shut down the right implementation!
-		switch (m_CurrentRenderAPI)
+		switch (GraphicsContext::GetRenderAPI())
 		{
 			case eRenderAPI::kOpenGL:
 			{
@@ -85,11 +88,11 @@ namespace Aether
 	{
 		// Update ImGui data 
 		ImGuiIO& io = ImGui::GetIO();
-		io.DisplaySize = ImVec2((float)Application::Get().GetWindow().GetWidth(), (float)Application::Get().GetWindow().GetHeight());
+		io.DisplaySize = ImVec2((float)Window::GetWidth(), (float)Window::GetHeight());
 		io.DeltaTime = (float)glfwGetTime();
 
 		// Call the specific rendering API implementation to begin new frames
-		Application::Get().GetRenderer().BeginImGuiRender();
+		Renderer::BeginImGuiRender();
 
 		// Now call the generic new frame function once here
 		ImGui::NewFrame();
@@ -106,16 +109,25 @@ namespace Aether
 	void ImGuiLayer::End()
 	{
 		ImGui::Render();
-		Application::Get().GetRenderer().EndImGuiRender();
+		Renderer::EndImGuiRender();
 
 		// Necessary ImGui steps when docking and viewports are enabled
 		ImGuiIO& io = ImGui::GetIO();
 		if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
 		{
-			GLFWwindow* backup_current_context = glfwGetCurrentContext();
+			// We need to backup context for OpenGL
+			eRenderAPI current = GraphicsContext::GetRenderAPI();
+			GLFWwindow* backupCurrentContext;
+			if (current == eRenderAPI::kOpenGL)
+				backupCurrentContext = glfwGetCurrentContext();
+
+			// Update ImGui windows
 			ImGui::UpdatePlatformWindows();
 			ImGui::RenderPlatformWindowsDefault();
-			glfwMakeContextCurrent(backup_current_context);
+
+			// Restore context for OpenGL
+			if (current == eRenderAPI::kOpenGL)
+				glfwMakeContextCurrent(backupCurrentContext);
 		}
 	}
 

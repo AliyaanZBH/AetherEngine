@@ -4,10 +4,12 @@
 // auth: Aliyaan Zulfiqar
 //===============================================================================
 #include "IWindow.h"
+#include "WindowContext.h"
+#include "Window.h"
 //===============================================================================
 
 // Forward declare for renderer
-class IRenderer;
+class IRendererBackend;
 
 // WinMan - Window Manager.
 namespace Aether
@@ -15,10 +17,10 @@ namespace Aether
 	class WindowGLFW final : public IWindow
 	{
 	public:
-		WindowGLFW(const WinData& winData, const eRenderAPI currentRenderer);
+		WindowGLFW(const WindowContext::WinData& winData, const eRenderAPI currentRenderer);
 		virtual ~WindowGLFW();
 
-		AETHER_RESULT Initialize(const WinData& winData, const eRenderAPI currentRenderer) override;
+		AETHER_RESULT Initialize(const WindowContext::WinData& winData, const eRenderAPI currentRenderer) override;
 		bool WindowShouldClose() override;
 		void PollEvents() override
 		{
@@ -26,6 +28,7 @@ namespace Aether
 		}
 
 		inline void SetEventCallback(const EventCallbackFn& callback) override { m_WinData.m_EventCallback = callback; }
+
 
 		void Terminate() override;
 

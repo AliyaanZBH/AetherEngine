@@ -26,3 +26,7 @@ typedef int AETHER_RESULT;	// For more useful error handling at low-level, can b
 
 // Bit field macro
 #define BIT(x) (1 << x)
+
+// Nice helper for alignment
+#define AETHER_ALIGN16(x) (((x) + 15) & ~15)	// Rounds up to the nearest 16-byte boundary
+#define AETHER_ALIGN256(x) (((x) + 255) & ~255)	// Rounds up to the nearest 256-byte boundary

@@ -3,21 +3,22 @@
 // desc: The OpenGL rendering engine, leveraging GLAD.
 // auth: Aliyaan Zulfiqar
 //===============================================================================
-#include "IRenderer.h"
+#include "IRendererBackend.h"
 #include "ShaderOpenGL.h"
 #include "BufferOpenGL.h"
 //===============================================================================
 namespace Aether
 {
-	class RendererOpenGL final : public IRenderer
+	class RendererOpenGL final : public IRendererBackend
 	{
 	public:
 		// Main start up function
-		AETHER_RESULT Initialize(IWindow& window) override;
+		AETHER_RESULT Initialize(const IWindow& window) override;
 		void CreatePipeline(const PipelineDesc& desc) override;
 
 		void ClearFrame() override;
 		void Render() override;
+		void Submit(const DrawCommand& cmd, ConstantBufferView* cbv) override;
 		void Render(VertexBufferView* vbv, IndexBufferView* ibv) override;
 		void Present() override;
 
@@ -37,7 +38,10 @@ namespace Aether
 
 		GLFWwindow* m_pWindow;
 
-		unsigned int m_VertexAttributeArray;
+		unsigned int m_VertexAttributeArray = 0;
+		int m_DynamicColourLocation = 0;
+		int m_TransformLocation = 0;
+		int m_SolidColourLocation = 0;
 
 		// In OpenGL, multiple shaders must be linked into a single shader program, this one contains a vertex and pixel shader
 		ShaderOpenGL* m_DefaultShader = nullptr;

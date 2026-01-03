@@ -7,56 +7,46 @@
 #include "RendererDX11.h"
 #include "D3DUtils.h"
 #include "Pipeline.h" 
+#include "DrawCommand.h"
 //===============================================================================
 
 namespace Aether
 {
-	AETHER_RESULT RendererDX11::Initialize(IWindow& window)
+	AETHER_RESULT RendererDX11::Initialize(const IWindow& window)
 	{
-		AETHER_RESULT ret = AETHER_OK;
+		AETHER_RESULT ar = AETHER_OK;
 
-		if (!CreateDevice())
-			assert(false, "Failed to initialize DirectX 11 device.");
+		AETHER_ASSERT(CreateDevice(), "Failed to initialize DirectX 11 device.");
+
 		// Retrieve the native window handle (HWND on Windows)
-
 		HWND hwnd = static_cast<HWND>(window.GetWin32Handle());
 		m_WinData = window.GetData();
 
 		// Create swapchain description based on the current window
 		DXGI_SWAP_CHAIN_DESC sd;
 		CreateSwapChainDescription(sd, hwnd, true, m_WinData.m_ClientWidth, m_WinData.m_ClientHeight);
-
-		if (!CreateSwapChain(sd))
-			assert(false, "Failed to initialize DirectX 11 swap chain.");
+		AETHER_ASSERT(CreateSwapChain(sd), "Failed to initialize DirectX 11 swap chain.");
 
 		// Needs to be executed every time the window is resized
 		// So just call the OnResize method here to avoid code duplication.
 		// This calls CreateRenderTargets etc.
 		OnResize(m_WinData.m_ClientWidth, m_WinData.m_ClientHeight, *this);
 
-		D3D11_RASTERIZER_DESC rsDesc = {};
-		rsDesc.FillMode = D3D11_FILL_SOLID;
-		rsDesc.CullMode = D3D11_CULL_NONE;
-		rsDesc.DepthClipEnable = TRUE;
-
-		ID3D11RasterizerState* rasterState = nullptr;
-		m_pD3DDevice->CreateRasterizerState(&rsDesc, &rasterState);
-		m_pD3DImmediateContext->RSSetState(rasterState);
+		CreateRasteriserState();
 
 		// Set sampler state
 		CreateWrapSampler(m_pWrapSampler);
 
-		m_Viewport.TopLeftX = 0;
-		m_Viewport.TopLeftY = 0;
-		m_Viewport.Width = m_WinData.m_ClientWidth;
-		m_Viewport.Height = m_WinData.m_ClientHeight;
-		m_Viewport.MinDepth = 0.0f;
-		m_Viewport.MaxDepth = 1.0f;
+		UpdateViewportAndScissor();
 		
 		m_pD3DImmediateContext->RSSetViewports(1, &m_Viewport);
+		m_pD3DImmediateContext->RSSetScissorRects(1, &m_Scissor);
+
+		// Create a constant buffer for per draw data
+
 
 		// Return true / positive result if we made all the way here without failing previous functions
-		return ret;
+		return ar;
 	}
 
 	ShaderDX11* RendererDX11::LoadShader(ShaderHandle handle)
@@ -129,9 +119,22 @@ namespace Aether
 	}
 
 	void RendererDX11::Render()
-	{} // Currently not rendering any geometry
+	{} // Currently not rendering any internal geometry
 
-	void RendererDX11::Render(VertexBufferView * vbv, IndexBufferView * ibv)
+	void RendererDX11::Submit(const DrawCommand& cmd, ConstantBufferView* cbv)
+	{
+		uint32_t cbSlot = cbv->m_Slot;
+		ID3D11Buffer* conBuf = static_cast<BufferDX11*>(cbv->m_Buffer)->GetBuffer();
+
+		// Set constant buffer
+		m_pD3DImmediateContext->VSSetConstantBuffers(cbSlot, 1, &conBuf);
+		m_pD3DImmediateContext->PSSetConstantBuffers(cbSlot, 1, &conBuf);
+
+		// DX11 is immediate mode so we can render immediately
+		Render(cmd.m_VBV, cmd.m_IBV);
+	}
+
+	void RendererDX11::Render(VertexBufferView* vbv, IndexBufferView* ibv)
 	{
 		// Grab geo buffers
 		BufferDX11* vertBuf = static_cast<BufferDX11*>(vbv->m_Buffer);
@@ -142,15 +145,19 @@ namespace Aether
 
 		UINT offset = vbv->m_Offset;
 
-		m_pD3DImmediateContext->VSSetShader(m_VS, nullptr, 0);
-		m_pD3DImmediateContext->PSSetShader(m_PS, nullptr, 0);
-		m_pD3DImmediateContext->RSSetViewports(1, &m_Viewport);
 		m_pD3DImmediateContext->IASetInputLayout(m_Layout);
 		m_pD3DImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 		m_pD3DImmediateContext->IASetVertexBuffers(0, 1, &dxVB, &vbv->m_Stride, &offset);
 		m_pD3DImmediateContext->IASetIndexBuffer(dxIB, DXGI_FORMAT_R32_UINT, 0);
 	
+		m_pD3DImmediateContext->VSSetShader(m_VS, nullptr, 0);
+		m_pD3DImmediateContext->PSSetShader(m_PS, nullptr, 0);
+
+		m_pD3DImmediateContext->RSSetViewports(1, &m_Viewport);
+		m_pD3DImmediateContext->RSSetScissorRects(1, &m_Scissor);
+
 		m_pD3DImmediateContext->DrawIndexed(ibv->m_Count, 0, 0);
+
 	}
 
 	void RendererDX11::Present()
@@ -165,15 +172,19 @@ namespace Aether
 
 	void RendererDX11::ClearFrame()
 	{
-		// Set render target ready for drawing
-		m_pD3DImmediateContext->OMSetRenderTargets(1, m_pRenderTargetView.GetAddressOf(), m_pDepthStencilView.Get());
 
 		// Clear the back buffer
 		float clearColor[4] = { 1.f, 0.3f, 0.0f, 1.0f };
 		m_pD3DImmediateContext->ClearRenderTargetView(m_pRenderTargetView.Get(), clearColor);
 
+		// Set render target ready for drawing
+		m_pD3DImmediateContext->OMSetRenderTargets(1, m_pRenderTargetView.GetAddressOf(), m_pDepthStencilView.Get());
+		//m_pD3DImmediateContext->OMSetRenderTargets(1, m_pRenderTargetView.GetAddressOf(),nullptr);
+
 		// Clear depth aswell!
-		m_pD3DImmediateContext->ClearDepthStencilView(m_pDepthStencilView.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
+		m_pD3DImmediateContext->ClearDepthStencilView(m_pDepthStencilView.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+
+		UpdateViewportAndScissor();
 	}
 
 	void RendererDX11::Terminate()
@@ -223,7 +234,7 @@ namespace Aether
 		ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 	}
 
-	bool RendererDX11::CreateDevice()
+	AETHER_RESULT RendererDX11::CreateDevice()
 	{
 
 		// Setup to enable debug layer
@@ -269,7 +280,7 @@ namespace Aether
 			NULL,
 			&m_pD3DImmediateContext));
 
-		return true;
+		return AETHER_OK;
 	}
 
 	void RendererDX11::CreateSwapChainDescription(DXGI_SWAP_CHAIN_DESC& sd, HWND hMainWnd, bool windowed, int screenWidth, int screenHeight)
@@ -297,7 +308,7 @@ namespace Aether
 
 	}
 
-	bool RendererDX11::CreateSwapChain(DXGI_SWAP_CHAIN_DESC& sd)
+	AETHER_RESULT RendererDX11::CreateSwapChain(DXGI_SWAP_CHAIN_DESC& sd)
 	{
 		Microsoft::WRL::ComPtr<IDXGIDevice> dxgiDevice = 0;
 		AETHER_HR_ASSERT(m_pD3DDevice->QueryInterface(__uuidof(IDXGIDevice), (void**)&dxgiDevice));
@@ -310,10 +321,10 @@ namespace Aether
 
 		AETHER_HR_ASSERT(dxgiFactory->CreateSwapChain(m_pD3DDevice.Get(), &sd, &m_pSwapChain));
 
-		return true;
+		return AETHER_OK;
 	}
 
-	bool RendererDX11::CreateRenderTargets()
+	AETHER_RESULT RendererDX11::CreateRenderTargets()
 	{
 		Microsoft::WRL::ComPtr<ID3D11Texture2D> backBuffer;
 		AETHER_HR_ASSERT(m_pSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), &backBuffer));
@@ -321,7 +332,20 @@ namespace Aether
 		AETHER_HR_ASSERT(m_pD3DDevice->CreateRenderTargetView(backBuffer.Get(), nullptr, m_pRenderTargetView.GetAddressOf()));
 
 		m_pD3DImmediateContext->OMSetRenderTargets(1, m_pRenderTargetView.GetAddressOf(), m_pDepthStencilView.Get());
-		return true;
+		return AETHER_OK;
+	}
+
+	AETHER_RESULT RendererDX11::CreateRasteriserState()
+	{
+		D3D11_RASTERIZER_DESC rsDesc = {};
+		rsDesc.FillMode = D3D11_FILL_SOLID;
+		rsDesc.CullMode = D3D11_CULL_BACK;
+		rsDesc.DepthClipEnable = TRUE;
+
+		m_pD3DDevice->CreateRasterizerState(&rsDesc, &m_pRasterState);
+		m_pD3DImmediateContext->RSSetState(m_pRasterState.Get());
+
+		return AETHER_OK;
 	}
 
 	// Create the depth/stencil buffer description
@@ -352,10 +376,11 @@ namespace Aether
 		dsd.MiscFlags = 0;
 	}
 
-	void RendererDX11::CreateDepthStencilBufferAndView(D3D11_TEXTURE2D_DESC& dsd)
+	AETHER_RESULT RendererDX11::CreateDepthStencilBufferAndView(D3D11_TEXTURE2D_DESC& dsd)
 	{
 		AETHER_HR_ASSERT(m_pD3DDevice->CreateTexture2D(&dsd, 0, m_pDepthStencilBuffer.GetAddressOf()));
 		AETHER_HR_ASSERT(m_pD3DDevice->CreateDepthStencilView(m_pDepthStencilBuffer.Get(), 0, m_pDepthStencilView.GetAddressOf()));
+		return AETHER_OK;
 	}
 
 	void RendererDX11::OnResize_Default(int clientWidth, int clientHeight)
@@ -363,26 +388,32 @@ namespace Aether
 		assert(m_pD3DImmediateContext);
 		assert(m_pD3DDevice);
 		assert(m_pSwapChain);
-
+		
 		// Release the old views, as they hold references to the buffers we
 		// will be destroying.  Also release the old depth/stencil buffer.
-
+		
 		m_pRenderTargetView.Reset();
 		m_pDepthStencilView.Reset();
 		m_pDepthStencilBuffer.Reset();
-
+		
 		// Resize swap chain
 		AETHER_HR_ASSERT(m_pSwapChain->ResizeBuffers(1, clientWidth, clientHeight, DXGI_FORMAT_R8G8B8A8_UNORM, 0));
-
+		
 		// Create depth stencil
 		D3D11_TEXTURE2D_DESC depthStencilDesc;
-
+		
 		// MSAA currently disabled
 		CreateDepthStencilDescription(depthStencilDesc, clientWidth, clientHeight, false, 2, 1);
-		CreateDepthStencilBufferAndView(depthStencilDesc);
-
+		AETHER_ASSERT(CreateDepthStencilBufferAndView(depthStencilDesc), "Failed to create depth stencil buffer and view in DX11");
+		
 		// Create new render targets
 		CreateRenderTargets();
+		
+		// Update windata struct and then update viewport
+		m_WinData.m_ClientWidth = clientWidth;
+		m_WinData.m_ClientHeight = clientHeight;
+		
+		UpdateViewportAndScissor();
 	}
 
 	void RendererDX11::CreateWrapSampler(Microsoft::WRL::ComPtr<ID3D11SamplerState>& pSampler)
@@ -397,6 +428,24 @@ namespace Aether
 		sampDesc.MinLOD = 0;
 		sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
 		AETHER_HR_ASSERT(m_pD3DDevice->CreateSamplerState(&sampDesc, &pSampler));
+	}
+
+	void RendererDX11::UpdateViewportAndScissor()
+	{
+		m_Viewport.TopLeftX = 0;
+		m_Viewport.TopLeftY = 0;
+		m_Viewport.Width = m_WinData.m_ClientWidth;
+		m_Viewport.Height = m_WinData.m_ClientHeight;
+		m_Viewport.MinDepth = 0.0f;
+		m_Viewport.MaxDepth = 1.0f;
+
+		m_Scissor.left = 0;
+		m_Scissor.top = 0;
+		m_Scissor.right = m_WinData.m_ClientWidth;
+		m_Scissor.bottom = m_WinData.m_ClientHeight;
+
+		m_pD3DImmediateContext->RSSetViewports(1, &m_Viewport);
+		m_pD3DImmediateContext->RSSetScissorRects(1, &m_Scissor);
 	}
 };
 #endif

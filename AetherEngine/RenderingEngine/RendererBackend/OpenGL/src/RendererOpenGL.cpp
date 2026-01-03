@@ -4,7 +4,9 @@
 //===============================================================================
 #include "RendererOpenGL.h"
 #include "BufferOpenGL.h"
+#include "DrawCommand.h"
 #include "Pipeline.h"
+#include <glm/gtc/type_ptr.hpp>
 //===============================================================================
 
 namespace Aether
@@ -39,7 +41,7 @@ namespace Aether
 		}
 	}
 
-	AETHER_RESULT RendererOpenGL::Initialize(IWindow& window)
+	AETHER_RESULT RendererOpenGL::Initialize(const IWindow& window)
 	{
 		AETHER_RESULT ar = AETHER_OK;
 	
@@ -156,6 +158,12 @@ namespace Aether
 			// Finally, enable the attribute in the vertex array
 			glEnableVertexArrayAttrib(m_VertexAttributeArray, location);
 		}
+
+		// Store uniform locations
+		m_TransformLocation = glGetUniformLocation(m_DefaultShader->GetProgram(), "u_Transform");
+		m_SolidColourLocation = glGetUniformLocation(m_DefaultShader->GetProgram(), "u_SolidColour");
+		m_DynamicColourLocation = glGetUniformLocation(m_DefaultShader->GetProgram(), "u_DynamicColour");
+
 	}
 
 	void RendererOpenGL::Render()
@@ -164,9 +172,10 @@ namespace Aether
 		float deltaTime = glfwGetTime();
 		float varyingVal = (sin(deltaTime) / 2.0f) + 0.15f;
 
-		int dynamicColourLocation = glGetUniformLocation(m_DefaultShader->GetProgram(), "dynamicColour");
-		glUniform4f(dynamicColourLocation, varyingVal, varyingVal, varyingVal, 1.0f);
-
+		glUniform4f(m_DynamicColourLocation, varyingVal, varyingVal, varyingVal, 1.0f);
+		
+		// No transform on this guy
+		glUniformMatrix4fv(m_TransformLocation, 1, GL_FALSE, glm::value_ptr(glm::mat4(1.f)));
 
 		// Bind and draw our geo!
 		glBindVertexArray(m_VertexAttributeArray);
@@ -184,14 +193,26 @@ namespace Aether
 		glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, nullptr);
 	}
 
+	void RendererOpenGL::Submit(const DrawCommand& cmd, ConstantBufferView* cbv)
+	{
+		// Write the transformation matrix into the uniform buffer
+		glUniformMatrix4fv(m_TransformLocation, 1, GL_FALSE, glm::value_ptr(cmd.m_ModelMatrix));
+		// Same for colour
+		glUniform4f(m_SolidColourLocation, cmd.m_SolidColour.x, cmd.m_SolidColour.y, cmd.m_SolidColour.z, 1.0f);
+
+
+		// OpenGL is immediate mode so we can render immediately
+		Render(cmd.m_VBV, cmd.m_IBV);
+	}
+
 	void RendererOpenGL::Render(VertexBufferView* vbv, IndexBufferView* ibv)
 	{
 		// Need to rebind vertex array as it is still pointing at the old set of geometry!
 		glBindVertexArray(m_VertexAttributeArray);
 		
 		// Only want the dynamic colour on the other bit of geo, so reset the value to 0 here for the main background
-		int dynamicColourLocation = glGetUniformLocation(m_DefaultShader->GetProgram(), "dynamicColour");
-		glUniform4f(dynamicColourLocation, 0.f, 0.f, 0.f, 1.0f);
+		glUniform4f(m_DynamicColourLocation, 0.f, 0.f, 0.f, 1.0f);
+
 
 		glVertexArrayVertexBuffer(
 			m_VertexAttributeArray,
@@ -200,7 +221,6 @@ namespace Aether
 			vbv->m_Offset,
 			vbv->m_Stride
 		);
-
 
 		glVertexArrayElementBuffer(m_VertexAttributeArray, static_cast<BufferOpenGL*>(ibv->m_Buffer)->GetHandle());
 		glDrawElements(GL_TRIANGLES, ibv->m_Count, GL_UNSIGNED_INT, nullptr);

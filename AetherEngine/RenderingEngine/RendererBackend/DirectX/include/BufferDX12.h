@@ -18,13 +18,18 @@ namespace Aether
 		void SetName(const WCHAR* name);
 
 
-		ID3D12Resource* GetResource() const { return m_Resource; }
+		ID3D12Resource* GetResource() { return m_Resource; }
 	private:
 		D3D12_RESOURCE_STATES GetFinalState(eBufferType type) const;
 
 		ID3D12Device* m_Device = nullptr;
 		ID3D12GraphicsCommandList* m_CmdList = nullptr;
 		ID3D12Resource* m_Resource = nullptr;
-		ID3D12Resource* m_UploadHeap = nullptr;
+
+		// Helper map point for CBs
+		void* m_CBMapping = nullptr;
+
+		// Intermediate upload heap for buffers that don't change frequently
+		ID3D12Resource* m_IntermediateUploadHeap = nullptr;
 	};
 }

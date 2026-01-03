@@ -4,7 +4,7 @@
 // auth: Aliyaan Zulfiqar
 //===============================================================================
 #include "Layer.h"
-#include "IRenderer.h"
+#include "IRendererBackend.h"
 //===============================================================================
 
 namespace Aether
@@ -42,9 +42,6 @@ namespace Aether
 
 		void Begin();
 		void End();
-
-	protected:
-		eRenderAPI m_CurrentRenderAPI;
 	private:
 		void SetStyle();
 	};

@@ -1,36 +1,19 @@
-#include "CoreApp.h"
 //===============================================================================
 // desc: The core engine app that facilitates general use for any application made with Aether!
 // auth: Aliyaan Zulfiqar
 //===============================================================================
 #include "CoreApp.h"
+
 #include "Log.h"
-
-#ifdef USE_GLFW
-#include "WindowGLFW.h"
-#endif
-
-#ifdef USE_OPENGL
-#include "RendererOpenGL.h"
-#endif
-
-#ifdef USE_DX11
-#include "RendererDX11.h"
-#endif
-
-#ifdef USE_DX12
-#include "RendererDX12.h"
-#endif
-
-#ifdef USE_VULKAN
-#include "Renderer/RendererVulkan.h" // To be implemented
-#endif
-
-#include "AppEvent.h"
-#include "ImGuiLayer.h"
 #include "Input.h"
+#include "Renderer.h"
+#include "Window.h"
+
+#include "WindowContext.h"
 #include "GraphicsContext.h"
-#include "Pipeline.h"
+
+#include "ImGuiLayer.h"
+#include "AppEvent.h"
 //===============================================================================
 namespace Aether
 {
@@ -47,77 +30,31 @@ namespace Aether
             AETHER_ASSERT(AETHER_FAIL, "An instance of the application is already running!");
         s_Instance = this;
 
-        // Set which type of window we are creating and pass in some data for it
+        // Select rendering API
+        GraphicsContext::SelectRenderAPI(eRenderAPI::kDX12);
+
         // Later in development, this will be read from a JSON config file so that the user can save and load settings, along with manually changing it from a GUI inside the application!
-        IWindow::WinData wd =
+        WindowContext::WinData wd =
         {
             .m_ClientWidth = 800u,
             .m_ClientHeight = 600u
             /*.m_Title = "AetherApp"*/      // Default title is Aether Engine
         };
 
-    #ifdef USE_GLFW
-        m_Window = std::make_unique<WindowGLFW>(wd, m_CurrentRenderAPI);      // Calls initialise and catches errors inside with assert
-    #elif defined(USE_WIN32)
-        m_Window = std::make_unique<WinManWin32>();
-    #else
-    #error No window API defined. Please enable USE_GLFW or USE_WIN32."
-        ar = AETHER_FAIL;
-    #endif
-
-        // Set the desired rendering API, based on the chosen runtime enum. 
-        std::string m_RendererString = "";
-        switch (m_CurrentRenderAPI)
-        {
-            case eRenderAPI::kOpenGL:
-            {
-                m_Renderer = std::make_unique<RendererOpenGL>();
-                m_RendererString = "OpenGL";
-                break;
-            }
-
-            #ifdef USE_DX11
-            case eRenderAPI::kDX11:
-            {
-                m_Renderer = std::make_unique<RendererDX11>();
-                m_RendererString = "DirectX 11";
-                break;
-            }
-            #endif
-
-            #ifdef USE_DX12
-            case eRenderAPI::kDX12:
-            {
-                m_Renderer = std::make_unique<RendererDX12>();
-                m_RendererString = "DirectX 12";
-                break;
-            }
-            #endif
-
-            default:
-            {
-                ar = AETHER_FAIL;
-                AETHER_ASSERT(ar, "No rendering API defined. Please enable one of the `USE_X` arguments to ensure that one is built and then select a valid desired rendering API.");
-            }
-        }
-
-        AETHER_CORE_INFO("Using Renderer: {0}", m_RendererString);
-
-		// Init rendering API - catch errors out here with assert
-		AETHER_ASSERT(m_Renderer->Initialize(*m_Window));
-
-
-        // Create default pipeline for the renderer
-        CreatePipeline();
+        // Initialise high-level window API, which sets up a low-level backend window platform. Inside this function you'll find the values for the default window size
+        Window::Initialise(wd);
+        
+        // Initialise high-level rendering API, which in turn sets up the low-level backend with a default shader pipeline
+        Renderer::Initialise();
 
 		// Setup ImGui layer for the renderer too
-		m_ImGuiLayer = new ImGuiLayer(m_CurrentRenderAPI);
+		m_ImGuiLayer = new ImGuiLayer(GraphicsContext::GetRenderAPI());
 
 		// Push the ImGui layer into the stack at the overlay point
 		PushOverlay(m_ImGuiLayer);
 
         // Bind event callback for our window
-        m_Window->SetEventCallback(BIND_APP_FN(OnEvent));
+        Window::SetEventCallback(BIND_APP_FN(OnEvent));
     }
 
     void Application::PushLayer(Layer* layer)
@@ -132,52 +69,10 @@ namespace Aether
         overlay->OnAttach();
     }
 
-    void Application::CreatePipeline()
-    {
-        // Define what layout we want our renderer to use and create pipelines for. Start with the vertex attributes
-
-        VertexAttribute aPos
-        {
-            .m_Name = eShaderSemantic::kPosition,
-            .m_Format = eVertexAttributeFormat::kFloat4,
-            .m_Offset = 0   // Offset is optional and will be calculated by the layout constructor!
-        };
-
-        VertexAttribute aColour = { eShaderSemantic::kColour, eVertexAttributeFormat::kFloat4 };
-
-        // Construct a layout with these attributes, offset and stride will be calculated internally
-        VertexLayout layout({ aPos, aColour });
-
-        // Grab shader library and register shaders or grab handle in the case that they've already been registered (not the case here, but could be when called later!)
-        ShaderLibrary& shaders = ShaderLibrary::Get();
-        ShaderDesc vsDesc
-        {
-            .m_Name = "VertexShader",       // No extensions, ideally we have identical shaders for both GLSL and HLSL. Let the renderer API figure out which one it needs to loads
-            .m_ShaderStage = eShaderStage::kVertex
-        };
-        ShaderHandle vsHandle = shaders.Register("DefaultVertexShader", vsDesc);
-
-        ShaderDesc psDesc
-        {
-            .m_Name = "PixelShader",
-            .m_ShaderStage = eShaderStage::kPixel
-        };
-        ShaderHandle psHandle = shaders.Register("DefaultPixelShader", psDesc);
-
-        PipelineDesc pipelineDesc =
-        {
-            .m_VertexShader = vsHandle,
-            .m_PixelShader = psHandle,
-            .m_Layout = layout
-        };
-
-        m_Renderer->CreatePipeline(pipelineDesc);
-    }
-
     bool Application::OnWindowResize(WindowResizeEvent& e)
     {
 		// Let the renderer handle it's specific steps for resizing (recreating buffers, contexts, etc.)
-        m_Renderer->Resize(e.GetWidth(),e.GetHeight());
+        Renderer::Resize(e.GetWidth(),e.GetHeight());
         return true;
     }
 
@@ -203,13 +98,13 @@ namespace Aether
         AETHER_RESULT ar = AETHER_OK;
 
         // The game loop!
-        while (!m_Window->WindowShouldClose())
+        while (!Window::ShouldClose())
         {
-            // Clear frame!
-            m_Renderer->ClearFrame();
+            // Start a new rendering frame!
+            Renderer::BeginFrame();
 
-            // Handle window events here (e.g., using GLFW or another windowing library)
-            m_Window->PollEvents();
+            // Handle window events here (e.g., using GLFW or another backend window library)
+            Window::Poll();
 
             // Refresh ImGui drawing context
             m_ImGuiLayer->Begin();
@@ -220,21 +115,21 @@ namespace Aether
             // Render our layers!
             m_LayerStack.RenderLayers();
 
-            // Draw anything else we want! (Perhaps outdated at this point, but I like the idea of each renderer drendering something small and inconsequential like a small watermark as an easter egg)
-            m_Renderer->Render();
+            // Finalize rendering by submitting all registered draw commands to the backend
+            Renderer::Render();
 
-            // Finalise ImGui drawing afterwards
+            // Finalise ImGui drawing last, as it will invalidate renderer state.
             m_ImGuiLayer->End();
 
-            // Present our finished lovely frame!
-            m_Renderer->Present();
+            // Now present our lovely frame!
+            Renderer::EndFrame();
         }
 
         printf("\n\n\n");
         AETHER_CORE_INFO("Thanks for using Aether!\n");
 
         // Make sure we release our resources manually if they aren't already tied in the destructor - everything in here will get deleted and have those called so no need to call things twice!
-        m_Renderer->Terminate();
+        Renderer::Terminate();
 
         // Return the OK!
         return AETHER_OK;

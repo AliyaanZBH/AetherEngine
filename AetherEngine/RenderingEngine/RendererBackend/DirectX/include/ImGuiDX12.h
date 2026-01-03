@@ -1,4 +1,8 @@
 #pragma once
+//===============================================================================
+// desc: Quick copy-paste of the the descriptor allocator from the ImGui examples. Will be updated in the future.
+// auth: Aliyaan Zulfiqar
+//===============================================================================
 
 //
 // Temp Structs

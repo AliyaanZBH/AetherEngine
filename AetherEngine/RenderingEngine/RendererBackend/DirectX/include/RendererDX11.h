@@ -4,23 +4,24 @@
 //		 Based upon one I built during a university project, but the goal is to optimize and modernize things going forward.
 // auth: Aliyaan Zulfiqar
 //===============================================================================
-#include "IRenderer.h"
+#include "IRendererBackend.h"
 #include "ShaderDX11.h"
 #include "BufferDX11.h"
-#include "GraphicsContext.h"
+#include "Vertex.h"
 //===============================================================================
 
 namespace Aether
 {
-	class RendererDX11 final : public IRenderer
+	class RendererDX11 final : public IRendererBackend
 	{
 	public:
 		// Main start up function
-		AETHER_RESULT Initialize(IWindow& window) override;
+		AETHER_RESULT Initialize(const IWindow& window) override;
 		void CreatePipeline(const PipelineDesc& desc) override;
 
 		void ClearFrame() override;
 		void Render() override;
+		void Submit(const DrawCommand& cmd, ConstantBufferView* cbv) override;
 		void Render(VertexBufferView* vbv, IndexBufferView* ibv) override;
 		void Present() override;
 		
@@ -48,7 +49,7 @@ namespace Aether
 			if (m_pOnResize)
 				m_pOnResize(sw, sh, d3d);
 			else*/
-			OnResize_Default(sw, sh);;
+			OnResize_Default(sw, sh);
 		}
 
 		//
@@ -72,16 +73,17 @@ namespace Aether
 		// Heavy lifting to start D3D11
 		//
 
-		bool CreateDevice();
+		AETHER_RESULT CreateDevice();
+		AETHER_RESULT CreateSwapChain(DXGI_SWAP_CHAIN_DESC& sd);
+		AETHER_RESULT CreateRenderTargets();
+		AETHER_RESULT CreateRasteriserState();
+		AETHER_RESULT CreateDepthStencilBufferAndView(D3D11_TEXTURE2D_DESC& dsd);
+
 		void CreateSwapChainDescription(DXGI_SWAP_CHAIN_DESC& sd, HWND hMainWnd, bool windowed, int screenWidth, int screenHeight);
-		bool CreateSwapChain(DXGI_SWAP_CHAIN_DESC& sd);
-
-		bool CreateRenderTargets();
-
 		void CreateDepthStencilDescription(D3D11_TEXTURE2D_DESC& dsd, int screenWidth, int screenHeight, bool msaa, int count, int maxQuality);;
-		void CreateDepthStencilBufferAndView(D3D11_TEXTURE2D_DESC& dsd);
-
 		void CreateWrapSampler(Microsoft::WRL::ComPtr<ID3D11SamplerState>& pSampler);
+
+		void UpdateViewportAndScissor();
 
 		//
 		// Private utility functions
@@ -99,10 +101,13 @@ namespace Aether
 
 
 		Microsoft::WRL::ComPtr<ID3D11Device> m_pD3DDevice = nullptr;
+
 		// A handle of the device we can use to give rendering commands
 		Microsoft::WRL::ComPtr<ID3D11DeviceContext> m_pD3DImmediateContext = nullptr;
+
 		Microsoft::WRL::ComPtr<IDXGISwapChain> m_pSwapChain = nullptr;
 		Microsoft::WRL::ComPtr<ID3D11RenderTargetView> m_pRenderTargetView = nullptr;
+		Microsoft::WRL::ComPtr<ID3D11RasterizerState> m_pRasterState = nullptr;
 		Microsoft::WRL::ComPtr<ID3D11SamplerState> m_pWrapSampler = nullptr;
 		D3D_DRIVER_TYPE m_D3DDriverType = D3D_DRIVER_TYPE_UNKNOWN;
 		Microsoft::WRL::ComPtr<ID3D11Texture2D> m_pDepthStencilBuffer = nullptr;
@@ -119,10 +124,11 @@ namespace Aether
 		//
 		//	Window data!
 		//
-		Aether::IWindow::WinData m_WinData = {};
+		WindowContext::WinData m_WinData = {};
 
 		// Position, height, width, min+max depth of the view we are rendering
 		D3D11_VIEWPORT m_Viewport;
+		D3D11_RECT m_Scissor;
 
 		//
 		// Currently unused values that will be implemented soon
