@@ -10,7 +10,12 @@ struct VS_OUTPUT
     float4 colour : COLOR;
 };
 
-cbuffer PerDrawData : register(b0)
+cbuffer PerFrameData : register(b0)
+{
+    float4x4 viewProjection;
+}
+
+cbuffer PerDrawData : register(b1)
 {
     float4x4 model;
     float4   colour;
@@ -19,9 +24,11 @@ cbuffer PerDrawData : register(b0)
 VS_OUTPUT main(VS_INPUT input)
 {
     VS_OUTPUT output;
-    //output.pos = input.pos;
-    //output.colour = input.colour;
+    
+    float4 world = mul(model, input.pos);
+
     output.colour = colour;
-    output.pos = mul(model, input.pos);
+    output.pos = mul(viewProjection, world);
+    
     return output;
 }

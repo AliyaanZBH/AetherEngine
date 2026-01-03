@@ -113,8 +113,8 @@ namespace Aether
         s_CommandQueue.reserve(128);
 
         // Create constant buffers for per-frame and per-draw data
-        CreateConstantBuffer<PerFrameData>(s_PerFrameBuffer, s_PerFrameCBView, 0);
-        CreateConstantBuffer<PerDrawData>(s_PerDrawBuffer, s_PerDrawCBView, 1);
+        s_PerFrameBuffer = CreateConstantBuffer<PerFrameData>(eBufferType::kConstantPerFrame, &s_PerFrameCBView, 0);
+        s_PerDrawBuffer = CreateConstantBuffer<PerDrawData>(eBufferType::kConstantPerDraw, &s_PerDrawCBView, 1);
 
 	}
 
@@ -145,6 +145,7 @@ namespace Aether
         data.m_ViewProj = camera.GetViewProj();
 
         s_PerFrameBuffer->Upload(&data, sizeof(PerFrameData));
+        s_RendererBackend->BindFrameConstants(&s_PerFrameCBView);
     }
 
     void Renderer::Render()
@@ -216,9 +217,9 @@ namespace Aether
             data.m_Colour = cmd.m_SolidColour;
             s_PerDrawBuffer->Upload(&data, sizeof(PerDrawData));
 
-            // Submit the view on this buffer together with the command
+            // Submit the view on this buffer together with the command;
             s_RendererBackend->Submit(cmd, &s_PerDrawCBView);
-            
+
             // Maybe save this for render passes like Opaque and Transparent?
             //switch (cmd.m_Type)
             //{
@@ -227,7 +228,7 @@ namespace Aether
             //        s_RendererBackend->Submit(cmd);
             //    }
             //}
-        }
+        };
 
 
     }
@@ -351,11 +352,11 @@ namespace Aether
     }
 
     template<typename T>
-    void Renderer::CreateConstantBuffer(Buffer* buf, ConstantBufferView cbv, uint8_t slot)
+    Buffer* Renderer::CreateConstantBuffer( const eBufferType type, ConstantBufferView* cbv, uint8_t slot)
     {
         // Create a re-usable and generic constant buffer
         BufferDesc conBufDesc;
-        conBufDesc.m_Type = eBufferType::kConstant;
+        conBufDesc.m_Type = type;
         conBufDesc.m_SizeInBytes = sizeof(T);
         conBufDesc.m_CPUVisible = true;
 
@@ -363,11 +364,13 @@ namespace Aether
         T tmpData = {};
         conBufDesc.m_Data = &tmpData;
 
-        buf = s_RendererBackend->CreateBuffer(conBufDesc);
+        Buffer* buf = s_RendererBackend->CreateBuffer(conBufDesc);
         // Fill in the view too
-        cbv.m_Buffer = s_PerDrawBuffer;
-        cbv.m_Size = s_PerDrawBuffer->GetSize();
-        cbv.m_Slot = slot;
+        cbv->m_Buffer = buf;
+        cbv->m_Size = buf->GetSize();
+        cbv->m_Slot = slot;
+        
+        return buf;
     }
 
     void Renderer::CreateBackendPipeline()

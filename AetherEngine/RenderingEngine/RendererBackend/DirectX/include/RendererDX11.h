@@ -29,6 +29,7 @@ namespace Aether
 		void Terminate() override;
 
 		Buffer* CreateBuffer(const BufferDesc& desc) override;
+		void BindFrameConstants(const ConstantBufferView* cbv) override;
 
 
 		void* GetNativeDevice() override { return m_pD3DDevice.Get(); }
@@ -94,6 +95,8 @@ namespace Aether
 
 		// Translate API agnostic input layout into DX11 land
 		std::vector<D3D11_INPUT_ELEMENT_DESC> TranslateLayout(const VertexLayout& layout);
+
+		void BindConstantBuffer(const ConstantBufferView* cbv);
 
 		//
 		// Private members to facillitate the above functions

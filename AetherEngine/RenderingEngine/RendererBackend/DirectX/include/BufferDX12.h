@@ -26,9 +26,6 @@ namespace Aether
 		ID3D12GraphicsCommandList* m_CmdList = nullptr;
 		ID3D12Resource* m_Resource = nullptr;
 
-		// Helper map point for CBs
-		void* m_CBMapping = nullptr;
-
 		// Intermediate upload heap for buffers that don't change frequently
 		ID3D12Resource* m_IntermediateUploadHeap = nullptr;
 	};

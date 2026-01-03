@@ -52,7 +52,7 @@ namespace Aether
 
 
 		template <typename T>
-		static void CreateConstantBuffer(Buffer* buf, ConstantBufferView cbv, uint8_t slot);
+		static Buffer* CreateConstantBuffer(const eBufferType type, ConstantBufferView* cbv, uint8_t slot);
 
 		// Create a default high-level description for a rendering pipeline, built by the backend
 		static void CreateBackendPipeline();

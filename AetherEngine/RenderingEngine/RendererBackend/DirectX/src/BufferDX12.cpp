@@ -23,10 +23,12 @@ namespace Aether
 
 		// Constant buffers need 256 byte alignment and enough additional capacity to handle multiple draws per frame
 		UINT capacity = 1;
-		if (m_Desc.m_Type == eBufferType::kConstant)
+		if (m_Desc.m_Type == eBufferType::kConstantPerFrame || m_Desc.m_Type == eBufferType::kConstantPerDraw)
 		{
 			m_Desc.m_SizeInBytes = AETHER_ALIGN256(desc.m_SizeInBytes);
-			capacity =  1024;	// 1024 draws per frame
+
+			if (m_Desc.m_Type == eBufferType::kConstantPerDraw)
+				capacity =  1024;	// 1024 draws per frame
 		}
 
 		CD3DX12_RESOURCE_DESC defaultResourceDesc = CD3DX12_RESOURCE_DESC::Buffer(m_Desc.m_SizeInBytes * capacity);
@@ -66,7 +68,8 @@ namespace Aether
 		switch (type)
 		{
 		case eBufferType::kVertex:
-		case eBufferType::kConstant:
+		case eBufferType::kConstantPerFrame:
+		case eBufferType::kConstantPerDraw:
 			return D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER;
 
 		case eBufferType::kIndex:
@@ -80,9 +83,9 @@ namespace Aether
 	void BufferDX12::Upload(const void* data, size_t size, size_t offset)
 	{
 
-		if (m_Desc.m_Type == eBufferType::kConstant)
+		if (m_Desc.m_Type == eBufferType::kConstantPerDraw)
 		{
-			// DX12 backend will use a special linear allocator to handle constant buffers.
+			// DX12 backend will use a special linear allocator to handle constant buffers per draw.
 			return;
 		}
 			

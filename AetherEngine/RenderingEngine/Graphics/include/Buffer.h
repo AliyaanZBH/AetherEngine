@@ -13,8 +13,8 @@ namespace Aether
 		kNone,
 		kVertex,
 		kIndex ,
-		kConstant,
-		kUniform, 
+		kConstantPerFrame,
+		kConstantPerDraw,
 		kStorage, 
 		kTransferSrc,
 		kTransferDst
@@ -71,4 +71,5 @@ namespace Aether
 		uint32_t	m_Size = 0u;
 		uint32_t	m_Slot = 0u; // Which register is the CB getting bound to
 	};
+
 }

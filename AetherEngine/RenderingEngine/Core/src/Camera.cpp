@@ -15,12 +15,24 @@ namespace Aether
 		CalculateProjection();
 	}
 
-	void Camera::Translate()
+	void Camera::Translate(const glm::vec3& delta)
 	{
+		m_Position += delta;
+		CalculateView();
 	}
 
-	void Camera::Rotate()
+	void Camera::Rotate(const glm::quat& delta)
 	{
+		// Use normalise to avoid quat drifting
+		m_Rotation = glm::normalize(delta * m_Rotation);
+		CalculateView();
+	}
+
+	void Camera::RotateEuler(const glm::vec3& eulerDegrees)
+	{
+		glm::vec3 radians = glm::radians(eulerDegrees);
+		glm::quat delta = glm::quat(radians);
+		Rotate(delta);
 	}
 
 	void Camera::SetPerspectiveCamera()
@@ -35,6 +47,12 @@ namespace Aether
 		CalculateProjection();
 	}
 
+	void Camera::SetAspectRatio(const float aspect)
+	{
+		m_Aspect = aspect;
+		CalculateProjection();
+	}
+
 	void Camera::SetPosition(const glm::vec3& pos)
 	{
 		m_Position = pos;
@@ -43,25 +61,20 @@ namespace Aether
 
 	void Camera::CalculateView()
 	{
-		//m_View = glm::lookAt(m_Position, m_Position + m_Forward, m_Up);
-
-		// Black magic to get a rotation matrix out of a quaternion
+		// Black magic to get a rotation matrix out of a quaternion. Conjugate here to account for view matrix being the inverse of the cameras world rotation
 		glm::mat4 rot = glm::mat4_cast(glm::conjugate(m_Rotation));
 		glm::mat4 trans = glm::translate(glm::mat4(1.f), -m_Position);
-		m_View = rot * trans;
+
+		// Flip Z in the name of sanity (and intuitive use for designers)
+		glm::mat4 zFlip = glm::scale(glm::mat4(1.f), glm::vec3(1.f, 1.f, -1.f));
+		m_View = zFlip * rot * trans;
 	}
 
 	void Camera::CalculateProjection()
 	{
 		if (m_ProjectionType == eProjectionType::kPerspective)
-		{
 			m_Projection = glm::perspective(glm::radians(m_Fov), m_Aspect, m_NearPlane, m_FarPlane);
-
-		}
 		else
-		{
 			m_Projection = glm::ortho(m_OrthoLeft, m_OrthoRight, m_OrthoBottom, m_OrthoTop, m_NearPlane, m_FarPlane);
-
-		}
 	}
 }

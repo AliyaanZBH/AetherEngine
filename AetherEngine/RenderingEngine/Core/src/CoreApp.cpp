@@ -50,8 +50,14 @@ namespace Aether
         Renderer::Initialise();
 
         // Create a camera too
-        m_Camera = new Camera(eProjectionType::kPerspective);
+        m_Camera = new Camera(eProjectionType::kOrthographic);
 
+        // Set aspect ratio
+        const float aspect = (float)wd.m_ClientWidth / (float)wd.m_ClientHeight;
+        m_Camera->SetAspectRatio(aspect);
+
+        // Move it back a tad
+        m_Camera->SetPosition({ 0.f, 0.f, -1.f });
 		// Setup ImGui layer for the renderer too
 		m_ImGuiLayer = new ImGuiLayer(GraphicsContext::GetRenderAPI());
 
@@ -76,8 +82,16 @@ namespace Aether
 
     bool Application::OnWindowResize(WindowResizeEvent& e)
     {
-		// Let the renderer handle it's specific steps for resizing (recreating buffers, contexts, etc.)
-        Renderer::Resize(e.GetWidth(),e.GetHeight());
+        uint16_t width = e.GetWidth();
+        uint16_t height = e.GetHeight();
+
+		// Let the renderer handle specific steps for resizing (recreating buffers, contexts, etc.)
+        Renderer::Resize(width, height);
+
+        // Also update camera aspect ratio
+        const float aspect = (float)width / height;
+        m_Camera->SetAspectRatio(aspect);
+
         return true;
     }
 
