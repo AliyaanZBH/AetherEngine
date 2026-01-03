@@ -21,15 +21,15 @@ namespace Aether
 		//D3D12_RESOURCE_STATES initialState = desc.m_CPUVisible ? D3D12_RESOURCE_STATE_GENERIC_READ : D3D12_RESOURCE_STATE_COPY_DEST;
 		D3D12_RESOURCE_STATES initialState = D3D12_RESOURCE_STATE_COMMON;
 
-		// Constant buffers need 256 byte alignment
+		// Constant buffers need 256 byte alignment and enough additional capacity to handle multiple draws per frame
+		UINT capacity = 1;
 		if (m_Desc.m_Type == eBufferType::kConstant)
 		{
-			//m_Desc.m_SizeInBytes = AETHER_ALIGN256(desc.m_SizeInBytes);
-			// Early out and let DX12 internals handle this (there's a linear allocator for CB there)
-			return;
+			m_Desc.m_SizeInBytes = AETHER_ALIGN256(desc.m_SizeInBytes);
+			capacity =  1024;	// 1024 draws per frame
 		}
 
-		CD3DX12_RESOURCE_DESC defaultResourceDesc = CD3DX12_RESOURCE_DESC::Buffer(m_Desc.m_SizeInBytes);
+		CD3DX12_RESOURCE_DESC defaultResourceDesc = CD3DX12_RESOURCE_DESC::Buffer(m_Desc.m_SizeInBytes * capacity);
 
 		AETHER_HR_ASSERT(device->CreateCommittedResource(
 			&heapProps,
@@ -52,12 +52,6 @@ namespace Aether
 				nullptr,
 				IID_PPV_ARGS(&m_IntermediateUploadHeap)
 			));
-		}
-
-		// Permanently map CBs as this will be updated every frame
-		if (desc.m_Type == eBufferType::kConstant)
-		{
-			m_Resource->Map(0, nullptr, &m_CBMapping);
 		}
 	}
 
@@ -85,27 +79,25 @@ namespace Aether
 
 	void BufferDX12::Upload(const void* data, size_t size, size_t offset)
 	{
-		// Make sure to update our desc first.
-		m_Desc.m_Data = data;
 
-		// Constant buffers need 256 byte alignment
 		if (m_Desc.m_Type == eBufferType::kConstant)
-			m_Desc.m_SizeInBytes = AETHER_ALIGN256(size);
-		else
-			m_Desc.m_SizeInBytes = size;
-
+		{
+			// DX12 backend will use a special linear allocator to handle constant buffers.
+			return;
+		}
+			
 		// If the upload heap exists, this means we are using the DEFAULT heap path. This requires updating subresources via an intermediate upload heap
 		if (m_IntermediateUploadHeap)
 		{
 			// Copy to GPU from intermediate upload heap via UpdateSubresources
 			D3D12_SUBRESOURCE_DATA subData{};
-			subData.pData = m_Desc.m_Data;
-			subData.RowPitch = m_Desc.m_SizeInBytes;
-			subData.SlicePitch = m_Desc.m_SizeInBytes;
+			subData.pData = data;
+			subData.RowPitch = size;
+			subData.SlicePitch = size;
 
 			// This command will put the resource into state COPY_DEST
 			UpdateSubresources(m_CmdList, m_Resource, m_IntermediateUploadHeap, 0, 0, 1, &subData);
-			
+
 			// Transition the resource now that it has been uploaded
 			D3D12_RESOURCE_STATES finalState = GetFinalState(m_Desc.m_Type);
 
@@ -115,21 +107,13 @@ namespace Aether
 		else // If there is no intermediate upload heap, that means our buffer is already an upload heap, and we can map from CPU to GPU directly.
 		{
 			// Skip intermediate upload heap and GPU copy: map & memcpy directly from CPU
-
-			if (m_Desc.m_Type == eBufferType::kConstant)
-			{
-				// DX12 backend will use a special linear allocator to handle constant buffers.
-			}
-			else
-			{
-				void* mapped = nullptr;
-				m_Resource->Map(0, nullptr, &mapped);
-				memcpy(static_cast<uint8_t*>(mapped) + offset, m_Desc.m_Data, m_Desc.m_SizeInBytes);
-				m_Resource->Unmap(0, nullptr);
-			}
-
+			void* mapped = nullptr;
+			m_Resource->Map(0, nullptr, &mapped);
+			memcpy(static_cast<uint8_t*>(mapped) + offset, data, size);
+			m_Resource->Unmap(0, nullptr);
 		}
 	}
+
 	void BufferDX12::SetName(const WCHAR* name)
 	{
 		m_Resource->SetName(name);

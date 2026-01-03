@@ -97,12 +97,6 @@ namespace Aether
         descriptorHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 		AETHER_HR_ASSERT(m_Device->CreateDescriptorHeap(&descriptorHeapDesc, IID_PPV_ARGS(&m_MainDescriptorHeap)));
 		m_DescriptorSize = m_Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-        
-		// Initialise our allocator for the CB
-		size_t cbSliceSize = sizeof(PerDrawData);
-		size_t maxDrawsPerFrame = 1024; // adjust as needed
-		m_CBAllocator.Init(m_Device.Get(), cbSliceSize, maxDrawsPerFrame);
-
 
 		//
 		//  ImGui Descriptor Heap - Reuse same description
@@ -221,19 +215,13 @@ namespace Aether
 
 	void RendererDX12::Submit(const DrawCommand& cmd, ConstantBufferView* cbv)
 	{
-		// Create CBV this frame
-		//CreateConstBufView(cbv);
-		
 		PerDrawData cbData{};
 		cbData.m_ModelMatrix = cmd.m_ModelMatrix;
 		cbData.m_Colour = cmd.m_SolidColour;
 
 		CreateConstBufView(cbv, cbData);
 
-		
-
 		Render(cmd.m_VBV, cmd.m_IBV);
-
 	}
 
 	void RendererDX12::Render(VertexBufferView* vbv, IndexBufferView* ibv)
@@ -477,7 +465,18 @@ namespace Aether
 
 	Buffer* RendererDX12::CreateBuffer(const BufferDesc& desc)
 	{
-		return new BufferDX12(desc, m_Device.Get(), m_CmdList.Get());
+		BufferDX12* buffer = new BufferDX12(desc, m_Device.Get(), m_CmdList.Get());
+
+		// Set up linear allocator if this is a constant buffer
+		if (desc.m_Type == eBufferType::kConstant)
+		{
+			// Initialise our allocator for the CB
+			size_t cbSliceSize = sizeof(PerDrawData);
+			size_t maxDrawsPerFrame = 1024;
+			m_CBAllocator.Init(buffer->GetResource(), cbSliceSize, maxDrawsPerFrame);
+		}
+
+		return static_cast<Buffer*>(buffer);
 	}
 
 	void RendererDX12::FinalizeUploads()
