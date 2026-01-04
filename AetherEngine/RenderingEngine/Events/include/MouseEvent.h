@@ -62,21 +62,39 @@ namespace Aether
 		float m_ScrollX, m_ScrollY;
 	};
 
+	class AETHER_API MouseLockEvent : public MouseEvent
+	{
+	public:
+		MouseLockEvent(bool lock)
+			: m_bLock(lock) {
+		}
+
+		bool ShouldLock() const { return m_bLock; }
+
+		EVENT_CLASS_TYPE(kMouseLock)
+	private:
+		bool m_bLock;
+	};
+
+	//
 	// Another abstract-y layer for button events
+	//
+
 	class AETHER_API MouseButtonEvent : public MouseEvent
 	{
 	public:
-		inline int GetMouseButton() const { return m_Button; }
+		inline uint8_t GetMouseButton() const { return m_Button; }
 	protected:
-		MouseButtonEvent(const int button)
+		MouseButtonEvent(const uint8_t button)
 			: m_Button(button), MouseEvent() {}
-		int m_Button;
+		uint8_t m_Button;
 	};
+
 
 	class AETHER_API MouseClickEvent : public MouseButtonEvent
 	{
 	public:
-		MouseClickEvent(int button)
+		MouseClickEvent(uint8_t button)
 			: MouseButtonEvent(button) {}
 
 		std::string ToString() const override
@@ -92,7 +110,7 @@ namespace Aether
 	class AETHER_API MouseClickReleaseEvent : public MouseButtonEvent
 	{
 	public:
-		MouseClickReleaseEvent(int button)
+		MouseClickReleaseEvent(uint8_t button)
 			: MouseButtonEvent(button) {}
 
 		std::string ToString() const override
@@ -104,4 +122,5 @@ namespace Aether
 
 		EVENT_CLASS_TYPE(kMouseClickRelease)
 	};
+
 }

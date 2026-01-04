@@ -5,6 +5,9 @@
 #include "CameraController.h"
 #include "Camera.h"
 #include "Input.h"
+#include "CoreApp.h"
+#include "Event.h"
+#include "MouseEvent.h"
 //===============================================================================
 
 namespace Aether
@@ -17,6 +20,42 @@ namespace Aether
 
 		// Press R to reset
 		HandleReset();
+	}
+
+	void CameraController::OnEvent(Event& e)
+	{
+		EventDispatcher dispatcher(e);
+
+		// We don't have a proper event bus / engine context yet, so emitting the mouse lock event here directly would unfortunately go nowhere
+		// Instead, dispatch a mouse click event and setup the lock event inside there
+		dispatcher.Dispatch<MouseClickEvent>( [this] (MouseClickEvent& e)
+		{
+			MouseCode mb = (MouseCode)e.GetMouseButton();
+			if ( mb == MouseCode::kLMB)
+			{
+				MouseLockEvent mlEvent(true);
+				// Use the App singleton for now which will dispatch the actual lock event and pass it to the window class
+				Application::Get().OnEvent(mlEvent);
+				m_bRotatingWithMouse = true;
+
+				// Establish starting mouse position to avoid jumps
+				m_LastMousePos = Input::GetMousePosition(); 
+			}
+			return false;
+		});
+
+		// Remember to unlock when click is released
+		dispatcher.Dispatch<MouseClickReleaseEvent>( [this] (MouseClickReleaseEvent& e)
+		{
+			MouseCode mb = (MouseCode)e.GetMouseButton();
+			if (mb == MouseCode::kLMB)
+			{
+				MouseLockEvent mlEvent(false);
+				Application::Get().OnEvent(mlEvent);
+				m_bRotatingWithMouse = false;
+			}
+			return false;
+		});
 	}
 
 	void CameraController::HandleReset()
@@ -71,6 +110,7 @@ namespace Aether
 	{
 		float yaw = 0.f;
 		float pitch = 0.f;
+		float roll = 0.f;
 
 		if (Input::IsKeyPressed(KeyCode::kLeft))
 			yaw -= m_KeyLookSens * deltaTime;
@@ -81,7 +121,13 @@ namespace Aether
 		if (Input::IsKeyPressed(KeyCode::kDown))
 			pitch += m_KeyLookSens * deltaTime;
 
-		if (yaw == 0 && pitch == 0)
+		if (Input::IsKeyPressed(KeyCode::kQ))
+			roll -= m_KeyLookSens * deltaTime;
+		if (Input::IsKeyPressed(KeyCode::kE))
+			roll += m_KeyLookSens * deltaTime;
+
+
+		if (yaw == 0 && pitch == 0 && roll == 0)
 		{
 			return;
 		}
@@ -89,28 +135,19 @@ namespace Aether
 		// Construct magic quats - use World up to avoid drift
 		glm::quat qYaw = glm::angleAxis(yaw, m_Camera.GetWorldUp());
 		glm::quat qPitch = glm::angleAxis(pitch, m_Camera.GetRight());
+		glm::quat qRoll = glm::angleAxis(roll, m_Camera.GetForward());
 
-		m_Camera.Rotate(qYaw * qPitch);
+		m_Camera.Rotate(qYaw * qPitch * qRoll);
 	}
 
 	void CameraController::HandleMouseRotation(float deltaTime)
 	{
-		if (!Input::IsMouseButtonPressed(MouseCode::kLMB))
+		if (!m_bRotatingWithMouse)
 		{
-			m_bRotatingWithMouse = false;
 			return;
 		}
 
 		glm::vec2 mousePos = Input::GetMousePosition();
-
-		if (!m_bRotatingWithMouse)
-		{
-			// First frame of drag, establish reference point and return early this one time
-			m_LastMousePos = mousePos;
-			m_bRotatingWithMouse = true;
-			return;
-		}
-
 		glm::vec2 delta = mousePos - m_LastMousePos;
 		m_LastMousePos = mousePos;
 

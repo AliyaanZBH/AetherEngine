@@ -25,7 +25,11 @@ public:
 		delete m_CameraController;
 	}
 
-	void OnEvent(Aether::Event& event) override { /*AETHER_TRACE("{0}", event);*/ }
+	void OnEvent(Aether::Event& event) override
+	{
+		/*AETHER_TRACE("{0}", event);*/
+		m_CameraController->OnEvent(event);
+	}
 
 	void Update() override 
 	{

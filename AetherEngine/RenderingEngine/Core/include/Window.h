@@ -21,6 +21,8 @@ namespace Aether
 		static void Poll();
 		static void SetEventCallback(const EventCallbackFn& callback);
 
+		static void SetCursorLocked(const bool lock);
+
 		static bool ShouldClose();
 		static int GetWidth();
 		static int GetHeight();

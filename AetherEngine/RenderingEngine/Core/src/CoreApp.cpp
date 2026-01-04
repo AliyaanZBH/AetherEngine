@@ -17,6 +17,7 @@
 
 #include "ImGuiLayer.h"
 #include "AppEvent.h"
+#include "MouseEvent.h"
 //===============================================================================
 namespace Aether
 {
@@ -101,13 +102,28 @@ namespace Aether
     void Application::OnEvent(Event& event)
     {
         // Just print the event for now
-       // AETHER_CORE_TRACE("{0}", event);
+        // AETHER_CORE_TRACE("{0}", event);
 
         // Handle window resize in DirectX
         EventDispatcher dispatcher(event);
 
-        // This magic function does a bit of type checking to ensure that only the correct event gets dispatched
+        // This magic function does a bit of static type checking to ensure that only the correct event gets fired by the correct layer
         dispatcher.Dispatch<WindowResizeEvent>(BIND_APP_FN(OnWindowResize));
+
+        // Handle mouse locking
+        dispatcher.Dispatch<MouseLockEvent>([this] (MouseLockEvent& e)
+        {
+            Window::SetCursorLocked(e.ShouldLock());
+            return true;
+        });
+
+        // Also ensure that when focus is lost, the mouse is always unlocked so it never gets stuck off screen
+        dispatcher.Dispatch<WindowFocusEvent>([this] (WindowFocusEvent& e)
+        {
+            if (!e.IsFocused())
+                Window::SetCursorLocked(false);
+            return false;   // Return false as we might have other things that want to handle this event too
+        });
 
         // Pass event to layer stack to ensure event fires on correct layer
         m_LayerStack.HandleEvent(event);

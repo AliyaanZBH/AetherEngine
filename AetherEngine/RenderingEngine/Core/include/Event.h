@@ -18,7 +18,7 @@ namespace Aether
 	{
 		None = 0,
 		kKeyPressed, kKeyReleased, kKeyTyped,
-		kMouseMove, kMouseClick, kMouseClickRelease, kMouseScroll,
+		kMouseMove, kMouseClick, kMouseClickRelease, kMouseScroll, kMouseLock,
 		kWindowClose, kWindowMoved, kWindowResize, kWindowFocus, kWindowLostFocus,
 		kAppUpdate, kAppRender, kAppTick
 	};
@@ -90,7 +90,7 @@ namespace Aether
 		template <typename T>
 		bool Dispatch(EventFn<T> func)
 		{
-			// Little type check to ensure that we're firing off a valid event
+			// Little type check to ensure that we're firing off a valid event. This is uses a static type so there's no RTTI needed!
 			if (m_Event.GetEventType() == T::GetStaticType())
 			{
 				// Fire event and store result in the handled flag
@@ -101,11 +101,9 @@ namespace Aether
 																				// 	Second, this Event * gets casted to a T * using (T*) (now it's type T*).
 																				// 	Last, this T* gets dereferenced into a T with* (object from second step).
 				return true;												// In effect, we have done this : 	func(static_cast<T&>(m_Event)) - but in a way that will actually compile with some naught C hacks
-
 			}
 			return false;	// Return false if we hae a type mismatch
 		}
-
 	private:
 		Event& m_Event;
 	};

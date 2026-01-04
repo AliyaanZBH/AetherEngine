@@ -10,6 +10,7 @@
 namespace Aether
 {
 	class Camera;
+	class Event;
 
 	class AETHER_API CameraController
 	{
@@ -18,7 +19,7 @@ namespace Aether
 			: m_Camera(camera) {}
 
 		void Update(float deltaTime);
-
+		void OnEvent(Event& e);
 	private:
 
 		void HandleKeyboardMovement(float deltaTime);
