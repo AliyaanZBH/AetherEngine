@@ -6,6 +6,8 @@
 #include "CoreApp.h"
 #include "Log.h"
 #include "Input.h"
+#include "AetherTime.h"
+#include "CameraController.h"
 #include "Renderer.h"
 #include "Drawing.h"
 

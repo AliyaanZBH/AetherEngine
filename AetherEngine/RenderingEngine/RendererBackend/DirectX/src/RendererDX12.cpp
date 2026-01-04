@@ -219,7 +219,7 @@ namespace Aether
 		cbData.m_ModelMatrix = cmd.m_ModelMatrix;
 		cbData.m_Colour = cmd.m_SolidColour;
 
-		CreateConstBufView(cbv, cbData);
+		CreatePerDrawConstBufView(cbv, cbData);
 
 		Render(cmd.m_VBV, cmd.m_IBV);
 	}
@@ -265,6 +265,7 @@ namespace Aether
 		// Update stored windata values and set flag so that we resize at a safe point in our render pipeline.
 		m_WinData.m_ClientWidth = newWidth;
 		m_WinData.m_ClientHeight = newHeight;
+		UpdateViewportAndScissor();
 		m_bNeedsResize = true;
 	}
 
@@ -340,17 +341,16 @@ namespace Aether
 		return AETHER_OK;
 	}
 
-
-	void RendererDX12::CreateConstBufView(ConstantBufferView* cbv, PerDrawData& cbData)
+	void RendererDX12::CreatePerDrawConstBufView(ConstantBufferView* cbv, PerDrawData& cbData)
 	{
 		BufferDX12* dxBuf = static_cast<BufferDX12*>(cbv->m_Buffer);
 
-		D3D12_GPU_VIRTUAL_ADDRESS cbGPUAddr = m_CBAllocator.Alloc(&cbData);
+		D3D12_GPU_VIRTUAL_ADDRESS cbGPUAddr = m_PerDrawCBAllocator.Alloc(&cbData);
 		D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc{};
 		cbvDesc.BufferLocation = cbGPUAddr;
 		cbvDesc.SizeInBytes = static_cast<UINT>(AETHER_ALIGN256(sizeof(PerDrawData)));
 
-		uint8_t currentDescriptorIndex = m_CBAllocator.GetIndex();
+		uint8_t currentDescriptorIndex = m_PerDrawCBAllocator.GetIndex();
 		CD3DX12_CPU_DESCRIPTOR_HANDLE handle(
 			m_MainDescriptorHeap->GetCPUDescriptorHandleForHeapStart(),
 			currentDescriptorIndex,
@@ -359,19 +359,20 @@ namespace Aether
 
 		m_Device->CreateConstantBufferView(&cbvDesc, handle);
 
+		// Sig and state need to be set before the next commands
 		m_CmdList->SetPipelineState(m_PipelineStateObject);
-		m_CmdList->SetGraphicsRootSignature(m_RootSig);                             // Set the root signature
+		m_CmdList->SetGraphicsRootSignature(m_RootSig);                         
 
 		// Bind descriptor to b0 in our root signature
 		ID3D12DescriptorHeap* heaps[] = { m_MainDescriptorHeap.Get() };
 		m_CmdList->SetDescriptorHeaps(1, heaps);
-		m_CmdList->SetGraphicsRootDescriptorTable(0, CD3DX12_GPU_DESCRIPTOR_HANDLE(
+		m_CmdList->SetGraphicsRootDescriptorTable(1, CD3DX12_GPU_DESCRIPTOR_HANDLE(
 			m_MainDescriptorHeap->GetGPUDescriptorHandleForHeapStart(),
 			currentDescriptorIndex,
 			m_DescriptorSize
 		));
 
-		m_CBAllocator.IncrementIndex();
+		m_PerDrawCBAllocator.IncrementIndex();
 	}
 
 	D3D12_VERTEX_BUFFER_VIEW RendererDX12::CreateVertBufView(VertexBufferView* vbv)
@@ -467,16 +468,28 @@ namespace Aether
 	{
 		BufferDX12* buffer = new BufferDX12(desc, m_Device.Get(), m_CmdList.Get());
 
-		// Set up linear allocator if this is a constant buffer
-		if (desc.m_Type == eBufferType::kConstant)
+		if (desc.m_Type == eBufferType::kConstantPerDraw)
 		{
 			// Initialise our allocator for the CB
-			size_t cbSliceSize = sizeof(PerDrawData);
+			size_t cbSliceSize = desc.m_SizeInBytes;
 			size_t maxDrawsPerFrame = 1024;
-			m_CBAllocator.Init(buffer->GetResource(), cbSliceSize, maxDrawsPerFrame);
+			m_PerDrawCBAllocator.Init(buffer->GetResource(), cbSliceSize, maxDrawsPerFrame);
 		}
 
 		return static_cast<Buffer*>(buffer);
+	}
+
+	void RendererDX12::BindFrameConstants(const ConstantBufferView* cbv)
+	{
+		BufferDX12* dxBuf = static_cast<BufferDX12*>(cbv->m_Buffer);
+
+		D3D12_GPU_VIRTUAL_ADDRESS gpuAddr = dxBuf->GetResource()->GetGPUVirtualAddress();
+		
+		// Sig and state need to be set before the next command
+		m_CmdList->SetPipelineState(m_PipelineStateObject);
+		m_CmdList->SetGraphicsRootSignature(m_RootSig);
+		
+		m_CmdList->SetGraphicsRootConstantBufferView(0, gpuAddr);
 	}
 
 	void RendererDX12::FinalizeUploads()
@@ -566,17 +579,22 @@ namespace Aether
 	{
 		AETHER_RESULT ar = AETHER_OK;
 
-		// Create descriptor table to describe the range of descriptors inside our main descriptor heap
-		// For now, create a range that represents a single CBV at register b0
-		CD3DX12_DESCRIPTOR_RANGE cbvRange;
-		cbvRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0);
+		CD3DX12_ROOT_PARAMETER rootParams[2] = {};
+		// Init per-frame CB as a root CBV at b0
+		rootParams[0].InitAsConstantBufferView(0, 0);
 
-		CD3DX12_ROOT_PARAMETER rootParam;
-		rootParam.InitAsDescriptorTable(1, &cbvRange);
+		// Init per-draw CB as a descriptor table at b1
+
+		// Create descriptor table to describe the range of descriptors inside our main descriptor heap
+		// For now, create a range that represents a single CBV at register 1
+		CD3DX12_DESCRIPTOR_RANGE cbvRange;
+		cbvRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 1);
+
+		rootParams[1].InitAsDescriptorTable(1, &cbvRange);
 
 		// Create root signature - now using root params
 		CD3DX12_ROOT_SIGNATURE_DESC rootDesc = {};
-		rootDesc.Init(1, &rootParam, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+		rootDesc.Init(2, rootParams, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
 		// For error checking
 		ID3DBlob* signature;
@@ -828,7 +846,7 @@ namespace Aether
 		}
 
 		// Clear our allocator offsets and indices too
-		m_CBAllocator.Reset();
+		m_PerDrawCBAllocator.Reset();
 		return ar;
 	}
 

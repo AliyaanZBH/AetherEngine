@@ -4,6 +4,7 @@
 //===============================================================================
 #include "CoreApp.h"
 
+#include "AetherTime.h"
 #include "Log.h"
 #include "Input.h"
 #include "Renderer.h"
@@ -12,8 +13,11 @@
 #include "WindowContext.h"
 #include "GraphicsContext.h"
 
+#include "Camera.h"
+
 #include "ImGuiLayer.h"
 #include "AppEvent.h"
+#include "MouseEvent.h"
 //===============================================================================
 namespace Aether
 {
@@ -31,7 +35,7 @@ namespace Aether
         s_Instance = this;
 
         // Select rendering API
-        GraphicsContext::SelectRenderAPI(eRenderAPI::kDX12);
+        GraphicsContext::SelectRenderAPI(eRenderAPI::kOpenGL);
 
         // Later in development, this will be read from a JSON config file so that the user can save and load settings, along with manually changing it from a GUI inside the application!
         WindowContext::WinData wd =
@@ -47,7 +51,17 @@ namespace Aether
         // Initialise high-level rendering API, which in turn sets up the low-level backend with a default shader pipeline
         Renderer::Initialise();
 
-		// Setup ImGui layer for the renderer too
+        // Create a camera too
+        m_Camera = new Camera(eProjectionType::kPerspective);
+
+        // Set aspect ratio
+        const float aspect = (float)wd.m_ClientWidth / (float)wd.m_ClientHeight;
+        m_Camera->SetAspectRatio(aspect);
+
+        // Move it back a tad
+        m_Camera->SetPosition({ 0.f, 0.f, -1.f });
+       
+		// Setup ImGui layer
 		m_ImGuiLayer = new ImGuiLayer(GraphicsContext::GetRenderAPI());
 
 		// Push the ImGui layer into the stack at the overlay point
@@ -71,21 +85,44 @@ namespace Aether
 
     bool Application::OnWindowResize(WindowResizeEvent& e)
     {
-		// Let the renderer handle it's specific steps for resizing (recreating buffers, contexts, etc.)
-        Renderer::Resize(e.GetWidth(),e.GetHeight());
+        uint16_t width = e.GetWidth();
+        uint16_t height = e.GetHeight();
+
+		// Let the renderer handle specific steps for resizing (recreating buffers, contexts, etc.)
+        Renderer::Resize(width, height);
+
+        // Also update camera aspect ratio
+        const float aspect = (float)width / height;
+        m_Camera->SetAspectRatio(aspect);
+
         return true;
     }
 
     void Application::OnEvent(Event& event)
     {
         // Just print the event for now
-       // AETHER_CORE_TRACE("{0}", event);
+        // AETHER_CORE_TRACE("{0}", event);
 
         // Handle window resize in DirectX
         EventDispatcher dispatcher(event);
 
-        // This magic function does a bit of type checking to ensure that only the correct event gets dispatched
+        // This magic function does a bit of static type checking to ensure that only the correct event gets fired by the correct layer
         dispatcher.Dispatch<WindowResizeEvent>(BIND_APP_FN(OnWindowResize));
+
+        // Handle mouse locking
+        dispatcher.Dispatch<MouseLockEvent>([this] (MouseLockEvent& e)
+        {
+            Window::SetCursorLocked(e.ShouldLock());
+            return true;
+        });
+
+        // Also ensure that when focus is lost, the mouse is always unlocked so it never gets stuck off screen
+        dispatcher.Dispatch<WindowFocusEvent>([this] (WindowFocusEvent& e)
+        {
+            if (!e.IsFocused())
+                Window::SetCursorLocked(false);
+            return false;   // Return false as we might have other things that want to handle this event too
+        });
 
         // Pass event to layer stack to ensure event fires on correct layer
         m_LayerStack.HandleEvent(event);
@@ -100,8 +137,10 @@ namespace Aether
         // The game loop!
         while (!Window::ShouldClose())
         {
+            Time::Update();
+
             // Start a new rendering frame!
-            Renderer::BeginFrame();
+            Renderer::BeginFrame(*m_Camera);
 
             // Handle window events here (e.g., using GLFW or another backend window library)
             Window::Poll();
@@ -134,5 +173,4 @@ namespace Aether
         // Return the OK!
         return AETHER_OK;
     }
-
 };

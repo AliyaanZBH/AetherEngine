@@ -13,9 +13,10 @@ namespace Aether
 	{
 		switch (usage)
 		{
-			case eBufferType::kVertex:		return D3D11_BIND_VERTEX_BUFFER;
-			case eBufferType::kIndex:		return D3D11_BIND_INDEX_BUFFER;
-			case eBufferType::kConstant:	return D3D11_BIND_CONSTANT_BUFFER;
+			case eBufferType::kVertex:				return D3D11_BIND_VERTEX_BUFFER;
+			case eBufferType::kIndex:				return D3D11_BIND_INDEX_BUFFER;
+			case eBufferType::kConstantPerFrame:
+			case eBufferType::kConstantPerDraw:		return D3D11_BIND_CONSTANT_BUFFER;
 
 			default:
 				AETHER_ASSERT(false, "Unsupported usage for DX11");
@@ -51,10 +52,6 @@ namespace Aether
 
 	void BufferDX11::Upload(const void* data, size_t size, size_t offset)
 	{
-		// Make sure to update our desc first.
-		//m_Desc.m_Data = data;
-		//m_Desc.m_SizeInBytes = size;
-
 		// Check if our buffer is able to be written to by the CPU
 		if (m_Desc.m_CPUVisible)
 		{

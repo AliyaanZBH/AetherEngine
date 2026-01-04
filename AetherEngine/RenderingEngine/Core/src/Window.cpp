@@ -51,6 +51,11 @@ namespace Aether
 		s_WindowBackend->SetEventCallback(callback);
 	}
 
+	void Window::SetCursorLocked(const bool lock)
+	{
+		s_WindowBackend->SetCursorLocked(lock);
+	}
+
 
 	bool Window::ShouldClose()
 	{

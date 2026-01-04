@@ -22,6 +22,7 @@ namespace Aether
 		virtual void Terminate() = 0;
 
 		virtual void SetEventCallback(const EventCallbackFn& callback) = 0;
+		virtual void SetCursorLocked(const bool lock) = 0;
 
 		// This will return a native handle (HWND on Windows or a GLFW window handle on Linux)
 		virtual void* GetNativeWindowHandle() const = 0;

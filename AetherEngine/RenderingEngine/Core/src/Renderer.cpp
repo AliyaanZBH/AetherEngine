@@ -1,5 +1,3 @@
-#include "Renderer.h"
-#include "Renderer.h"
 //===============================================================================
 // desc: High-level API for applications using Aether to render games with ease
 // auth: Aliyaan Zulfiqar
@@ -13,6 +11,7 @@
 #include "GraphicsCommon.h"
 #include "WindowContext.h"
 #include "Window.h"
+#include "Camera.h"
 
 #ifdef USE_OPENGL
 #include "RendererOpenGL.h"
@@ -36,10 +35,13 @@ namespace Aether
     std::unique_ptr<IRendererBackend> Renderer::s_RendererBackend = nullptr;
     std::vector<DrawCommand> Renderer::s_CommandQueue = {};
 
-    // Buffer instances
+    // Constant buffer instances
+    Buffer* Renderer::s_PerFrameBuffer = nullptr;
+    ConstantBufferView Renderer::s_PerFrameCBView = {};
     Buffer* Renderer::s_PerDrawBuffer = nullptr;
-    ConstantBufferView Renderer::s_CBView = {};
+    ConstantBufferView Renderer::s_PerDrawCBView = {};
 
+    // Geometry buffer instances
     Buffer* Renderer::s_TriVertexBuffer = nullptr;
     Buffer* Renderer::s_TriIndexBuffer = nullptr;
     VertexBufferView* Renderer::s_TriVBView = nullptr;
@@ -110,21 +112,10 @@ namespace Aether
         // Reserve some space for our command queue up-front, to avoid re-allocations
         s_CommandQueue.reserve(128);
 
-        // Create a re-usable and generic constant buffer
-        BufferDesc conBufDesc;
-        conBufDesc.m_Type = eBufferType::kConstant;
-        conBufDesc.m_SizeInBytes = sizeof(PerDrawData);
-        conBufDesc.m_CPUVisible = true;
-       
-        // We'll crash in DX if we try to create a constant buffer with empty data, so supply basic identity data for now
-        PerDrawData tmpData;
-        conBufDesc.m_Data = &tmpData;
+        // Create constant buffers for per-frame and per-draw data
+        s_PerFrameBuffer = CreateConstantBuffer<PerFrameData>(eBufferType::kConstantPerFrame, &s_PerFrameCBView, 0);
+        s_PerDrawBuffer = CreateConstantBuffer<PerDrawData>(eBufferType::kConstantPerDraw, &s_PerDrawCBView, 1);
 
-        s_PerDrawBuffer = s_RendererBackend->CreateBuffer(conBufDesc);
-        // Fill in the view too
-        s_CBView.m_Buffer = s_PerDrawBuffer;
-        s_CBView.m_Size = s_PerDrawBuffer->GetSize();
-        s_CBView.m_Slot = 0u;
 	}
 
     void Renderer::Terminate()
@@ -144,9 +135,17 @@ namespace Aether
         s_RendererBackend->Resize(width, height);
     }
 
-    void Renderer::BeginFrame()
+    void Renderer::BeginFrame(const Camera& camera)
     {
+        // Clear frame and ensure we are safe to continue rendering and submitting data to the GPU
         s_RendererBackend->ClearFrame();
+
+        // Now upload per-frame data to the GPU
+        PerFrameData data;
+        data.m_ViewProj = camera.GetViewProj();
+
+        s_PerFrameBuffer->Upload(&data, sizeof(PerFrameData));
+        s_RendererBackend->BindFrameConstants(&s_PerFrameCBView);
     }
 
     void Renderer::Render()
@@ -209,6 +208,7 @@ namespace Aether
 
     void Renderer::Dispatch()
     {
+
         for (DrawCommand& cmd : s_CommandQueue)
         {
             // Update constant buffer with data for this draww
@@ -217,9 +217,9 @@ namespace Aether
             data.m_Colour = cmd.m_SolidColour;
             s_PerDrawBuffer->Upload(&data, sizeof(PerDrawData));
 
-            // Submit the view on this buffer together with the command
-            s_RendererBackend->Submit(cmd, &s_CBView);
-            
+            // Submit the view on this buffer together with the command;
+            s_RendererBackend->Submit(cmd, &s_PerDrawCBView);
+
             // Maybe save this for render passes like Opaque and Transparent?
             //switch (cmd.m_Type)
             //{
@@ -228,7 +228,7 @@ namespace Aether
             //        s_RendererBackend->Submit(cmd);
             //    }
             //}
-        }
+        };
 
 
     }
@@ -349,6 +349,28 @@ namespace Aether
         s_QuadIBView->m_Count = 6;
         s_QuadIBView->m_IndexSize = sizeof(unsigned int);
         s_QuadIBView->m_Offset = 0;
+    }
+
+    template<typename T>
+    Buffer* Renderer::CreateConstantBuffer( const eBufferType type, ConstantBufferView* cbv, uint8_t slot)
+    {
+        // Create a re-usable and generic constant buffer
+        BufferDesc conBufDesc;
+        conBufDesc.m_Type = type;
+        conBufDesc.m_SizeInBytes = sizeof(T);
+        conBufDesc.m_CPUVisible = true;
+
+        // We'll crash in DX if we try to create a constant buffer with empty data, so supply basic identity data for now
+        T tmpData = {};
+        conBufDesc.m_Data = &tmpData;
+
+        Buffer* buf = s_RendererBackend->CreateBuffer(conBufDesc);
+        // Fill in the view too
+        cbv->m_Buffer = buf;
+        cbv->m_Size = buf->GetSize();
+        cbv->m_Slot = slot;
+        
+        return buf;
     }
 
     void Renderer::CreateBackendPipeline()

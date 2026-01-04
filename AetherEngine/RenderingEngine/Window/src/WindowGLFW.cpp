@@ -117,6 +117,15 @@ namespace Aether
             glfwSetWindowShouldClose(window, GLFW_TRUE);
         });
 
+        glfwSetWindowFocusCallback(m_pWindow, [] (GLFWwindow* window, int focused)
+        {
+            WindowContext::WinData& data = *(WindowContext::WinData*)glfwGetWindowUserPointer(window);
+
+            WindowFocusEvent event(focused);
+            data.m_EventCallback(event);
+        });
+
+
         // Key Callback
         //
         glfwSetKeyCallback(m_pWindow, [](GLFWwindow* window, int key, int scancode, int action, int mods)
@@ -197,6 +206,11 @@ namespace Aether
     {
         // Return a flag that is set when the user attempts to close the window, but the window isn't actually closed yet.
         return glfwWindowShouldClose(m_pWindow);
+    }
+
+    inline void WindowGLFW::SetCursorLocked(const bool lock)
+    {
+        glfwSetInputMode(m_pWindow, GLFW_CURSOR, lock ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL);
     }
 
     void WindowGLFW::Terminate()

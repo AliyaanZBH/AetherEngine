@@ -11,11 +11,13 @@ set(SRC
     Core/src/CoreApp.cpp 
 
     Core/src/Log.cpp
+    Core/src/Camera.cpp
     Core/src/Window.cpp
     Core/src/Renderer.cpp
     Core/src/LayerStack.cpp
 
     Input/src/Input.cpp
+    Input/src/CameraController.cpp
 
     Window/src/WindowGLFW.cpp
 
@@ -55,9 +57,11 @@ set(INCLUDE
     # Core
     Core/include/Aether.h
     Core/include/Core.h
-    Core/include/CoreApp.h
     Core/include/AetherUtils.h
+    Core/include/CoreApp.h
+    Core/include/Camera.h
     Core/include/Log.h
+    Core/include/AetherTime.h
     Core/include/Event.h
     Core/include/Layer.h
     Core/include/LayerStack.h
@@ -67,7 +71,7 @@ set(INCLUDE
     # Input
     Input/include/InputCodes.h
     Input/include/Input.h
-
+    Input/include/CameraController.h
 
 
     # Interfaces

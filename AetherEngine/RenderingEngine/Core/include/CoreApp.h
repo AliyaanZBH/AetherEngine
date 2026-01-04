@@ -13,6 +13,7 @@ namespace Aether
 {
 	class ImGuiLayer;
 	class WindowResizeEvent;
+	class Camera;
 
 	class AETHER_API Application
 	{
@@ -30,9 +31,13 @@ namespace Aether
 		void PushOverlay(Layer* overlay);
 
 		inline static Application& Get() { return *s_Instance; }
+
+		inline Camera* GetCamera() { return m_Camera; }
 	private:
 
 		bool OnWindowResize(WindowResizeEvent& e);
+
+		Camera* m_Camera = nullptr;
 
 		// Layers all get owned by the layer stack, so we can create this as a raw pointer
 		ImGuiLayer* m_ImGuiLayer = nullptr;

@@ -34,6 +34,7 @@ namespace Aether
 		void Terminate() override;
 
 		Buffer* CreateBuffer(const BufferDesc& desc) override;
+		void BindFrameConstants(const ConstantBufferView* cbv) override;
 		void FinalizeUploads() override;
 
 		void* GetNativeDevice() override { return m_Device.Get(); }
@@ -81,7 +82,7 @@ namespace Aether
 		//
 
 		
-		void CreateConstBufView(ConstantBufferView* cbv, PerDrawData& cbData);
+		void CreatePerDrawConstBufView(ConstantBufferView* cbv, PerDrawData& cbData);
 		D3D12_VERTEX_BUFFER_VIEW CreateVertBufView(VertexBufferView* vbv);
 		D3D12_INDEX_BUFFER_VIEW CreateIdxBufView(IndexBufferView* ibv);
 
@@ -126,7 +127,7 @@ namespace Aether
 
 		Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_MainDescriptorHeap;												// SRVs and now CBVs!
 		UINT m_DescriptorSize = 0u;																						// Descriptor size for our heap, used to map registers b0, b1, t0 etc. 
-		LinearAllocatorDX12 m_CBAllocator;																				// Small linear allocator for constant buffers
+		LinearAllocatorDX12 m_PerDrawCBAllocator;																		// Small linear allocator for constant buffers that update per draw (materials, model matrix etc)
 		
 		Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_ImGuiDescriptorHeap;												// Dedicated heap ImGui (mainly just for SRVs)
 		static inline ImGuiExampleDescriptorHeapAllocator m_SRVHeapAllocator;											// SRV allocator for ImGui - currently using the stock example one

@@ -32,6 +32,21 @@ private:
 	uint16_t m_Width, m_Height;
 	};
 
+	class AETHER_API WindowFocusEvent : public Event
+	{
+	public:
+		WindowFocusEvent(bool focused)
+			: m_bFocused(focused) {}
+
+		inline const bool IsFocused() const { return m_bFocused; }
+
+		EVENT_CLASS_TYPE(kWindowFocus)
+		EVENT_CLASS_CATEGORY(kApplicationEvent)
+	private:
+		bool m_bFocused;
+	};
+
+
 	class AETHER_API WindowCloseEvent : public Event
 	{
 	public:

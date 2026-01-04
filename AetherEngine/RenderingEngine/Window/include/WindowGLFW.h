@@ -28,7 +28,7 @@ namespace Aether
 		}
 
 		inline void SetEventCallback(const EventCallbackFn& callback) override { m_WinData.m_EventCallback = callback; }
-
+		inline void SetCursorLocked(const bool lock) override;
 
 		void Terminate() override;
 

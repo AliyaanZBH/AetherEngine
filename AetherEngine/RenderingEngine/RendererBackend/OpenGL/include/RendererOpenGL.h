@@ -26,6 +26,7 @@ namespace Aether
 		void Terminate() override;
 
 		Buffer* CreateBuffer(const BufferDesc& desc) override;
+		void BindFrameConstants(const ConstantBufferView* cbv) override;
 
 		void* GetNativeDevice() override { return 0; }
 		void* GetNativeContext() override { return 0; }
@@ -35,6 +36,8 @@ namespace Aether
 		void EndImGuiRender() override;
 	private:
 		ShaderOpenGL* LoadShader(ShaderHandle vertHandle, ShaderHandle fragHandle);
+		
+		void BindConstantBuffer(const ConstantBufferView* cbv);
 
 		GLFWwindow* m_pWindow;
 
@@ -49,5 +52,6 @@ namespace Aether
 
 		BufferOpenGL* m_VertexBuffer = nullptr;
 		BufferOpenGL* m_IndexBuffer = nullptr;
+
 	};
 };

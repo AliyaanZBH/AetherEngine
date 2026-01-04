@@ -97,6 +97,17 @@ namespace Aether
 		return outLayout;
 	}
 
+	void RendererDX11::BindConstantBuffer(const ConstantBufferView* cbv)
+	{
+		uint32_t cbSlot = cbv->m_Slot;
+		ID3D11Buffer* conBuf = static_cast<BufferDX11*>(cbv->m_Buffer)->GetBuffer();
+
+		// Set constant buffer
+		m_pD3DImmediateContext->VSSetConstantBuffers(cbSlot, 1, &conBuf);
+		m_pD3DImmediateContext->PSSetConstantBuffers(cbSlot, 1, &conBuf);
+
+	}
+
 	void RendererDX11::CreatePipeline(const PipelineDesc& desc)
 	{
 		// Load shaders into temp objects
@@ -123,12 +134,8 @@ namespace Aether
 
 	void RendererDX11::Submit(const DrawCommand& cmd, ConstantBufferView* cbv)
 	{
-		uint32_t cbSlot = cbv->m_Slot;
-		ID3D11Buffer* conBuf = static_cast<BufferDX11*>(cbv->m_Buffer)->GetBuffer();
 
-		// Set constant buffer
-		m_pD3DImmediateContext->VSSetConstantBuffers(cbSlot, 1, &conBuf);
-		m_pD3DImmediateContext->PSSetConstantBuffers(cbSlot, 1, &conBuf);
+		BindConstantBuffer(cbv);
 
 		// DX11 is immediate mode so we can render immediately
 		Render(cmd.m_VBV, cmd.m_IBV);
@@ -216,6 +223,11 @@ namespace Aether
 	Buffer* RendererDX11::CreateBuffer(const BufferDesc& desc)
 	{
 		return new BufferDX11(desc, m_pD3DDevice.Get(), m_pD3DImmediateContext.Get());
+	}
+
+	void RendererDX11::BindFrameConstants(const ConstantBufferView* cbv)
+	{
+		BindConstantBuffer(cbv);
 	}
 
 	void RendererDX11::InitImGui()

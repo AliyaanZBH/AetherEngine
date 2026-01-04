@@ -13,8 +13,8 @@ namespace Aether
 		kNone,
 		kVertex,
 		kIndex ,
-		kConstant,
-		kUniform, 
+		kConstantPerFrame,
+		kConstantPerDraw,
 		kStorage, 
 		kTransferSrc,
 		kTransferDst
@@ -51,23 +51,23 @@ namespace Aether
 
 	struct AETHER_API VertexBufferView
 	{
-		Buffer*		m_Buffer;
-		uint32_t	m_Stride;
-		size_t		m_Offset;
+		Buffer*		m_Buffer = nullptr;
+		uint32_t	m_Stride = 0u;
+		size_t		m_Offset = 0u;
 	};
 
 	struct AETHER_API IndexBufferView
 	{
-		Buffer*		m_Buffer;
-		uint32_t	m_IndexSize; // 16 or 32 bit (currently only 32 bit supported)
-		uint32_t	m_Count;
-		size_t		m_Offset;
+		Buffer*		m_Buffer = nullptr;
+		uint32_t	m_IndexSize = 0u; // 16 or 32 bit (currently only 32 bit supported)
+		uint32_t	m_Count = 0u;
+		size_t		m_Offset = 0u;
 	};
 
 
 	struct AETHER_API ConstantBufferView
 	{
-		Buffer*		m_Buffer;
+		Buffer*		m_Buffer = nullptr;
 		uint32_t	m_Size = 0u;
 		uint32_t	m_Slot = 0u; // Which register is the CB getting bound to
 	};
