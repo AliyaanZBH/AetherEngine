@@ -11,14 +11,21 @@ namespace Aether
 	bool Input::IsKeyPressed(KeyCode key)
 	{
 		GLFWwindow* window = static_cast<GLFWwindow*>(Window::GetNativeWindowHandle());
-		bool state = glfwGetKey(window, static_cast<int32_t>(key));
+		int state = glfwGetKey(window, static_cast<int32_t>(key));
 		return state == GLFW_PRESS || state == GLFW_REPEAT;
 	}
+
+	//bool Input::IsKeyReleased(KeyCode key)
+	//{
+	//	GLFWwindow* window = static_cast<GLFWwindow*>(Window::GetNativeWindowHandle());
+	//	int state = glfwGetKey(window, static_cast<int32_t>(key));
+	//	return state == GLFW_RELEASE;
+	//}
 
 	bool Input::IsMouseButtonPressed(MouseCode button)
 	{
 		GLFWwindow* window = static_cast<GLFWwindow*>(Window::GetNativeWindowHandle());
-		bool state = glfwGetMouseButton(window, static_cast<int32_t>(button));
+		int state = glfwGetMouseButton(window, static_cast<int32_t>(button));
 		return state == GLFW_PRESS;
 	}
 

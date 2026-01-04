@@ -24,6 +24,8 @@ namespace Aether
 		void HandleKeyboardMovement(float deltaTime);
 		void HandleKeyboardRotation(float deltaTime);
 		void HandleMouseRotation(float deltaTime);
+		void HandleReset();
+
 
 		Camera& m_Camera;
 		

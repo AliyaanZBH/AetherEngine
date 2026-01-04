@@ -265,6 +265,7 @@ namespace Aether
 		// Update stored windata values and set flag so that we resize at a safe point in our render pipeline.
 		m_WinData.m_ClientWidth = newWidth;
 		m_WinData.m_ClientHeight = newHeight;
+		UpdateViewportAndScissor();
 		m_bNeedsResize = true;
 	}
 

@@ -14,6 +14,19 @@ namespace Aether
 		HandleKeyboardMovement(deltaTime);
 		HandleKeyboardRotation(deltaTime);
 		HandleMouseRotation(deltaTime);
+
+		// Press R to reset
+		HandleReset();
+	}
+
+	void CameraController::HandleReset()
+	{
+		//if (Input::IsKeyReleased(KeyCode::kR))
+		if (Input::IsKeyPressed(KeyCode::kR))
+		{
+			m_Camera.ResetRotation();
+			m_Camera.ResetPosition();
+		}
 	}
 		
 	void CameraController::HandleKeyboardMovement(float deltaTime)
@@ -73,8 +86,8 @@ namespace Aether
 			return;
 		}
 
-		// Construct magic quats
-		glm::quat qYaw = glm::angleAxis(yaw, m_Camera.GetUp());
+		// Construct magic quats - use World up to avoid drift
+		glm::quat qYaw = glm::angleAxis(yaw, m_Camera.GetWorldUp());
 		glm::quat qPitch = glm::angleAxis(pitch, m_Camera.GetRight());
 
 		m_Camera.Rotate(qYaw * qPitch);
@@ -105,7 +118,7 @@ namespace Aether
 		float pitch = delta.y * m_MouseLookSens;
 
 		// Construct magic quats
-		glm::quat qYaw = glm::angleAxis(yaw, m_Camera.GetUp());
+		glm::quat qYaw = glm::angleAxis(yaw, m_Camera.GetWorldUp());
 		glm::quat qPitch = glm::angleAxis(pitch, m_Camera.GetRight());
 
 		m_Camera.Rotate(qYaw * qPitch);

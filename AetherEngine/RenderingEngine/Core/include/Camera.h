@@ -23,7 +23,11 @@ namespace Aether
 		void SetOrthographicCamera();
 		void SetAspectRatio(const float aspect);
 
+		void ResetRotation();
+		void ResetPosition();
+
 		void SetPosition(const glm::vec3& pos);
+		void SetRotation(const glm::quat& rot);
 
 		const eProjectionType GetProjectionType()	const { return m_ProjectionType; }
 
@@ -31,20 +35,26 @@ namespace Aether
 		const glm::mat4& GetProjection()	const { return m_Projection; }
 		const glm::mat4 GetViewProj()		const { return m_Projection * m_View; }
 
-		const glm::vec3 GetForward()	const { return m_Rotation * m_Forward; }
-		const glm::vec3 GetRight()		const { return m_Rotation * m_Right; }
-		const glm::vec3 GetUp()			const { return m_Rotation * m_Up; }
+		const glm::vec3 GetWorldForward()	const { return m_WorldForward; }
+		const glm::vec3 GetWorldRight()		const { return m_WorldRight; }
+		const glm::vec3 GetWorldUp()		const { return m_WorldUp; }
+
+		const glm::vec3 GetForward()	const { return m_Rotation * m_WorldForward; }
+		const glm::vec3 GetRight()		const { return m_Rotation * m_WorldRight; }
+		const glm::vec3 GetUp()			const { return m_Rotation * m_WorldUp; }
 
 	private:
 		void CalculateView();
 		void CalculateProjection();
 		
+		// World data
+		static constexpr glm::vec3 m_WorldForward{ 0.f, 0.f, 1.f };
+		static constexpr glm::vec3 m_WorldRight{ 1.f, 0.f, 0.f };
+		static constexpr glm::vec3 m_WorldUp{ 0.f, 1.f, 0.f };
+
 		// View data
 		glm::mat4 m_View		{ 1.f };
 		glm::vec3 m_Position	{ 0.f };
-		glm::vec3 m_Forward		{ 0.f, 0.f, 1.f };	// DX view space looks down -Z
-		glm::vec3 m_Right		{ 1.f, 0.f, 0.f };
-		glm::vec3 m_Up			{ 0.f, 1.f, 0.f };
 		
 		// Projection data
 		glm::mat4 m_Projection	{ 1.f };

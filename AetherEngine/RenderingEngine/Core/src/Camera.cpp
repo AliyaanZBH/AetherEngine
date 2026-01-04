@@ -53,9 +53,27 @@ namespace Aether
 		CalculateProjection();
 	}
 
+	void Camera::ResetRotation()
+	{
+		m_Rotation = glm::quat(1, 0, 0, 0);
+		CalculateView();
+	}
+
+	void Camera::ResetPosition()
+	{
+		m_Position = glm::vec3(0.f);
+		CalculateView();
+	}
+
 	void Camera::SetPosition(const glm::vec3& pos)
 	{
 		m_Position = pos;
+		CalculateView();
+	}
+
+	void Camera::SetRotation(const glm::quat& rot)
+	{
+		m_Rotation = glm::normalize(rot);
 		CalculateView();
 	}
 
