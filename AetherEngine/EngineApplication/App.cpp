@@ -43,15 +43,33 @@ public:
 	{
 		// Define where and how we want to draw using transform helper
 		Aether::Transform trans;
-		trans.m_Scale = { 1.75f, 1.75f, 1.f };
+		trans.m_Scale = { 2.0f, 2.0f, 1.f };
 		trans.m_Position = { 0.f, 0.f, 2.0f };
 
 		Aether::Renderer::DrawQuad(trans, Aether::Colours::kYellow);
 
+		trans.m_Scale = { 0.75f, 0.75f, 1.f };
+
+		// Draw grid - temp so magic numbers for now
+		for (int y = 0; y < 15; ++y)
+		{
+			for (int x = 0; x < 15; x++)
+			{
+				trans.m_Position = { x * 0.85f, y * 0.85f, 4.f };
+
+				// Alternate colours
+				if (x % 2 == 0)
+					Aether::Renderer::DrawQuad(trans, Aether::Colours::kDarkBlue);
+				else
+					Aether::Renderer::DrawQuad(trans, Aether::Colours::kDarkRed);
+
+			}
+		}
+
 		// Can re-use transform for another draw!
-		trans.m_Scale = { 1.5f, 1.5f, 1.f };
+		trans.m_Scale = { 1.75f, 1.75f, 1.f };
 		trans.m_Position = { 0.3f, 0.3f, 1.0f };
-		Aether::Renderer::DrawTriangle(trans, Aether::Colours::kPureGreen);
+		Aether::Renderer::DrawTriangle(trans, Aether::Colours::kCyan);
 	}
 
 private:

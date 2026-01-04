@@ -197,20 +197,9 @@ namespace Aether
 		// Render ImGui on top of everything else!
 		ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), m_CmdList.Get());
 	}
+
 	void RendererDX12::Render()
 	{
-		AETHER_RESULT ar = AETHER_OK;
-
-		// Draw something! Simple depth tested quads for now
-		m_CmdList->SetPipelineState(m_PipelineStateObject);
-		m_CmdList->SetGraphicsRootSignature(m_RootSig);                             // Set the root signature
-		m_CmdList->RSSetViewports(1, &m_Viewport);                                  // Set the viewports
-		m_CmdList->RSSetScissorRects(1, &m_Scissor);                                // Set the scissor rects
-		m_CmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);     // Set the primitive topology
-		m_CmdList->IASetVertexBuffers(0, 1, &m_VertBufView);                        // Set the vertex buffer (using the vertex buffer view)
-		m_CmdList->IASetIndexBuffer(&m_IdxBufView);                                 // Set IB
-		m_CmdList->DrawIndexedInstanced(6, 1, 0, 0, 0);                             // Draw 2 triangles (draw 1 instance of 2 triangles)
-		m_CmdList->DrawIndexedInstanced(6, 1, 0, 4, 0);                             // Draw second quad
 	}
 
 	void RendererDX12::Submit(const DrawCommand& cmd, ConstantBufferView* cbv)
@@ -494,8 +483,6 @@ namespace Aether
 
 	void RendererDX12::FinalizeUploads()
 	{
-		AETHER_ASSERT(CreateAndUploadGeo());
-
 		// Execute immediately to send our geo buffers up
 		m_CmdList->Close();
 		ID3D12CommandList* ppCmdLists[] = { m_CmdList.Get() };
@@ -689,78 +676,6 @@ namespace Aether
 
 		AETHER_HR_ASSERT(m_Device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_PipelineStateObject)));
 
-	}
-
-
-	AETHER_RESULT RendererDX12::CreateAndUploadGeo()
-	{
-		AETHER_RESULT ar = AETHER_OK;
-
-		// We got quads now baybee!
-		Vertex verts[] =
-		{
-			// First Quad
-			{ {	-0.6f,  0.6f, 0.5f, 1.f	},   { 1.f, 0.f, 0.f, 1.f } }, // Top left
-			{ {	 0.3f, -0.3f, 0.5f, 1.f	},   { 0.f, 1.f, 0.f, 1.f } }, // Bottom right
-			{ {	-0.6f, -0.3f, 0.5f, 1.f	},   { 0.f, 0.f, 1.f, 1.f } }, // Bottom left
-			{ {	 0.3f,  0.6f, 0.5f, 1.f	},   { 1.f, 1.f, 1.f, 1.f } }, // Top right
-
-			// Second Quad - flip colours
-			{ {	-0.75f, 0.75f,	0.7f, 1.f },   { 1.f, 1.f, 1.f, 1.f } }, // Top left
-			{ {	 0.0f,	0.0f,	0.7f, 1.f },   { 0.f, 0.f, 1.f, 1.f } }, // Bottom right
-			{ {	-0.75f, 0.0f,	0.7f, 1.f },   { 0.f, 1.f, 0.f, 1.f } }, // Bottom left
-			{ {	 0.f,  0.75f,	0.7f, 1.f },   { 1.f, 0.f, 0.f, 1.f } }  // Top right
-		};
-
-		// Indices too!
-		DWORD indices[] =
-		{
-			0, 1, 2, // first triangle
-			0, 3, 1 // second triangle
-		};
-
-
-		//
-		//  Init VBuffer
-		//
-
-		BufferDesc vbDesc =
-		{
-			.m_Data = verts,
-			.m_SizeInBytes = sizeof(verts),
-			.m_Type = eBufferType::kVertex,
-			.m_CPUVisible = true
-		};
-
-		m_VertexBuffer = static_cast<BufferDX12*>(CreateBuffer(vbDesc));
-		m_VertexBuffer->SetName(L"Simple AHH Vert Buffer");
-
-		// Upload the buffer to the GPU now, the buffer helper will internally work out if this will map the resource directly or copy to the default heap of the GPU
-		m_VertexBuffer->Upload(vbDesc.m_Data, vbDesc.m_SizeInBytes);
-		
-		// Repeat for indices
-		BufferDesc ibDesc =
-		{
-			.m_Data = indices,
-			.m_SizeInBytes = sizeof(indices),
-			.m_Type = eBufferType::kIndex,
-			.m_CPUVisible = true
-		};
-
-		m_IndexBuffer = static_cast<BufferDX12*>(CreateBuffer(ibDesc));
-		m_IndexBuffer->SetName(L"Simple AHH Index Buffer");
-		m_IndexBuffer->Upload(ibDesc.m_Data, ibDesc.m_SizeInBytes);
-
-		// Finally, create VB and IB views for geo.
-		m_VertBufView.BufferLocation = m_VertexBuffer->GetResource()->GetGPUVirtualAddress();
-		m_VertBufView.StrideInBytes = sizeof(Vertex);
-		m_VertBufView.SizeInBytes = vbDesc.m_SizeInBytes;
-
-		m_IdxBufView.BufferLocation = m_IndexBuffer->GetResource()->GetGPUVirtualAddress();
-		m_IdxBufView.Format = DXGI_FORMAT_R32_UINT; // 32-bit unsigned integer (this is what a dword is, double word, a word is 2 bytes)
-		m_IdxBufView.SizeInBytes = ibDesc.m_SizeInBytes;
-
-		return ar;
 	}
 
 	AETHER_RESULT RendererDX12::ClearAndSyncFrame()

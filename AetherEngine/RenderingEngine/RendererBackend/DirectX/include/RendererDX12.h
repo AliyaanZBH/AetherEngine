@@ -75,9 +75,6 @@ namespace Aether
 		// Create a PSO using our layout
 		void CreatePSO(const D3D12_SHADER_BYTECODE& vs, const D3D12_SHADER_BYTECODE& ps, const VertexLayout& layout);
 
-
-		AETHER_RESULT CreateAndUploadGeo();
-
 		// Extra Methods to help with rendering
 		//
 
@@ -104,7 +101,7 @@ namespace Aether
 
 		static const DXGI_FORMAT m_kRTVFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
 		static const DXGI_FORMAT m_kDSVFormat = DXGI_FORMAT_D32_FLOAT;
-		static const UINT8 m_kHeapSize = 64u;
+		static const UINT m_kHeapSize = 512u;
 		static const UINT8 m_kNumFrameBuffers = 2u;
 		const float m_kClearColour[3] = { 0.1f, 0.2f, 1.0f };
 

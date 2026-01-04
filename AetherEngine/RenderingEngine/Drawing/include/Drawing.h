@@ -36,7 +36,12 @@ namespace Aether
 		const glm::vec4 kPureGreen = glm::vec4(0.0f, 1.0f, 0.0f, 1.0f);
 		const glm::vec4 kPureBlue = glm::vec4(0.0f, 0.0f, 1.0f, 1.0f);
 
+		const glm::vec4 kDarkRed = glm::vec4(0.8f, 0.0f, 0.0f, 1.0f);
+		const glm::vec4 kDarkGreen = glm::vec4(0.0f, 0.8f, 0.0f, 1.0f);
+		const glm::vec4 kDarkBlue = glm::vec4(0.0f, 0.0f, 0.8f, 1.0f);
+
 		const glm::vec4 kYellow = glm::vec4(1.0f, 1.0f, 0.0f, 1.0f);
 		const glm::vec4 kMagenta = glm::vec4(1.0f, 0.0f, 1.0f, 1.0f);
+		const glm::vec4 kCyan = glm::vec4(0.0f, 1.0f, 1.0f, 1.0f);
 	};
 }
