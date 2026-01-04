@@ -71,4 +71,10 @@ namespace Aether
 		uint32_t	m_Size = 0u;
 		uint32_t	m_Slot = 0u; // Which register is the CB getting bound to
 	};
+
+	struct AETHER_API GeometryBuffer
+	{
+		VertexBufferView vbView = {};
+		IndexBufferView ibView = {};
+	};
 }

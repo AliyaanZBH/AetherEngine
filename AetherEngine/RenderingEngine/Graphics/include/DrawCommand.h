@@ -9,7 +9,7 @@ namespace Aether
 	struct VertexBufferView;
 	struct IndexBufferView;
 
-	enum class eDrawCommandType { kLine, kTri, kQuad, kCircle, kMesh };
+	enum class eDrawCommandType { kLine, kTri, kQuad, kCircle, kCube, kMesh };
 	// Instead of submitting draw functions immediately, submit the necessary data so that they can all be drawn safely at the correct time for each rendering API.
 	// This abstraction helps with app users not having to worry about all this when they call a draw function
 	struct DrawCommand

@@ -1,3 +1,5 @@
+#include "Renderer.h"
+#include "Renderer.h"
 //===============================================================================
 // desc: High-level API for applications using Aether to render games with ease
 // auth: Aliyaan Zulfiqar
@@ -42,15 +44,10 @@ namespace Aether
     ConstantBufferView Renderer::s_PerDrawCBView = {};
 
     // Geometry buffer instances
-    Buffer* Renderer::s_TriVertexBuffer = nullptr;
-    Buffer* Renderer::s_TriIndexBuffer = nullptr;
-    VertexBufferView* Renderer::s_TriVBView = nullptr;
-    IndexBufferView* Renderer::s_TriIBView = nullptr;
+    GeometryBuffer* Renderer::s_TriGeoBuffer = nullptr;
+    GeometryBuffer* Renderer::s_QuadGeoBuffer = nullptr;
+    GeometryBuffer* Renderer::s_BoxGeoBuffer = nullptr;
 
-    Buffer* Renderer::s_QuadVertexBuffer = nullptr;
-    Buffer* Renderer::s_QuadIndexBuffer = nullptr;
-    VertexBufferView* Renderer::s_QuadVBView = nullptr;
-    IndexBufferView* Renderer::s_QuadIBView = nullptr;
 
 	void Renderer::Initialise()
 	{
@@ -105,6 +102,7 @@ namespace Aether
         // Create primitive geometry buffers that can be reused
         CreateTriangleGeometry();
         CreateQuadGeometry();
+        CreateBoxGeometry();
 
         // Finalise our uploads to the renderer
         s_RendererBackend->FinalizeUploads();
@@ -121,10 +119,8 @@ namespace Aether
     void Renderer::Terminate()
     {
         // Delete all buffers we allocated
-        delete s_TriVertexBuffer;
-        delete s_TriIndexBuffer;
-        delete s_QuadVertexBuffer;
-        delete s_QuadIndexBuffer;
+        delete s_TriGeoBuffer;
+        delete s_QuadGeoBuffer;
 
         // Tear down renderer backend too
         s_RendererBackend->Terminate();
@@ -175,8 +171,8 @@ namespace Aether
     {
         DrawCommand cmd;
         cmd.m_Type = eDrawCommandType::kTri;
-        cmd.m_VBV = s_TriVBView;
-        cmd.m_IBV = s_TriIBView;
+        cmd.m_VBV = &s_TriGeoBuffer->vbView;
+        cmd.m_IBV = &s_TriGeoBuffer->ibView;
         cmd.m_ModelMatrix = transform.CreateModelMatrix();
         cmd.m_SolidColour = colour;
         s_CommandQueue.push_back(cmd);
@@ -187,8 +183,8 @@ namespace Aether
         // Register a draw command for geometry
         DrawCommand cmd;
         cmd.m_Type = eDrawCommandType::kQuad;
-        cmd.m_VBV = s_QuadVBView;
-        cmd.m_IBV = s_QuadIBView;
+        cmd.m_VBV = &s_QuadGeoBuffer->vbView;
+        cmd.m_IBV = &s_QuadGeoBuffer->ibView;
         cmd.m_ModelMatrix = transform.CreateModelMatrix();
         cmd.m_SolidColour = colour;
         s_CommandQueue.push_back(cmd);
@@ -196,6 +192,17 @@ namespace Aether
 
     void Renderer::DrawCircle()
     {
+    }
+
+    void Renderer::DrawCube(const Transform& transform, const glm::vec4& colour)
+    {
+        DrawCommand cmd;
+        cmd.m_Type = eDrawCommandType::kCube;
+        cmd.m_VBV = &s_BoxGeoBuffer->vbView;
+        cmd.m_IBV = &s_BoxGeoBuffer->ibView;
+        cmd.m_ModelMatrix = transform.CreateModelMatrix();
+        cmd.m_SolidColour = colour;
+        s_CommandQueue.push_back(cmd);
     }
 
     void Renderer::DrawMesh()
@@ -279,13 +286,11 @@ namespace Aether
             .m_CPUVisible = false
         };
 
-        s_TriVertexBuffer = s_RendererBackend->CreateBuffer(triVBDesc);
-        s_TriVertexBuffer->Upload(triVBDesc.m_Data, triVBDesc.m_SizeInBytes);
-
-        s_TriVBView = new VertexBufferView();
-        s_TriVBView->m_Buffer = s_TriVertexBuffer;
-        s_TriVBView->m_Stride = sizeof(Vertex);
-        s_TriVBView->m_Offset = 0;
+        s_TriGeoBuffer = new GeometryBuffer();
+        s_TriGeoBuffer->vbView.m_Buffer = s_RendererBackend->CreateBuffer(triVBDesc);
+        s_TriGeoBuffer->vbView.m_Buffer->Upload(triVBDesc.m_Data, triVBDesc.m_SizeInBytes);
+        s_TriGeoBuffer->vbView.m_Stride = sizeof(Vertex);
+        s_TriGeoBuffer->vbView.m_Offset = 0;
 
         unsigned int triIndices[3] = { 0, 1, 2 };
 
@@ -297,13 +302,11 @@ namespace Aether
             .m_CPUVisible = false
         };
 
-        s_TriIndexBuffer = s_RendererBackend->CreateBuffer(triIBDesc);
-        s_TriIndexBuffer->Upload(triIBDesc.m_Data, triIBDesc.m_SizeInBytes);
-        s_TriIBView = new IndexBufferView();
-        s_TriIBView->m_Buffer = s_TriIndexBuffer;
-        s_TriIBView->m_Count = 3;
-        s_TriIBView->m_IndexSize = sizeof(unsigned int);
-        s_TriIBView->m_Offset = 0;
+        s_TriGeoBuffer->ibView.m_Buffer = s_RendererBackend->CreateBuffer(triIBDesc);
+        s_TriGeoBuffer->ibView.m_Buffer->Upload(triIBDesc.m_Data, triIBDesc.m_SizeInBytes);
+        s_TriGeoBuffer->ibView.m_Count = 3;
+        s_TriGeoBuffer->ibView.m_IndexSize = sizeof(unsigned int);
+        s_TriGeoBuffer->ibView.m_Offset = 0;
     }
 
     void Renderer::CreateQuadGeometry()
@@ -324,13 +327,11 @@ namespace Aether
             .m_CPUVisible = false
         };
 
-        s_QuadVertexBuffer = s_RendererBackend->CreateBuffer(quadVBDesc);
-        s_QuadVertexBuffer->Upload(quadVBDesc.m_Data, quadVBDesc.m_SizeInBytes);
-
-        s_QuadVBView = new VertexBufferView();
-        s_QuadVBView->m_Buffer = s_QuadVertexBuffer;
-        s_QuadVBView->m_Stride = sizeof(Vertex);
-        s_QuadVBView->m_Offset = 0;
+        s_QuadGeoBuffer = new GeometryBuffer();
+        s_QuadGeoBuffer->vbView.m_Buffer = s_RendererBackend->CreateBuffer(quadVBDesc);
+        s_QuadGeoBuffer->vbView.m_Buffer->Upload(quadVBDesc.m_Data, quadVBDesc.m_SizeInBytes);
+        s_QuadGeoBuffer->vbView.m_Stride = sizeof(Vertex);
+        s_QuadGeoBuffer->vbView.m_Offset = 0;
 
         unsigned int quadIndices[6] = { 0, 1, 2, 2, 3, 0 };
 
@@ -342,13 +343,75 @@ namespace Aether
             .m_CPUVisible = false
         };
 
-        s_QuadIndexBuffer = s_RendererBackend->CreateBuffer(quadIBDesc);
-        s_QuadIndexBuffer->Upload(quadIBDesc.m_Data, quadIBDesc.m_SizeInBytes);
-        s_QuadIBView = new IndexBufferView();
-        s_QuadIBView->m_Buffer = s_QuadIndexBuffer;
-        s_QuadIBView->m_Count = 6;
-        s_QuadIBView->m_IndexSize = sizeof(unsigned int);
-        s_QuadIBView->m_Offset = 0;
+        s_QuadGeoBuffer->ibView.m_Buffer = s_RendererBackend->CreateBuffer(quadIBDesc);
+        s_QuadGeoBuffer->ibView.m_Buffer->Upload(quadIBDesc.m_Data, quadIBDesc.m_SizeInBytes);
+        s_QuadGeoBuffer->ibView.m_Count = 6;
+        s_QuadGeoBuffer->ibView.m_IndexSize = sizeof(unsigned int);
+        s_QuadGeoBuffer->ibView.m_Offset = 0;
+    }
+
+    void Renderer::CreateBoxGeometry()
+    {
+        // Make the extents .5 and then offset them from the center of our shape to create a 1x1x1 cube with origin at the center
+        glm::vec4 extents = { 0.5f, 0.5f, 0.5f, 1.f };
+        glm::vec4 flatWhite = { 1.f, 1.f, 1.f, 1.f };
+
+        Vertex boxVerts[] =
+        {
+            { { -extents.x,  extents.y,  extents.z, extents.w },   flatWhite },  		// V0 = -0.5,  0.5,  0.5
+            { { -extents.x,  extents.y, -extents.z, extents.w },   flatWhite },		    // V1 = -0.5,  0.5, -0.5
+            { {  extents.x,  extents.y, -extents.z, extents.w },   flatWhite },		    // V2 =  0.5,  0.5, -0.5
+            { {  extents.x,  extents.y,  extents.z, extents.w },   flatWhite },		    // V3 =  0.5,  0.5,  0.5
+            { { -extents.x, -extents.y,  extents.z, extents.w },   flatWhite },		    // V4 = -0.5, -0.5,  0.5
+            { { -extents.x, -extents.y, -extents.z, extents.w },   flatWhite },		    // V5 = -0.5, -0.5, -0.5
+            { {  extents.x, -extents.y, -extents.z, extents.w },   flatWhite },		    // V6 =  0.5, -0.5, -0.5
+            { {  extents.x, -extents.y,  extents.z, extents.w },   flatWhite }		    // V7 =  0.5, -0.5,  0.5
+        };
+
+        BufferDesc boxVBDesc
+        {
+            .m_Data = boxVerts,
+            .m_SizeInBytes = sizeof(boxVerts),
+            .m_Type = eBufferType::kVertex,
+            .m_CPUVisible = false
+        };
+
+        s_BoxGeoBuffer = new GeometryBuffer();
+        s_BoxGeoBuffer->vbView.m_Buffer = s_RendererBackend->CreateBuffer(boxVBDesc);
+        s_BoxGeoBuffer->vbView.m_Buffer->Upload(boxVBDesc.m_Data, boxVBDesc.m_SizeInBytes);
+        s_BoxGeoBuffer->vbView.m_Stride = sizeof(Vertex);
+        s_BoxGeoBuffer->vbView.m_Offset = 0;
+
+        // Hardcode indices
+        int boxIndices[] =
+        {
+            // +-x
+            0,1,4,	4,1,5,
+            2,3,6,	6,3,7,
+
+            // +-y
+            1,0,2,	2,0,3,
+            4,5,6,	4,6,7,
+
+            // +-z
+            2,5,1,	2,6,5,
+            3,0,4,	3,4,7,
+        };
+
+        BufferDesc boxIBDesc
+        {
+            .m_Data = boxIndices,
+            .m_SizeInBytes = sizeof(boxIndices),
+            .m_Type = eBufferType::kIndex,
+            .m_CPUVisible = false
+        };
+
+        s_BoxGeoBuffer->ibView.m_Buffer = s_RendererBackend->CreateBuffer(boxIBDesc);
+        s_BoxGeoBuffer->ibView.m_Buffer->Upload(boxIBDesc.m_Data, boxIBDesc.m_SizeInBytes);
+        s_BoxGeoBuffer->ibView.m_Count = 36;
+        s_BoxGeoBuffer->ibView.m_IndexSize = sizeof(unsigned int);
+        s_BoxGeoBuffer->ibView.m_Offset = 0;
+
     }
 
     template<typename T>

@@ -33,6 +33,8 @@ namespace Aether
 		static void DrawTriangle(const Transform& transform, const glm::vec4& colour);
 		static void DrawQuad(const Transform& transform, const glm::vec4& colour);
 		static void DrawCircle();
+
+		static void DrawCube(const Transform& transform, const glm::vec4& colour);
 		static void DrawMesh();
 
 		// TMP: I feel these are a breal the asbtraction a bit, but I'm putting them here just so we can get back to a stable build fast
@@ -49,6 +51,7 @@ namespace Aether
 
 		static void CreateTriangleGeometry();
 		static void CreateQuadGeometry();
+		static void CreateBoxGeometry();
 
 
 		template <typename T>
@@ -78,23 +81,8 @@ namespace Aether
 		static Buffer* s_PerDrawBuffer;
 		static ConstantBufferView s_PerDrawCBView;
 
-		// Tri
-		//
-
-		static Buffer* s_TriVertexBuffer;
-		static VertexBufferView* s_TriVBView;
-		static Buffer* s_TriIndexBuffer;
-		static IndexBufferView* s_TriIBView;
-
-
-		// Quad
-		//
-
-		static Buffer* s_QuadVertexBuffer;
-		static VertexBufferView* s_QuadVBView;
-		static Buffer* s_QuadIndexBuffer;
-		static IndexBufferView* s_QuadIBView;
+		static GeometryBuffer* s_TriGeoBuffer;
+		static GeometryBuffer* s_QuadGeoBuffer;
+		static GeometryBuffer* s_BoxGeoBuffer;
 	};
-
-
 }

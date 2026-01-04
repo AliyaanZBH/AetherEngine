@@ -27,6 +27,18 @@ namespace Aether
 		}
 	};
 
+	// tmp for now, textures will come in their own feature
+	struct Texture
+	{
+
+	};
+
+	struct Material
+	{
+		Texture m_Diffuse = {};
+		glm::vec4 m_SolidColour	{ 1.f };
+	};
+
 	namespace Colours
 	{
 		const glm::vec4 kPureBlack = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
