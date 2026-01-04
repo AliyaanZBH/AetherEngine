@@ -14,10 +14,10 @@ namespace Aether
 
 		inline static void Update()
 		{
-			static auto firstTimestamp = std::chrono::high_resolution_clock::now();
+			static auto startTimestamp = std::chrono::high_resolution_clock::now();
 			auto now = std::chrono::high_resolution_clock::now();
-			s_DeltaTime = std::chrono::duration<float>(now - firstTimestamp).count();
-			firstTimestamp = now;
+			s_DeltaTime = std::chrono::duration<float>(now - startTimestamp).count();
+			startTimestamp = now;
 		}
 
 		inline static float GetDT() { return s_DeltaTime; }
