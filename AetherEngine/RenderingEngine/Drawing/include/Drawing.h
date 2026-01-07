@@ -4,6 +4,10 @@
 // auth: Aliyaan Zulfiqar
 //===============================================================================
 #include "glm/gtc/matrix_transform.hpp"
+#ifndef GLM_ENABLE_EXPERIMENTAL
+#define GLM_ENABLE_EXPERIMENTAL
+#endif
+#include "glm/gtx/euler_angles.hpp"
 //===============================================================================
 
 namespace Aether
@@ -11,7 +15,7 @@ namespace Aether
 	struct Transform
 	{
 		glm::vec3 m_Position = glm::vec3(0.f);
-		//glm::vec3 m_Rotation = glm::vec3(1.f);		// Rotation currently unsupported
+		glm::vec3 m_Rotation = glm::vec3(0.f);		// Rotation currently unsupported
 		glm::vec3 m_Scale = glm::vec3(0.f);
 
 		glm::mat4 CreateModelMatrix() const
@@ -20,9 +24,11 @@ namespace Aether
 
 			glm::mat4 t = glm::translate(glm::mat4(1.f), m_Position);
 			//glm::mat4 r = glm::rotate(glm::mat4(1.f), m_Rotation);
+			glm::mat4 r = glm::eulerAngleZYX(m_Rotation.x, m_Rotation.y, m_Rotation.z);
 			glm::mat4 s = glm::scale(glm::mat4(1.f), m_Scale);
 
-			modelMatrix = t /* * r */ * s;
+			//modelMatrix = t /* * r */ * s;
+			modelMatrix = t  * r  * s;
 			return modelMatrix;
 		}
 	};

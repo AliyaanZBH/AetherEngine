@@ -17,7 +17,9 @@ public:
 
 	void OnAttach() override
 	{
-
+		// Define where and how we want to draw using a dedicated transform that we can update!
+		m_CubeTransform.m_Scale = { 2.0f, 2.0f, 2.f };
+		m_CubeTransform.m_Position = { -2.f, 0.f, 2.0f };
 	}
 
 	void OnDetach() override
@@ -37,17 +39,17 @@ public:
 			AETHER_INFO("Space is pressed! (Our polling!)"); 
 
 		m_CameraController->Update(Aether::Time::GetDT());
+
+		// Update rotation
+		m_CubeTransform.m_Rotation.y += Aether::Time::GetDT();
 	}
 
 	void Render() override
 	{
-		// Define where and how we want to draw using transform helper
+		Aether::Renderer::DrawCube(m_CubeTransform, Aether::Colours::kYellow);
+
+		// Define where and how we want to draw using a local transform helper
 		Aether::Transform trans;
-		trans.m_Scale = { 2.0f, 2.0f, 2.f };
-		trans.m_Position = { -2.f, 0.f, 2.0f };
-
-		Aether::Renderer::DrawCube(trans, Aether::Colours::kYellow);
-
 		trans.m_Scale = { 0.75f, 0.75f, 1.f };
 
 		// Draw grid - temp so magic numbers for now
@@ -65,7 +67,7 @@ public:
 			}
 		}
 
-		// Can re-use transform for another draw!
+		// Can re-use local transform for another draw!
 		trans.m_Scale = { 1.75f, 1.75f, 1.f };
 		trans.m_Position = { 0.3f, 0.3f, 1.0f };
 		Aether::Renderer::DrawTriangle(trans, Aether::Colours::kCyan);
@@ -73,6 +75,8 @@ public:
 
 private:
 	Aether::CameraController* m_CameraController;
+
+	Aether::Transform m_CubeTransform;
 };
 
 class AetherGame : public Aether::Application
