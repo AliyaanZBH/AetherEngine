@@ -29,13 +29,7 @@ namespace Aether
 		static void Render();
 		static void EndFrame();
 
-		static void DrawLine();
-		static void DrawTriangle(const Transform& transform, const glm::vec4& colour);
-		static void DrawQuad(const Transform& transform, const glm::vec4& colour);
-		static void DrawCircle();
-
-		static void DrawCube(const Transform& transform, const glm::vec4& colour);
-		static void DrawMesh();
+		static void Draw(const eDrawGeoType drawType, const Transform& transform, Material* mat);
 
 		// TMP: I feel these are a breal the asbtraction a bit, but I'm putting them here just so we can get back to a stable build fast
 		static void InitImGui();

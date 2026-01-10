@@ -28,6 +28,12 @@ set(SRC
     Graphics/src/Shader.cpp
 
     #
+    # Materials
+    #
+
+    Materials/src/MaterialSolidColour.cpp
+
+    #
     # DirectX Implementations
     #
 
@@ -92,6 +98,13 @@ set(INCLUDE
     Graphics/include/Buffer.h
     Graphics/include/Vertex.h
     Graphics/include/Pipeline.h
+
+    #
+    #   Materials
+    #
+
+    Materials/include/Material.h
+    Materials/include/MaterialSolidColour.h
 
     #
     # DirectX
@@ -186,6 +199,7 @@ target_include_directories(AetherRenderer
                             Core/include 
                             Graphics/include
                             Drawing/include
+                            Materials/include
                             Input/include
 
                     PRIVATE 

@@ -20,11 +20,20 @@ public:
 		// Define where and how we want to draw using a dedicated transform that we can update!
 		m_CubeTransform.m_Scale = { 2.0f, 2.0f, 2.f };
 		m_CubeTransform.m_Position = { -2.f, 0.f, 2.0f };
+
+		// Define our materials
+		m_CubeMaterial = new Aether::MaterialSolidColour(Aether::Colours::kYellow);
+		m_QuadMaterial = new Aether::MaterialSolidColour(Aether::Colours::kDarkBlue);
+		m_TriMaterial = new Aether::MaterialSolidColour(Aether::Colours::kCyan);
 	}
 
 	void OnDetach() override
 	{
 		delete m_CameraController;
+
+		delete m_CubeMaterial;
+		delete m_QuadMaterial;
+		delete m_TriMaterial;
 	}
 
 	void OnEvent(Aether::Event& event) override
@@ -46,7 +55,7 @@ public:
 
 	void Render() override
 	{
-		Aether::Renderer::DrawCube(m_CubeTransform, Aether::Colours::kYellow);
+		Aether::Renderer::Draw(Aether::eDrawGeoType::kCube, m_CubeTransform, m_CubeMaterial);
 
 		// Define where and how we want to draw using a local transform helper
 		Aether::Transform trans;
@@ -61,22 +70,27 @@ public:
 
 				// Alternate colours
 				if (x % 2 == 0)
-					Aether::Renderer::DrawQuad(trans, Aether::Colours::kDarkBlue);
+					m_QuadMaterial->SetColour(Aether::Colours::kDarkBlue);
 				else
-					Aether::Renderer::DrawQuad(trans, Aether::Colours::kDarkRed);
+					m_QuadMaterial->SetColour(Aether::Colours::kDarkRed);
+
+				Aether::Renderer::Draw(Aether::eDrawGeoType::kQuad, trans, m_QuadMaterial);
 			}
 		}
 
 		// Can re-use local transform for another draw!
 		trans.m_Scale = { 1.75f, 1.75f, 1.f };
 		trans.m_Position = { 0.3f, 0.3f, 1.0f };
-		Aether::Renderer::DrawTriangle(trans, Aether::Colours::kCyan);
+		Aether::Renderer::Draw(Aether::eDrawGeoType::kTri, trans, m_TriMaterial);
 	}
 
 private:
 	Aether::CameraController* m_CameraController;
 
 	Aether::Transform m_CubeTransform;
+	Aether::MaterialSolidColour* m_CubeMaterial;
+	Aether::MaterialSolidColour* m_QuadMaterial;
+	Aether::MaterialSolidColour* m_TriMaterial;
 };
 
 class AetherGame : public Aether::Application

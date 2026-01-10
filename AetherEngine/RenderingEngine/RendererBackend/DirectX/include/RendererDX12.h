@@ -79,7 +79,7 @@ namespace Aether
 		//
 
 		
-		void CreatePerDrawConstBufView(ConstantBufferView* cbv, PerDrawData& cbData);
+		void CreatePerDrawConstBufView(ConstantBufferView* cbv, PerDrawData_Solid& cbData);
 		D3D12_VERTEX_BUFFER_VIEW CreateVertBufView(VertexBufferView* vbv);
 		D3D12_INDEX_BUFFER_VIEW CreateIdxBufView(IndexBufferView* ibv);
 

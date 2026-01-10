@@ -14,6 +14,7 @@
 #include "WindowContext.h"
 #include "Window.h"
 #include "Camera.h"
+#include "Material.h"
 
 #ifdef USE_OPENGL
 #include "RendererOpenGL.h"
@@ -112,7 +113,7 @@ namespace Aether
 
         // Create constant buffers for per-frame and per-draw data
         s_PerFrameBuffer = CreateConstantBuffer<PerFrameData>(eBufferType::kConstantPerFrame, &s_PerFrameCBView, 0);
-        s_PerDrawBuffer = CreateConstantBuffer<PerDrawData>(eBufferType::kConstantPerDraw, &s_PerDrawCBView, 1);
+        s_PerDrawBuffer = CreateConstantBuffer<PerDrawData_Solid>(eBufferType::kConstantPerDraw, &s_PerDrawCBView, 1);
 
 	}
 
@@ -163,50 +164,43 @@ namespace Aether
     // Drawing Functions!
     //
 
-    void Renderer::DrawLine()
-    {
-    }
-
-    void Renderer::DrawTriangle(const Transform& transform, const glm::vec4& colour)
+    void Renderer::Draw(const eDrawGeoType drawType, const Transform& transform, Material* mat)
     {
         DrawCommand cmd;
-        cmd.m_Type = eDrawCommandType::kTri;
-        cmd.m_VBV = &s_TriGeoBuffer->vbView;
-        cmd.m_IBV = &s_TriGeoBuffer->ibView;
         cmd.m_ModelMatrix = transform.CreateModelMatrix();
-        cmd.m_SolidColour = colour;
+        cmd.m_Material = mat;
+
+        // Switch on draw type and bind correct geo buffers
+        switch (drawType)
+        {
+            case eDrawGeoType::kTri:
+            {
+                cmd.m_VBV = &s_TriGeoBuffer->vbView;
+                cmd.m_IBV = &s_TriGeoBuffer->ibView;
+                break;
+            }
+
+            case eDrawGeoType::kQuad:
+            {
+                cmd.m_VBV = &s_QuadGeoBuffer->vbView;
+                cmd.m_IBV = &s_QuadGeoBuffer->ibView;
+                break;
+            }
+
+            case eDrawGeoType::kCube:
+            {
+                cmd.m_VBV = &s_BoxGeoBuffer->vbView;
+                cmd.m_IBV = &s_BoxGeoBuffer->ibView;
+                break;
+            }
+
+            default:
+            {
+                break;
+            }
+        }
+
         s_CommandQueue.push_back(cmd);
-    }
-
-    void Renderer::DrawQuad(const Transform& transform, const glm::vec4& colour)
-    {
-        // Register a draw command for geometry
-        DrawCommand cmd;
-        cmd.m_Type = eDrawCommandType::kQuad;
-        cmd.m_VBV = &s_QuadGeoBuffer->vbView;
-        cmd.m_IBV = &s_QuadGeoBuffer->ibView;
-        cmd.m_ModelMatrix = transform.CreateModelMatrix();
-        cmd.m_SolidColour = colour;
-        s_CommandQueue.push_back(cmd);
-    }
-
-    void Renderer::DrawCircle()
-    {
-    }
-
-    void Renderer::DrawCube(const Transform& transform, const glm::vec4& colour)
-    {
-        DrawCommand cmd;
-        cmd.m_Type = eDrawCommandType::kCube;
-        cmd.m_VBV = &s_BoxGeoBuffer->vbView;
-        cmd.m_IBV = &s_BoxGeoBuffer->ibView;
-        cmd.m_ModelMatrix = transform.CreateModelMatrix();
-        cmd.m_SolidColour = colour;
-        s_CommandQueue.push_back(cmd);
-    }
-
-    void Renderer::DrawMesh()
-    {
     }
 
     //
@@ -218,12 +212,24 @@ namespace Aether
 
         for (DrawCommand& cmd : s_CommandQueue)
         {
-            // Update constant buffer with data for this draww
-            PerDrawData data;
-            data.m_ModelMatrix = cmd.m_ModelMatrix;
-            data.m_Colour = cmd.m_SolidColour;
-            s_PerDrawBuffer->Upload(&data, sizeof(PerDrawData));
+            // Update constant buffer with data for this objects material
+            switch (cmd.m_Material->GetType())
+            {
+                case eMaterialType::kSolidColour:
+                {
+                    PerDrawData_Solid data;
+                    data.m_ModelMatrix = cmd.m_ModelMatrix;
 
+                    cmd.m_Material->WritePerDrawData(&data);
+                    s_PerDrawBuffer->Upload(&data, sizeof(PerDrawData_Solid));
+                    break;
+                }
+                default:
+                {
+                    AETHER_ASSERT(AETHER_FAIL, "Unknown material type!");
+                }
+            }
+           
             // Submit the view on this buffer together with the command;
             s_RendererBackend->Submit(cmd, &s_PerDrawCBView);
 
@@ -235,6 +241,27 @@ namespace Aether
             //        s_RendererBackend->Submit(cmd);
             //    }
             //}
+
+            //
+            // Crazy byte copying method of abstract material buffer creation
+            //
+            //std::byte perDrawMemory[256]; // or ring-buffer allocation
+            //memset(perDrawMemory, 0, sizeof(perDrawMemory));
+            //
+            //// Write transform (renderer-owned)
+            //*reinterpret_cast<glm::mat4*>(perDrawMemory) = cmd.m_ModelMatrix;
+            //
+            //// Write material (material-owned)
+            //std::byte* materialDst =
+            //    perDrawMemory + sizeof(glm::mat4);
+            //
+            //cmd.m_Material->WriteMaterialData(
+            //    materialDst,
+            //    sizeof(perDrawMemory) - sizeof(glm::mat4)
+            //);
+            //
+            //s_PerDrawBuffer->Upload(perDrawMemory, sizeof(perDrawMemory));
+            //s_RendererBackend->Submit(cmd, &s_PerDrawCBView);
         };
 
 

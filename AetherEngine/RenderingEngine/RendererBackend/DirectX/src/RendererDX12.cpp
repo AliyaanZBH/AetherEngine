@@ -10,6 +10,7 @@
 #include "Vertex.h"
 #include "Pipeline.h"
 #include "DrawCommand.h"
+#include "Material.h"
 //===============================================================================
 namespace Aether
 {
@@ -204,9 +205,9 @@ namespace Aether
 
 	void RendererDX12::Submit(const DrawCommand& cmd, ConstantBufferView* cbv)
 	{
-		PerDrawData cbData{};
+		PerDrawData_Solid cbData{};
 		cbData.m_ModelMatrix = cmd.m_ModelMatrix;
-		cbData.m_Colour = cmd.m_SolidColour;
+		cmd.m_Material->WritePerDrawData(&cbData);
 
 		CreatePerDrawConstBufView(cbv, cbData);
 
@@ -330,14 +331,14 @@ namespace Aether
 		return AETHER_OK;
 	}
 
-	void RendererDX12::CreatePerDrawConstBufView(ConstantBufferView* cbv, PerDrawData& cbData)
+	void RendererDX12::CreatePerDrawConstBufView(ConstantBufferView* cbv, PerDrawData_Solid& cbData)
 	{
 		BufferDX12* dxBuf = static_cast<BufferDX12*>(cbv->m_Buffer);
 
 		D3D12_GPU_VIRTUAL_ADDRESS cbGPUAddr = m_PerDrawCBAllocator.Alloc(&cbData);
 		D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc{};
 		cbvDesc.BufferLocation = cbGPUAddr;
-		cbvDesc.SizeInBytes = static_cast<UINT>(AETHER_ALIGN256(sizeof(PerDrawData)));
+		cbvDesc.SizeInBytes = static_cast<UINT>(AETHER_ALIGN256(sizeof(PerDrawData_Solid)));
 
 		uint8_t currentDescriptorIndex = m_PerDrawCBAllocator.GetIndex();
 		CD3DX12_CPU_DESCRIPTOR_HANDLE handle(

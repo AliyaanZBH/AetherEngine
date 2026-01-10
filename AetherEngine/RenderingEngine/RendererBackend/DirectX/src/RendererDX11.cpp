@@ -105,7 +105,6 @@ namespace Aether
 		// Set constant buffer
 		m_pD3DImmediateContext->VSSetConstantBuffers(cbSlot, 1, &conBuf);
 		m_pD3DImmediateContext->PSSetConstantBuffers(cbSlot, 1, &conBuf);
-
 	}
 
 	void RendererDX11::CreatePipeline(const PipelineDesc& desc)

@@ -8,6 +8,9 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #endif
 #include "glm/gtx/euler_angles.hpp"
+
+#include "Material.h"				// For the application to see them
+#include "MaterialSolidColour.h"	// For the application to see them
 //===============================================================================
 
 namespace Aether
@@ -33,18 +36,6 @@ namespace Aether
 		}
 	};
 
-	// tmp for now, textures will come in their own feature
-	struct Texture
-	{
-
-	};
-
-	struct Material
-	{
-		Texture m_Diffuse = {};
-		glm::vec4 m_SolidColour	{ 1.f };
-	};
-
 	namespace Colours
 	{
 		const glm::vec4 kPureBlack = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
@@ -62,4 +53,7 @@ namespace Aether
 		const glm::vec4 kMagenta = glm::vec4(1.0f, 0.0f, 1.0f, 1.0f);
 		const glm::vec4 kCyan = glm::vec4(0.0f, 1.0f, 1.0f, 1.0f);
 	};
+
+	enum class eDrawGeoType { kLine, kTri, kQuad, kCircle, kCube, kMesh };
+
 }

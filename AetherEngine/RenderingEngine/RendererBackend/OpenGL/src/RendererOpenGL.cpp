@@ -195,11 +195,6 @@ namespace Aether
 
 	void RendererOpenGL::Submit(const DrawCommand& cmd, ConstantBufferView* cbv)
 	{
-		// Write the transformation matrix into the uniform buffer
-		//glUniformMatrix4fv(m_TransformLocation, 1, GL_FALSE, glm::value_ptr(cmd.m_ModelMatrix));
-		//// Same for colour
-		//glUniform4f(m_SolidColourLocation, cmd.m_SolidColour.x, cmd.m_SolidColour.y, cmd.m_SolidColour.z, 1.0f);
-
 		BindConstantBuffer(cbv);
 
 		// OpenGL is immediate mode so we can render immediately
