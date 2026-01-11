@@ -19,7 +19,7 @@ namespace Aether
 			case eBufferType::kIndex:				return D3D11_BIND_INDEX_BUFFER;
 			case eBufferType::kConstantPerFrame:
 			case eBufferType::kConstantPerDraw:		return D3D11_BIND_CONSTANT_BUFFER;
-			case eBufferType::kStructured:			return D3D11_BIND_SHADER_RESOURCE;
+			case eBufferType::kStructuredStorage:	return D3D11_BIND_SHADER_RESOURCE;
 
 			default:
 				AETHER_ASSERT(false, "Unsupported usage for DX11");
@@ -31,11 +31,8 @@ namespace Aether
 	{
 		switch (usage)
 		{
-			/*case eBufferType::kVertex:				
-			case eBufferType::kIndex:				
-			case eBufferType::kConstantPerFrame:
-			case eBufferType::kConstantPerDraw:		return 0;*/
-			case eBufferType::kStructured:			return D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
+
+			case eBufferType::kStructuredStorage:			return D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
 
 		default:
 			AETHER_ASSERT(false, "Unsupported usage for DX11");
@@ -66,7 +63,7 @@ namespace Aether
 
 		// Extra step for structured buffers
 
-		if (desc.m_Type == eBufferType::kStructured)
+		if (desc.m_Type == eBufferType::kStructuredStorage)
 		{
 			D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc{};
 			srvDesc.Format = DXGI_FORMAT_UNKNOWN; // REQUIRED for structured buffers

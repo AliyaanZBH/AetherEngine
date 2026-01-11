@@ -15,8 +15,7 @@ namespace Aether
 		kIndex ,
 		kConstantPerFrame,
 		kConstantPerDraw,
-		kStructured,
-		kStorage, 
+		kStructuredStorage,	// Maps to structured in DX land and Storage in OpenGL
 		kTransferSrc,
 		kTransferDst
 	};

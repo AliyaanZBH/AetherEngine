@@ -21,6 +21,11 @@ namespace Aether
 		Renderer::UploadMaterialInstance(*this);
 	}
 
+	void MaterialInstance::Update()
+	{
+		Aether::Renderer::UpdateMaterialInstance(*this);
+	}
+
 	const Material& MaterialInstance::GetMaterialRef() const
 	{
 		return MaterialLibrary::Get().GetMaterial(m_MaterialRef);

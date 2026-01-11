@@ -5,6 +5,7 @@
 #include "RendererOpenGL.h"
 #include "BufferOpenGL.h"
 #include "DrawCommand.h"
+#include "GraphicsCommon.h"
 #include "Pipeline.h"
 #include <glm/gtc/type_ptr.hpp>
 //===============================================================================
@@ -158,12 +159,6 @@ namespace Aether
 			// Finally, enable the attribute in the vertex array
 			glEnableVertexArrayAttrib(m_VertexAttributeArray, location);
 		}
-
-		// Store uniform locations
-		m_TransformLocation = glGetUniformLocation(m_DefaultShader->GetProgram(), "u_Transform");
-		m_SolidColourLocation = glGetUniformLocation(m_DefaultShader->GetProgram(), "u_SolidColour");
-		m_DynamicColourLocation = glGetUniformLocation(m_DefaultShader->GetProgram(), "u_DynamicColour");
-
 	}
 
 	void RendererOpenGL::BindPipeline(const PipelineHandle handle)
@@ -172,18 +167,15 @@ namespace Aether
 
 	void RendererOpenGL::BindGlobalResources(Buffer* materialBuffer)
 	{
+		const BufferOpenGL* glBuf = static_cast<const BufferOpenGL*>(materialBuffer);
+
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, ShaderBindings::kMaterialSRV, glBuf->GetHandle());
 	}
 
 	void RendererOpenGL::Render()
 	{
 		// Uniform setup for varying colours!
 		float deltaTime = glfwGetTime();
-		float varyingVal = (sin(deltaTime) / 2.0f) + 0.15f;
-
-		glUniform4f(m_DynamicColourLocation, varyingVal, varyingVal, varyingVal, 1.0f);
-		
-		// No transform on this guy
-		//glUniformMatrix4fv(m_TransformLocation, 1, GL_FALSE, glm::value_ptr(glm::mat4(1.f)));
 
 		// Bind and draw our geo!
 		glBindVertexArray(m_VertexAttributeArray);
@@ -213,9 +205,6 @@ namespace Aether
 	{
 		// Need to rebind vertex array as it is still pointing at the old set of geometry!
 		glBindVertexArray(m_VertexAttributeArray);
-		
-		// Only want the dynamic colour on the other bit of geo, so reset the value to 0 here for the main background
-		glUniform4f(m_DynamicColourLocation, 0.f, 0.f, 0.f, 1.0f);
 
 		glVertexArrayVertexBuffer(
 			m_VertexAttributeArray,
@@ -259,14 +248,9 @@ namespace Aether
 
 	void RendererOpenGL::BindConstantBuffer(const ConstantBufferView* cbv)
 	{
-		const BufferOpenGL* glBuf =
-			static_cast<const BufferOpenGL*>(cbv->m_Buffer);
+		const BufferOpenGL* glBuf = static_cast<const BufferOpenGL*>(cbv->m_Buffer);
 
-		glBindBufferBase(
-			GL_UNIFORM_BUFFER,
-			cbv->m_Slot,
-			glBuf->GetHandle()
-		);
+		glBindBufferBase(GL_UNIFORM_BUFFER, cbv->m_Slot, glBuf->GetHandle());
 	}
 
 	

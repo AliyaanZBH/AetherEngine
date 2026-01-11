@@ -12,25 +12,14 @@ namespace Aether
 	{
 		glCreateBuffers(1, &m_Handle);
 
-		switch (desc.m_Type)
+		GLbitfield storageFlags = 0;
+
+		if (desc.m_CPUVisible)
 		{
-			case eBufferType::kVertex:
-			case eBufferType::kIndex:
-			{
-				// Using namedbuffer for Direct State Access in order to avoid global mutable state and hidden state changes
-				glNamedBufferData(m_Handle, desc.m_SizeInBytes, desc.m_Data, desc.m_CPUVisible ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW);	// Ternary here to allow for static and dynamic draws based on the description we pass in!
-				break;
-			}
-			case eBufferType::kConstantPerFrame:
-			case eBufferType::kConstantPerDraw:
-			case eBufferType::kStorage:
-			{
-				glNamedBufferStorage(m_Handle, desc.m_SizeInBytes, desc.m_Data, GL_DYNAMIC_STORAGE_BIT);
-				break;
-			}
-			default:
-				break;
+			storageFlags |= GL_DYNAMIC_STORAGE_BIT;
 		}
+
+		glNamedBufferStorage(m_Handle, desc.m_SizeInBytes, desc.m_Data, storageFlags);
 		
 	}
 

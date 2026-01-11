@@ -15,6 +15,7 @@ namespace Aether
 		MaterialInstance(eMaterialType material);
 
 		void Upload();
+		void Update();
 
 		const Material& GetMaterialRef() const;
 

@@ -258,12 +258,11 @@ namespace Aether
         const uint32_t index = inst.GetMaterialIndex();
         const uint32_t size = inst.GetMaterialRef().GetDataStride();
 
-        //UploadToStructuredBuffer(index, inst.GetRawData());
         s_MaterialDataGPU->Upload(
             inst.GetRawData(),          // Pointer to ONE material struct
             size,
             index * size,               // Byte offset to the correct element
-            false                       // No overwriting or discarding of the buffer!
+            false                       // No discarding of the buffer! Just cleanly overwrite the region belonging to this material
         );
         inst.ClearDirty();
     }
@@ -550,7 +549,7 @@ namespace Aether
             //.m_Data = nullptr, // empty for now, will be uploaded per material instance
             .m_SizeInBytes = kMaxMaterialInstances * materialStride,
             .m_StructStride = materialStride,
-            .m_Type = eBufferType::kStructured,
+            .m_Type = eBufferType::kStructuredStorage,
             .m_CPUVisible = true
         };
 

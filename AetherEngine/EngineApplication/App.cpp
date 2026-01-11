@@ -31,12 +31,23 @@ public:
 
 		// For demo purposes
 		m_QuadMaterials.reserve(225);
-		for (int i = 0; i < 225; ++i)
+		// Setup grid - temp so magic numbers for now
+		for (int y = 0; y < 15; ++y)
 		{
-			Aether::MaterialInstance matInst = Aether::MaterialInstance(Aether::eMaterialType::kSolidColour);
-			matInst.GetData<Aether::SolidColourMaterialData>().m_Colour = Aether::Colours::kDarkBlue;
-			m_QuadMaterials.push_back(matInst);
-			m_QuadMaterials[i].Upload();
+			for (int x = 0; x < 15; x++)
+			{
+				const int idx = x + y * 15;
+				Aether::MaterialInstance matInst = Aether::MaterialInstance(Aether::eMaterialType::kSolidColour);
+
+				// Alternate colours like a checkerboard
+				if ((x % 2 == 0 && y % 2 == 0) || (x % 2 == 1 && y % 2 == 1))
+					matInst.GetData<Aether::SolidColourMaterialData>().m_Colour = Aether::Colours::kDarkBlue;
+				else
+					matInst.GetData<Aether::SolidColourMaterialData>().m_Colour = Aether::Colours::kDarkRed;
+
+				m_QuadMaterials.push_back(matInst);
+				m_QuadMaterials[idx].Upload();
+			}
 		}
 
 		m_TriMaterial = new Aether::MaterialInstance(Aether::eMaterialType::kSolidColour);
@@ -72,7 +83,6 @@ public:
 	void Render() override
 	{
 		Aether::Renderer::Draw(Aether::eDrawGeoType::kCube, m_CubeTransform, m_CubeMaterial);
-
 		// Define where and how we want to draw using a local transform helper
 		Aether::Transform trans;
 		trans.m_Scale = { 0.75f, 0.75f, 1.f };
@@ -83,15 +93,8 @@ public:
 			for (int x = 0; x < 15; x++)
 			{
 				trans.m_Position = { (x - 5.f) * 0.85f, (y - 5.f) * 0.85f, 4.f };
-
-				// Alternate colours
-				if (x % 2 == 0)
-					m_QuadMaterials[x + y].GetData<Aether::SolidColourMaterialData>().m_Colour = Aether::Colours::kDarkBlue;
-				else
-					m_QuadMaterials[x + y].GetData<Aether::SolidColourMaterialData>().m_Colour = Aether::Colours::kDarkRed;
-
-				Aether::Renderer::UpdateMaterialInstance(m_QuadMaterials[x + (y *15)]);
-				Aether::Renderer::Draw(Aether::eDrawGeoType::kQuad, trans, &m_QuadMaterials[x+y]);
+				const int idx = x + y * 15;
+				Aether::Renderer::Draw(Aether::eDrawGeoType::kQuad, trans, &m_QuadMaterials[idx]);
 			}
 		}
 
