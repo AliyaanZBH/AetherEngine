@@ -19,7 +19,7 @@ namespace Aether
 		eDrawGeoType m_Type;
 		VertexBufferView* m_VBV;
 		IndexBufferView* m_IBV;
-		Material* m_Material;
+		MaterialInstance* m_MaterialInstance;
 		glm::mat4 m_ModelMatrix;
 		//glm::vec4[4] m_PerVertexColour;
 		//const Mesh* m_Mesh = nullptr;

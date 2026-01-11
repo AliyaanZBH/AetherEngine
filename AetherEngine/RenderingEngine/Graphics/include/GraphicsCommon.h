@@ -11,23 +11,15 @@ namespace Aether
 		glm::mat4 m_ViewProj = glm::mat4(1.f);		// 64
 	};
 
-	struct alignas(16) PerDrawData_Solid
+	struct alignas(16) PerDrawData
 	{
 		glm::mat4 m_ModelMatrix = glm::mat4(1.f);	// 64
-		glm::vec4 m_Colour = glm::vec4(1.f);		// 16
+		uint32_t m_MaterialIndex = 0u;				// 4
 	};
 
-	struct alignas(16)  PerDrawData_Textured
+	namespace ShaderBindings
 	{
-		glm::vec4 m_Tint = glm::vec4(1.f);			// 16
-		uint32_t m_TextureID = 0u;					// 4
-	};
-
-	struct alignas(16)  PerDrawData_PBR
-	{
-		float m_Roughness;			// 4
-		float m_Metallic;			// 4
-		uint32_t m_DiffuseTexID;	// 4
-		uint32_t m_NormalTexID;		// 4
-	};
+		constexpr uint32_t kPerDrawCB = 0;		// b0
+		constexpr uint32_t kMaterialSRV = 0;	// t0
+	}
 };

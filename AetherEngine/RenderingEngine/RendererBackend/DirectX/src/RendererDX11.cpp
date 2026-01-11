@@ -8,6 +8,7 @@
 #include "D3DUtils.h"
 #include "Pipeline.h" 
 #include "DrawCommand.h"
+#include "GraphicsCommon.h"
 //===============================================================================
 
 namespace Aether
@@ -63,10 +64,36 @@ namespace Aether
 		std::wstring windowsPath = ToWide(ResolveDirectXShaderPath(desc.m_Name));
 		ShaderDX11* shader = new ShaderDX11(windowsPath, ShaderStageToHLSLCompilerString(desc.m_ShaderStage));
 
-		// Register shader in DX12 cache
+		// Register shader in DX11 cache
 		m_ShaderCache[handle] = shader;
 
 		return shader;
+	}
+
+	PipelineDX11* RendererDX11::LoadPipeline(PipelineHandle handle)
+	{
+		auto it = m_PipelineCache.find(handle);
+		if (it != m_PipelineCache.end())
+			return it->second;
+
+		const PipelineDesc& desc = PipelineLibrary::Get().GetDesc(handle);
+
+		// Load shaders into temp objects via desc handle
+		ShaderDX11* vs = LoadShader(desc.m_VertexShader);
+		ShaderDX11* ps = LoadShader(desc.m_PixelShader);
+
+		// Translate and create the input layout for our device
+		std::vector<D3D11_INPUT_ELEMENT_DESC> inputs = TranslateLayout(desc.m_Layout);
+
+		PipelineDX11* pipeline = new PipelineDX11(vs, ps, inputs, m_pD3DDevice.Get());
+
+		m_PipelineCache[handle] = pipeline;
+
+		// Delete danglers
+		delete vs;
+		delete ps;
+
+		return pipeline;
 	}
 
 	std::vector<D3D11_INPUT_ELEMENT_DESC> RendererDX11::TranslateLayout(const VertexLayout& layout)
@@ -107,25 +134,26 @@ namespace Aether
 		m_pD3DImmediateContext->PSSetConstantBuffers(cbSlot, 1, &conBuf);
 	}
 
-	void RendererDX11::CreatePipeline(const PipelineDesc& desc)
+	void RendererDX11::CreatePipeline(const PipelineDesc& desc, const PipelineHandle handle)
 	{
-		// Load shaders into temp objects
-		ShaderDX11* vs = LoadShader(desc.m_VertexShader);
-		ShaderDX11* ps = LoadShader(desc.m_PixelShader);
+		// Find or create pipeline object, this function inserts it into our cache too
+		LoadPipeline(handle);
+	}
 
-		// Actually create specific shader from the binary blobs
-		m_pD3DDevice->CreateVertexShader(vs->Get()->GetBufferPointer(), vs->Get()->GetBufferSize(), nullptr, &m_VS);
-		m_pD3DDevice->CreatePixelShader(ps->Get()->GetBufferPointer(), ps->Get()->GetBufferSize(), nullptr, &m_PS);
+	void RendererDX11::BindPipeline(const PipelineHandle handle)
+	{
+		const PipelineDX11* pipe = m_PipelineCache[handle];
 
-		// Translate and create the input layout for our device
-		std::vector<D3D11_INPUT_ELEMENT_DESC> inputs = TranslateLayout(desc.m_Layout);
-		m_pD3DDevice->CreateInputLayout(inputs.data(), UINT(inputs.size()), vs->Get()->GetBufferPointer(), vs->Get()->GetBufferSize(), &m_Layout);
-		m_pD3DImmediateContext->IASetInputLayout(m_Layout);
+		m_pD3DImmediateContext->IASetInputLayout(pipe->GetInputLayout());
+		m_pD3DImmediateContext->VSSetShader(pipe->GetVS(), nullptr, 0);
+		m_pD3DImmediateContext->PSSetShader(pipe->GetPS(), nullptr, 0);
+	}
 
-		// Delete danglers
-		delete vs;
-		delete ps;
-
+	void RendererDX11::BindGlobalResources(Buffer* materialBuffer)
+	{
+		ID3D11ShaderResourceView* srv = static_cast<BufferDX11*>(materialBuffer)->GetSRV();
+		m_pD3DImmediateContext->VSSetShaderResources(ShaderBindings::kMaterialSRV, 1, &srv);
+		m_pD3DImmediateContext->PSSetShaderResources(ShaderBindings::kMaterialSRV, 1, &srv);
 	}
 
 	void RendererDX11::Render()
@@ -133,7 +161,6 @@ namespace Aether
 
 	void RendererDX11::Submit(const DrawCommand& cmd, ConstantBufferView* cbv)
 	{
-
 		BindConstantBuffer(cbv);
 
 		// DX11 is immediate mode so we can render immediately
@@ -151,13 +178,10 @@ namespace Aether
 
 		UINT offset = vbv->m_Offset;
 
-		m_pD3DImmediateContext->IASetInputLayout(m_Layout);
+
 		m_pD3DImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 		m_pD3DImmediateContext->IASetVertexBuffers(0, 1, &dxVB, &vbv->m_Stride, &offset);
 		m_pD3DImmediateContext->IASetIndexBuffer(dxIB, DXGI_FORMAT_R32_UINT, 0);
-	
-		m_pD3DImmediateContext->VSSetShader(m_VS, nullptr, 0);
-		m_pD3DImmediateContext->PSSetShader(m_PS, nullptr, 0);
 
 		m_pD3DImmediateContext->RSSetViewports(1, &m_Viewport);
 		m_pD3DImmediateContext->RSSetScissorRects(1, &m_Scissor);

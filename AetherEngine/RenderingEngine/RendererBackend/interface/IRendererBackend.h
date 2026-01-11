@@ -9,41 +9,46 @@
 
 namespace Aether
 {
-    class Buffer;
-    struct BufferDesc;
-    struct PipelineDesc;
-    struct VertexBufferView;
-    struct IndexBufferView;
-    struct ConstantBufferView;
-    struct DrawCommand;
+	class Buffer;
+	struct BufferDesc;
+	struct PipelineDesc;
+	struct VertexBufferView;
+	struct IndexBufferView;
+	struct ConstantBufferView;
+	struct MaterialBufferView;
+	struct DrawCommand;
 
-    class AETHER_API IRendererBackend {
-    public:
-        virtual ~IRendererBackend() = default;
+	using PipelineHandle = uint32_t;
 
-        virtual AETHER_RESULT Initialize(const IWindow& window) = 0;
-        virtual void CreatePipeline(const PipelineDesc& desc) = 0;
+	class AETHER_API IRendererBackend {
+	public:
+		virtual ~IRendererBackend() = default;
 
-        virtual void ClearFrame() = 0;
-        virtual void Render() = 0;
-        // Take a high-level draw call and break it down into an optimised render call for each API.
-        virtual void Submit(const DrawCommand& cmd, ConstantBufferView* cbv) = 0;
-        virtual void Render(VertexBufferView* vbv, IndexBufferView* ibv) {};
-        virtual void Present() = 0;
+		virtual AETHER_RESULT Initialize(const IWindow& window) = 0;
+		virtual void CreatePipeline(const PipelineDesc& desc, const PipelineHandle handle) = 0;
+		virtual void BindPipeline(const PipelineHandle handle) = 0;
+		virtual void BindGlobalResources(Buffer* materialBuffer) = 0;
 
-        virtual void Resize(int newWidth, int newHeight) = 0;
-        virtual void Terminate() = 0;
+		virtual void ClearFrame() = 0;
+		virtual void Render() = 0;
+		// Take a high-level draw call and break it down into an optimised render call for each API.
+		virtual void Submit(const DrawCommand& cmd, ConstantBufferView* cbv) = 0;
+		virtual void Render(VertexBufferView* vbv, IndexBufferView* ibv) {};
+		virtual void Present() = 0;
 
-        virtual Buffer* CreateBuffer(const BufferDesc& desc) = 0;
-        virtual void BindFrameConstants(const ConstantBufferView* cbv) = 0;
-        virtual void FinalizeUploads() {}; // Not pure virtual as OpenGL and DX11 do not need to implement this, this is a modern render API necessity
+		virtual void Resize(int newWidth, int newHeight) = 0;
+		virtual void Terminate() = 0;
 
-        virtual void* GetNativeDevice() = 0;
-        virtual void* GetNativeContext() = 0;
+		virtual Buffer* CreateBuffer(const BufferDesc& desc) = 0;
+		virtual void BindFrameConstants(const ConstantBufferView* cbv) = 0;
+		virtual void FinalizeUploads() {}; // Not pure virtual as OpenGL and DX11 do not need to implement this, this is a modern render API necessity
 
-        // To be called by ImGui layer
-        virtual void InitImGui() = 0;
-        virtual void BeginImGuiRender() = 0;
-        virtual void EndImGuiRender() = 0;
-    };
+		virtual void* GetNativeDevice() = 0;
+		virtual void* GetNativeContext() = 0;
+
+		// To be called by ImGui layer
+		virtual void InitImGui() = 0;
+		virtual void BeginImGuiRender() = 0;
+		virtual void EndImGuiRender() = 0;
+	};
 }

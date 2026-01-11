@@ -29,9 +29,13 @@ namespace Aether
 		static void Render();
 		static void EndFrame();
 
-		static void Draw(const eDrawGeoType drawType, const Transform& transform, Material* mat);
+		static void Draw(const eDrawGeoType drawType, const Transform& transform, MaterialInstance* mat);
+		
+		static void UploadMaterialInstance(MaterialInstance& instance);
+		static void UpdateMaterialInstance(MaterialInstance& instance);
 
-		// TMP: I feel these are a breal the asbtraction a bit, but I'm putting them here just so we can get back to a stable build fast
+
+		// TMP: I feel these break the asbtraction a bit, but I'm putting them here just so we can get back to a stable build fast
 		static void InitImGui();
 		static void BeginImGuiRender();
 		static void EndImGuiRender();
@@ -63,8 +67,23 @@ namespace Aether
 		// Currently running renderer backend
 		static std::unique_ptr<IRendererBackend> s_RendererBackend;
 
-		// Per-frame render list
-		static std::vector<DrawCommand> s_CommandQueue;
+		// Per-frame render lists, separated by material
+		static std::vector<DrawCommand> s_SolidColourCommandQueue;
+		static const std::string s_SolidColourPipeName;
+
+		static std::vector<DrawCommand> s_TexturedCommandQueue;
+
+
+		// Material objects
+		// Single Material object that can be reused for multiple geometry
+		static Aether::Material* s_SolidMat;
+
+		//
+		// Material data - shared across API
+		//
+		static std::vector<uint8_t> s_MaterialDataCPU;
+		static Buffer* s_MaterialDataGPU;
+		static uint32_t s_NextMatIdx;
 
 		//
 		// Geometry containers - shared between renderer backends

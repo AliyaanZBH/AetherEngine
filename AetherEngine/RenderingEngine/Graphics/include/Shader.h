@@ -35,7 +35,7 @@ namespace Aether
 		eShaderStage m_ShaderStage;
 	};
 
-	// Contains definitions for named shaders
+	// Contains high-level definitions for named shaders and stores handles to them to ensure backends don't create duplicates
 	class AETHER_API ShaderLibrary
 	{
 	public:

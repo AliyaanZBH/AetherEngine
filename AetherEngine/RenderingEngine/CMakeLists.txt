@@ -26,12 +26,14 @@ set(SRC
     #
 
     Graphics/src/Shader.cpp
+    Graphics/src/Pipeline.cpp
 
     #
     # Materials
     #
-
-    Materials/src/MaterialSolidColour.cpp
+    
+    Materials/src/Material.cpp
+    Materials/src/MaterialInstance.cpp
 
     #
     # DirectX Implementations
@@ -39,6 +41,7 @@ set(SRC
 
     RendererBackend/DirectX/src/RendererDX11.cpp
     RendererBackend/DirectX/src/BufferDX11.cpp
+    RendererBackend/DirectX/src/PipelineDX11.cpp
     RendererBackend/DirectX/src/ShaderDX11.cpp
 
     RendererBackend/DirectX/src/RendererDX12.cpp
@@ -104,7 +107,8 @@ set(INCLUDE
     #
 
     Materials/include/Material.h
-    Materials/include/MaterialSolidColour.h
+    Materials/include/MaterialInstance.h
+    
 
     #
     # DirectX
@@ -112,15 +116,21 @@ set(INCLUDE
 
     RendererBackend/DirectX/include/D3DUtils.h
     
+    # DX11
+    #
     RendererBackend/DirectX/include/RendererDX11.h
-    RendererBackend/DirectX/include/BufferDX12.h
+    RendererBackend/DirectX/include/BufferDX11.h
     RendererBackend/DirectX/include/ShaderDX11.h
+    RendererBackend/DirectX/include/PipelineDX11.h
     
+    # DX12
+    #
     RendererBackend/DirectX/include/RendererDX12.h
     RendererBackend/DirectX/include/ImGuiDX12.h
     RendererBackend/DirectX/include/LinearAllocatorDX12.h
     RendererBackend/DirectX/include/BufferDX12.h
     RendererBackend/DirectX/include/ShaderDX12.h
+
 
     #
     # OpenGL

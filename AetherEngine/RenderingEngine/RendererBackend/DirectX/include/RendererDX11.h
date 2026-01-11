@@ -7,6 +7,7 @@
 #include "IRendererBackend.h"
 #include "ShaderDX11.h"
 #include "BufferDX11.h"
+#include "PipelineDX11.h"
 #include "Vertex.h"
 //===============================================================================
 
@@ -17,7 +18,9 @@ namespace Aether
 	public:
 		// Main start up function
 		AETHER_RESULT Initialize(const IWindow& window) override;
-		void CreatePipeline(const PipelineDesc& desc) override;
+		void CreatePipeline(const PipelineDesc& desc, const PipelineHandle handle) override;
+		void BindPipeline(const PipelineHandle handle) override;
+		void BindGlobalResources(Buffer* materialBuffer) override;
 
 		void ClearFrame() override;
 		void Render() override;
@@ -93,6 +96,9 @@ namespace Aether
 		// Either finds an already compiled shader in the cache or compiles and inserts a new one
 		ShaderDX11* LoadShader(ShaderHandle handle);
 
+		// Finds a defined pipeline by handle or creates one for the first time
+		PipelineDX11* LoadPipeline(PipelineHandle handle);
+
 		// Translate API agnostic input layout into DX11 land
 		std::vector<D3D11_INPUT_ELEMENT_DESC> TranslateLayout(const VertexLayout& layout);
 
@@ -119,10 +125,10 @@ namespace Aether
 
 		// Use our shader wrapper to handle shader files themselves
 		std::unordered_map<ShaderHandle, ShaderDX11*> m_ShaderCache;
+		
+		// Cache of pipelines that we can bind for materials
+		std::unordered_map<PipelineHandle, PipelineDX11*> m_PipelineCache;
 
-		ID3D11VertexShader* m_VS = nullptr;
-		ID3D11PixelShader* m_PS = nullptr;
-		ID3D11InputLayout* m_Layout = nullptr;
 		
 		//
 		//	Window data!

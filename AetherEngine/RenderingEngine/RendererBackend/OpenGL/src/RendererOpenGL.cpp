@@ -123,7 +123,7 @@ namespace Aether
 		return shader;
 	}
 
-	void RendererOpenGL::CreatePipeline(const PipelineDesc& desc)
+	void RendererOpenGL::CreatePipeline(const PipelineDesc& desc, const PipelineHandle handle)
 	{
 		// Grab or create shaders for this openGL "Pipeline"
 		//
@@ -164,6 +164,14 @@ namespace Aether
 		m_SolidColourLocation = glGetUniformLocation(m_DefaultShader->GetProgram(), "u_SolidColour");
 		m_DynamicColourLocation = glGetUniformLocation(m_DefaultShader->GetProgram(), "u_DynamicColour");
 
+	}
+
+	void RendererOpenGL::BindPipeline(const PipelineHandle handle)
+	{
+	}
+
+	void RendererOpenGL::BindGlobalResources(Buffer* materialBuffer)
+	{
 	}
 
 	void RendererOpenGL::Render()

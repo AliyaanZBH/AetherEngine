@@ -18,7 +18,7 @@ cbuffer PerFrameData : register(b0)
 cbuffer PerDrawData : register(b1)
 {
     float4x4 model;
-    float4   colour;
+    uint MaterialIndex;
 };
 
 VS_OUTPUT main(VS_INPUT input)
@@ -27,7 +27,7 @@ VS_OUTPUT main(VS_INPUT input)
     
     float4 world = mul(model, input.pos);
 
-    output.colour = colour;
+    output.colour = input.colour;
     output.pos = mul(viewProjection, world);
     
     return output;

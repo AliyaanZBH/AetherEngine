@@ -14,7 +14,9 @@ namespace Aether
 	public:
 		// Main start up function
 		AETHER_RESULT Initialize(const IWindow& window) override;
-		void CreatePipeline(const PipelineDesc& desc) override;
+		void CreatePipeline(const PipelineDesc& desc, const PipelineHandle handle) override;
+		void BindPipeline(const PipelineHandle handle) override;
+		void BindGlobalResources(Buffer* materialBuffer) override;
 
 		void ClearFrame() override;
 		void Render() override;

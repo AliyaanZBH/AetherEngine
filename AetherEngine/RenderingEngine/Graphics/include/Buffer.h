@@ -15,6 +15,7 @@ namespace Aether
 		kIndex ,
 		kConstantPerFrame,
 		kConstantPerDraw,
+		kStructured,
 		kStorage, 
 		kTransferSrc,
 		kTransferDst
@@ -22,10 +23,11 @@ namespace Aether
 
 	struct AETHER_API BufferDesc
 	{
-		const void*	m_Data = nullptr;	// Optional paramater to upload data initially, or leave it for batch uploading optimisation
+		const void*	m_Data = nullptr;		// Optional paramater to upload data initially, or leave it for batch uploading optimisation
 		size_t      m_SizeInBytes;
+		size_t      m_StructStride = 0;		// TMP: Required for structured buffers but I think this breaks abstraction somewhat.
 		eBufferType m_Type;
-		bool        m_CPUVisible;   // Staging / dynamic buffers that we want to read back from
+		bool        m_CPUVisible;			// Staging / dynamic buffers that we want to read back from
 	};
 
 	class AETHER_API Buffer

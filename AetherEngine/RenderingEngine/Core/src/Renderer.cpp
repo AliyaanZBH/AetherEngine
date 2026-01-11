@@ -1,5 +1,6 @@
 #include "Renderer.h"
 #include "Renderer.h"
+#include "Renderer.h"
 //===============================================================================
 // desc: High-level API for applications using Aether to render games with ease
 // auth: Aliyaan Zulfiqar
@@ -36,7 +37,17 @@
 namespace Aether
 {
     std::unique_ptr<IRendererBackend> Renderer::s_RendererBackend = nullptr;
-    std::vector<DrawCommand> Renderer::s_CommandQueue = {};
+    std::vector<DrawCommand> Renderer::s_SolidColourCommandQueue = {};
+    std::vector<DrawCommand> Renderer::s_TexturedCommandQueue = {};
+
+    const std::string Renderer::s_SolidColourPipeName = "SolidColour";
+
+    // Materials
+    Material* Renderer::s_SolidMat;
+
+    std::vector<uint8_t> Renderer::s_MaterialDataCPU;
+    Buffer* Renderer::s_MaterialDataGPU = nullptr;
+    uint32_t Renderer::s_NextMatIdx = 0u;
 
     // Constant buffer instances
     Buffer* Renderer::s_PerFrameBuffer = nullptr;
@@ -97,7 +108,7 @@ namespace Aether
         // Init rendering API - catch errors out here with assert
         AETHER_ASSERT(s_RendererBackend->Initialize(Window::GetInterface()));
 
-        // Create a high-level description of our render pipeline, and let the back-end take it away and build it.
+        // Create a high-level description of our render pipeline, and let the back-end take it away and build it. Also builds materials here.
         CreateBackendPipeline();
 
         // Create primitive geometry buffers that can be reused
@@ -109,11 +120,12 @@ namespace Aether
         s_RendererBackend->FinalizeUploads();
 
         // Reserve some space for our command queue up-front, to avoid re-allocations
-        s_CommandQueue.reserve(128);
+        s_SolidColourCommandQueue.reserve(128);
+        s_TexturedCommandQueue.reserve(128);
 
         // Create constant buffers for per-frame and per-draw data
         s_PerFrameBuffer = CreateConstantBuffer<PerFrameData>(eBufferType::kConstantPerFrame, &s_PerFrameCBView, 0);
-        s_PerDrawBuffer = CreateConstantBuffer<PerDrawData_Solid>(eBufferType::kConstantPerDraw, &s_PerDrawCBView, 1);
+        s_PerDrawBuffer = CreateConstantBuffer<PerDrawData>(eBufferType::kConstantPerDraw, &s_PerDrawCBView, 1);
 
 	}
 
@@ -164,11 +176,11 @@ namespace Aether
     // Drawing Functions!
     //
 
-    void Renderer::Draw(const eDrawGeoType drawType, const Transform& transform, Material* mat)
+    void Renderer::Draw(const eDrawGeoType drawType, const Transform& transform, MaterialInstance* mat)
     {
         DrawCommand cmd;
         cmd.m_ModelMatrix = transform.CreateModelMatrix();
-        cmd.m_Material = mat;
+        cmd.m_MaterialInstance = mat;
 
         // Switch on draw type and bind correct geo buffers
         switch (drawType)
@@ -200,7 +212,51 @@ namespace Aether
             }
         }
 
-        s_CommandQueue.push_back(cmd);
+        // Finally, figure out which render pass / pipeline we want to push this into based on material
+        switch (mat->GetMaterialRef().GetType())
+        {
+            case eMaterialType::kSolidColour:
+            {
+                s_SolidColourCommandQueue.push_back(cmd);
+                break;
+            }
+
+            case eMaterialType::kTextured:
+            {
+                s_TexturedCommandQueue.push_back(cmd);
+                break;
+            }
+        }
+
+    }
+
+    void Renderer::UploadMaterialInstance(MaterialInstance& instance)
+    {
+        const Material& material = instance.GetMaterialRef();
+        uint32_t stride = material.GetDataStride();
+
+        uint32_t index = s_NextMatIdx++;
+        instance.SetMaterialIndex(index);
+
+        size_t offset = index * stride;
+
+        if (s_MaterialDataCPU.size() < offset + stride)
+            s_MaterialDataCPU.resize(offset + stride);
+
+        memcpy(s_MaterialDataCPU.data() + offset, instance.GetRawData(), stride);
+
+        s_MaterialDataGPU->Upload(s_MaterialDataCPU.data(), s_MaterialDataCPU.size());
+    }
+
+    void Renderer::UpdateMaterialInstance(MaterialInstance& inst)
+    {
+        if (!inst.IsDirty())
+            return;
+
+        const uint32_t index = inst.GetMaterialIndex();
+        //UploadToStructuredBuffer(index, inst.GetRawData());
+
+        inst.ClearDirty();
     }
 
     //
@@ -210,58 +266,24 @@ namespace Aether
     void Renderer::Dispatch()
     {
 
-        for (DrawCommand& cmd : s_CommandQueue)
+        // Iterate through our command queues and fire off draw commands. Set pipeline / render pass state once at the start
+        s_RendererBackend->BindPipeline(PipelineLibrary::Get().GetHandle(s_SolidColourPipeName));
+
+        // Pass up our material buffer as a global resource for this pass
+        s_RendererBackend->BindGlobalResources(s_MaterialDataGPU);
+
+        // TODO: Maybe further improve this by seperating render passes by Opaque and Transparent?
+
+        for (DrawCommand& cmd : s_SolidColourCommandQueue)
         {
             // Update constant buffer with data for this objects material
-            switch (cmd.m_Material->GetType())
-            {
-                case eMaterialType::kSolidColour:
-                {
-                    PerDrawData_Solid data;
-                    data.m_ModelMatrix = cmd.m_ModelMatrix;
-
-                    cmd.m_Material->WritePerDrawData(&data);
-                    s_PerDrawBuffer->Upload(&data, sizeof(PerDrawData_Solid));
-                    break;
-                }
-                default:
-                {
-                    AETHER_ASSERT(AETHER_FAIL, "Unknown material type!");
-                }
-            }
-           
-            // Submit the view on this buffer together with the command;
+            PerDrawData data;
+            data.m_ModelMatrix = cmd.m_ModelMatrix;
+            data.m_MaterialIndex = cmd.m_MaterialInstance->GetMaterialIndex();
+            s_PerDrawBuffer->Upload(&data, sizeof(data));  
+            
+            // Submit the draw command for rendering, along with this draw calls CBV
             s_RendererBackend->Submit(cmd, &s_PerDrawCBView);
-
-            // Maybe save this for render passes like Opaque and Transparent?
-            //switch (cmd.m_Type)
-            //{
-            //    case eDrawCommandType::kQuad:
-            //    {
-            //        s_RendererBackend->Submit(cmd);
-            //    }
-            //}
-
-            //
-            // Crazy byte copying method of abstract material buffer creation
-            //
-            //std::byte perDrawMemory[256]; // or ring-buffer allocation
-            //memset(perDrawMemory, 0, sizeof(perDrawMemory));
-            //
-            //// Write transform (renderer-owned)
-            //*reinterpret_cast<glm::mat4*>(perDrawMemory) = cmd.m_ModelMatrix;
-            //
-            //// Write material (material-owned)
-            //std::byte* materialDst =
-            //    perDrawMemory + sizeof(glm::mat4);
-            //
-            //cmd.m_Material->WriteMaterialData(
-            //    materialDst,
-            //    sizeof(perDrawMemory) - sizeof(glm::mat4)
-            //);
-            //
-            //s_PerDrawBuffer->Upload(perDrawMemory, sizeof(perDrawMemory));
-            //s_RendererBackend->Submit(cmd, &s_PerDrawCBView);
         };
 
 
@@ -269,7 +291,8 @@ namespace Aether
 
     void Renderer::Flush()
     {
-        s_CommandQueue.clear();
+        s_SolidColourCommandQueue.clear();
+        s_TexturedCommandQueue.clear();
     }
 
     void Renderer::InitImGui()
@@ -502,6 +525,26 @@ namespace Aether
             .m_Layout = layout
         };
 
-        s_RendererBackend->CreatePipeline(pipelineDesc);
+        // Register pipeline too
+        PipelineHandle solidColourPipeline = PipelineLibrary::Get().Register(s_SolidColourPipeName, pipelineDesc);
+
+        s_RendererBackend->CreatePipeline(pipelineDesc, solidColourPipeline);
+
+        // Create and register our material with this pipeline handle
+        uint32_t materialStride = sizeof(SolidColourMaterialData);
+        s_SolidMat = new Aether::Material(solidColourPipeline, materialStride, eMaterialType::kSolidColour);
+        MaterialLibrary::Get().Register(eMaterialType::kSolidColour, s_SolidMat);
+
+        // Make sure our buffer for GPU material data is created too
+        BufferDesc matBufDesc
+        {
+            //.m_Data = nullptr, // empty for now, will be uploaded per material instance
+            .m_SizeInBytes = kMaxMaterialInstances * materialStride,
+            .m_StructStride = materialStride,
+            .m_Type = eBufferType::kStructured,
+            .m_CPUVisible = true
+        };
+
+        s_MaterialDataGPU = s_RendererBackend->CreateBuffer(matBufDesc);
     }
 }

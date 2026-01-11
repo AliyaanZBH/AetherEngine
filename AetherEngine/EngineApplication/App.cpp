@@ -21,18 +21,34 @@ public:
 		m_CubeTransform.m_Scale = { 2.0f, 2.0f, 2.f };
 		m_CubeTransform.m_Position = { -2.f, 0.f, 2.0f };
 
-		// Define our materials
-		m_CubeMaterial = new Aether::MaterialSolidColour(Aether::Colours::kYellow);
-		m_QuadMaterial = new Aether::MaterialSolidColour(Aether::Colours::kDarkBlue);
-		m_TriMaterial = new Aether::MaterialSolidColour(Aether::Colours::kCyan);
-	}
+		
+		// Setup material instances, these are attached to objects
+		m_CubeMaterial = new Aether::MaterialInstance(Aether::eMaterialType::kSolidColour);
+		// Set the data we want!
+		m_CubeMaterial->GetData<Aether::SolidColourMaterialData>().m_Colour = Aether::Colours::kYellow;
+		// Remember to upload!
+		m_CubeMaterial->Upload();
 
+		// For demo purposes
+		m_QuadMaterials.reserve(225);
+		for (int i = 0; i < 225; ++i)
+		{
+			Aether::MaterialInstance matInst = Aether::MaterialInstance(Aether::eMaterialType::kSolidColour);
+			matInst.GetData<Aether::SolidColourMaterialData>().m_Colour = Aether::Colours::kDarkBlue;
+			m_QuadMaterials.push_back(matInst);
+			m_QuadMaterials[i].Upload();
+		}
+
+		m_TriMaterial = new Aether::MaterialInstance(Aether::eMaterialType::kSolidColour);
+		m_TriMaterial->GetData<Aether::SolidColourMaterialData>().m_Colour = Aether::Colours::kCyan;
+		m_TriMaterial->Upload();
+
+	}
 	void OnDetach() override
 	{
 		delete m_CameraController;
 
 		delete m_CubeMaterial;
-		delete m_QuadMaterial;
 		delete m_TriMaterial;
 	}
 
@@ -62,19 +78,21 @@ public:
 		trans.m_Scale = { 0.75f, 0.75f, 1.f };
 
 		// Draw grid - temp so magic numbers for now
-		for (int y = -5; y < 10; ++y)
+		for (int y = 0; y < 15; ++y)
 		{
-			for (int x = -5; x < 10; x++)
+			for (int x = 0; x < 15; x++)
 			{
-				trans.m_Position = { x * 0.85f, y * 0.85f, 4.f };
+				trans.m_Position = { (x - 5.f) * 0.85f, (y - 5.f) * 0.85f, 4.f };
 
 				// Alternate colours
 				if (x % 2 == 0)
-					m_QuadMaterial->SetColour(Aether::Colours::kDarkBlue);
+					m_QuadMaterials[x + y].GetData<Aether::SolidColourMaterialData>().m_Colour = Aether::Colours::kDarkBlue;
 				else
-					m_QuadMaterial->SetColour(Aether::Colours::kDarkRed);
+					m_QuadMaterials[x + y].GetData<Aether::SolidColourMaterialData>().m_Colour = Aether::Colours::kDarkRed;
 
-				Aether::Renderer::Draw(Aether::eDrawGeoType::kQuad, trans, m_QuadMaterial);
+				//Aether::Renderer::UploadMaterialInstance(m_QuadMaterials[x+y]);
+				//Aether::Renderer::UpdateMaterialInstance(m_QuadMaterials[x+y]);
+				Aether::Renderer::Draw(Aether::eDrawGeoType::kQuad, trans, &m_QuadMaterials[x+y]);
 			}
 		}
 
@@ -88,9 +106,11 @@ private:
 	Aether::CameraController* m_CameraController;
 
 	Aether::Transform m_CubeTransform;
-	Aether::MaterialSolidColour* m_CubeMaterial;
-	Aether::MaterialSolidColour* m_QuadMaterial;
-	Aether::MaterialSolidColour* m_TriMaterial;
+
+	// Material instances that can be of any material type
+	Aether::MaterialInstance* m_CubeMaterial;
+	std::vector<Aether::MaterialInstance> m_QuadMaterials;
+	Aether::MaterialInstance* m_TriMaterial;
 };
 
 class AetherGame : public Aether::Application
