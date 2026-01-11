@@ -14,7 +14,7 @@ namespace Aether
 		BufferDX11(const BufferDesc& desc, ID3D11Device* device, ID3D11DeviceContext* context);
 		~BufferDX11();
 
-		void Upload(const void* data, size_t size, size_t offset = 0) override;
+		void Upload(const void* data, size_t size, size_t offset = 0, bool overwrite = true) override;
 
 		ID3D11Buffer* GetBuffer() const { return m_Buffer; }
 		ID3D11ShaderResourceView* GetSRV() const { return m_SRV; }

@@ -93,7 +93,7 @@ namespace Aether
 		}
 	}
 
-	void BufferDX12::Upload(const void* data, size_t size, size_t offset)
+	void BufferDX12::Upload(const void* data, size_t size, size_t offset, bool overwrite)
 	{
 
 		if (m_Desc.m_Type == eBufferType::kConstantPerDraw)

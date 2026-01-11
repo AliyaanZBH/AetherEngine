@@ -39,7 +39,7 @@ namespace Aether
 		glDeleteBuffers(1, &m_Handle);
 	}
 
-	void BufferOpenGL::Upload(const void* data, size_t size, size_t offset)
+	void BufferOpenGL::Upload(const void* data, size_t size, size_t offset, bool overwrite)
 	{
 		glNamedBufferSubData(m_Handle, offset, size, data);
 	}

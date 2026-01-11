@@ -90,8 +90,7 @@ public:
 				else
 					m_QuadMaterials[x + y].GetData<Aether::SolidColourMaterialData>().m_Colour = Aether::Colours::kDarkRed;
 
-				//Aether::Renderer::UploadMaterialInstance(m_QuadMaterials[x+y]);
-				//Aether::Renderer::UpdateMaterialInstance(m_QuadMaterials[x+y]);
+				Aether::Renderer::UpdateMaterialInstance(m_QuadMaterials[x + (y *15)]);
 				Aether::Renderer::Draw(Aether::eDrawGeoType::kQuad, trans, &m_QuadMaterials[x+y]);
 			}
 		}

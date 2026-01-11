@@ -39,7 +39,7 @@ namespace Aether
 		virtual ~Buffer() = default;
 
 		// Explicit data upload that supports all types of buffers
-		virtual void Upload(const void* data, size_t size, size_t offset = 0) = 0;
+		virtual void Upload(const void* data, size_t size, size_t offset = 0, bool overwrite = true) = 0;
 
 		const BufferDesc& GetDesc() const { return m_Desc; }
 		size_t GetSize() const { return m_Desc.m_SizeInBytes; }

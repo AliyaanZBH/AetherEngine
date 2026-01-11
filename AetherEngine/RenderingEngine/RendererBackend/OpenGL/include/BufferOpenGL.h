@@ -14,7 +14,7 @@ namespace Aether
 		BufferOpenGL(const BufferDesc& desc);
 		~BufferOpenGL();
 
-		void Upload(const void* data, size_t size, size_t offset = 0) override;
+		void Upload(const void* data, size_t size, size_t offset = 0, bool overwrite = true) override;
 		
 		GLuint GetHandle() const { return m_Handle; }
 

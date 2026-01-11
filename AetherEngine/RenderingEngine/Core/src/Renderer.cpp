@@ -240,11 +240,13 @@ namespace Aether
 
         size_t offset = index * stride;
 
+        // Update CPU side data
         if (s_MaterialDataCPU.size() < offset + stride)
             s_MaterialDataCPU.resize(offset + stride);
 
         memcpy(s_MaterialDataCPU.data() + offset, instance.GetRawData(), stride);
 
+        // Upload to GPU structured buffer
         s_MaterialDataGPU->Upload(s_MaterialDataCPU.data(), s_MaterialDataCPU.size());
     }
 
@@ -254,8 +256,15 @@ namespace Aether
             return;
 
         const uint32_t index = inst.GetMaterialIndex();
-        //UploadToStructuredBuffer(index, inst.GetRawData());
+        const uint32_t size = inst.GetMaterialRef().GetDataStride();
 
+        //UploadToStructuredBuffer(index, inst.GetRawData());
+        s_MaterialDataGPU->Upload(
+            inst.GetRawData(),          // Pointer to ONE material struct
+            size,
+            index * size,               // Byte offset to the correct element
+            false                       // No overwriting or discarding of the buffer!
+        );
         inst.ClearDirty();
     }
 

@@ -87,7 +87,7 @@ namespace Aether
 			m_Buffer->Release();
 	}
 
-	void BufferDX11::Upload(const void* data, size_t size, size_t offset)
+	void BufferDX11::Upload(const void* data, size_t size, size_t offset, bool overwrite)
 	{
 		// Check if our buffer is able to be written to by the CPU
 		if (m_Desc.m_CPUVisible)
@@ -97,7 +97,9 @@ namespace Aether
 			AETHER_HR_ASSERT(m_Context->Map(
 				m_Buffer,
 				0,
-				D3D11_MAP_WRITE_DISCARD,	// This flag replaces the entire buffer contents.
+				overwrite
+					? D3D11_MAP_WRITE_DISCARD			// This flag replaces the entire buffer contents.
+					: D3D11_MAP_WRITE_NO_OVERWRITE,		// This flag replaces only a single element or region of the buffer
 				0,
 				&mapped
 			));

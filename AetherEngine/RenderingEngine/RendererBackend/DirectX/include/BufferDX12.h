@@ -14,7 +14,7 @@ namespace Aether
 		BufferDX12(const BufferDesc& desc, ID3D12Device* device, ID3D12GraphicsCommandList* cmdList);
 		~BufferDX12();
 
-		void Upload(const void* data, size_t size, size_t offset = 0) override;
+		void Upload(const void* data, size_t size, size_t offset = 0, bool overwrite = true) override;
 		void SetName(const WCHAR* name);
 
 
