@@ -469,7 +469,6 @@ namespace Aether
         s_BoxGeoBuffer->ibView.m_Count = 36;
         s_BoxGeoBuffer->ibView.m_IndexSize = sizeof(unsigned int);
         s_BoxGeoBuffer->ibView.m_Offset = 0;
-
     }
 
     template<typename T>

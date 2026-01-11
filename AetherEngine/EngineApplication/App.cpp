@@ -18,7 +18,7 @@ public:
 	void OnAttach() override
 	{
 		// Define where and how we want to draw using a dedicated transform that we can update!
-		m_CubeTransform.m_Scale = { 2.0f, 2.0f, 2.f };
+		m_CubeTransform.m_Scale = { 1.0f, 1.0f, 1.0f };
 		m_CubeTransform.m_Position = { -2.f, 0.f, 2.0f };
 
 		
@@ -82,7 +82,6 @@ public:
 
 	void Render() override
 	{
-		Aether::Renderer::Draw(Aether::eDrawGeoType::kCube, m_CubeTransform, m_CubeMaterial);
 		// Define where and how we want to draw using a local transform helper
 		Aether::Transform trans;
 		trans.m_Scale = { 0.75f, 0.75f, 1.f };
@@ -97,6 +96,8 @@ public:
 				Aether::Renderer::Draw(Aether::eDrawGeoType::kQuad, trans, &m_QuadMaterials[idx]);
 			}
 		}
+
+		Aether::Renderer::Draw(Aether::eDrawGeoType::kCube, m_CubeTransform, m_CubeMaterial);
 
 		// Can re-use local transform for another draw!
 		trans.m_Scale = { 1.75f, 1.75f, 1.f };

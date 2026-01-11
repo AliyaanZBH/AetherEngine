@@ -26,11 +26,9 @@ namespace Aether
 			glm::mat4 modelMatrix = glm::mat4(1.f);
 
 			glm::mat4 t = glm::translate(glm::mat4(1.f), m_Position);
-			//glm::mat4 r = glm::rotate(glm::mat4(1.f), m_Rotation);
 			glm::mat4 r = glm::eulerAngleZYX(m_Rotation.x, m_Rotation.y, m_Rotation.z);
 			glm::mat4 s = glm::scale(glm::mat4(1.f), m_Scale);
 
-			//modelMatrix = t /* * r */ * s;
 			modelMatrix = t  * r  * s;
 			return modelMatrix;
 		}
