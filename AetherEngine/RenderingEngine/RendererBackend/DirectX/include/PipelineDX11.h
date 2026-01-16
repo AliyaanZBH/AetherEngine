@@ -23,4 +23,5 @@ namespace Aether
 		ID3D11PixelShader*  m_PS = nullptr;
 		ID3D11InputLayout*  m_Layout = nullptr;
 	};
+
 }

@@ -41,7 +41,7 @@ namespace Aether
 
 		virtual Buffer* CreateBuffer(const BufferDesc& desc) = 0;
 		virtual void BindFrameConstants(const ConstantBufferView* cbv) = 0;
-		virtual void FinalizeUploads() {}; // Not pure virtual as OpenGL and DX11 do not need to implement this, this is a modern render API necessity
+		virtual void FinalizeUploads() = 0; 
 
 		virtual void* GetNativeDevice() = 0;
 		virtual void* GetNativeContext() = 0;

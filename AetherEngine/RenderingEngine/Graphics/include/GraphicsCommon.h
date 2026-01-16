@@ -15,6 +15,9 @@ namespace Aether
 	{
 		glm::mat4 m_ModelMatrix = glm::mat4(1.f);	// 64
 		uint32_t m_MaterialIndex = 0u;				// 4
+		uint32_t  _pad0;
+		uint32_t  _pad1;
+		uint32_t  _pad2;
 	};
 
 	namespace ShaderBindings

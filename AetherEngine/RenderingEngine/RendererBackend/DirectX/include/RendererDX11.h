@@ -33,6 +33,7 @@ namespace Aether
 
 		Buffer* CreateBuffer(const BufferDesc& desc) override;
 		void BindFrameConstants(const ConstantBufferView* cbv) override;
+		void FinalizeUploads() override {};
 
 
 		void* GetNativeDevice() override { return m_pD3DDevice.Get(); }
@@ -96,9 +97,6 @@ namespace Aether
 		// Either finds an already compiled shader in the cache or compiles and inserts a new one
 		ShaderDX11* LoadShader(ShaderHandle handle);
 
-		// Finds a defined pipeline by handle or creates one for the first time
-		PipelineDX11* LoadPipeline(PipelineHandle handle);
-
 		// Translate API agnostic input layout into DX11 land
 		std::vector<D3D11_INPUT_ELEMENT_DESC> TranslateLayout(const VertexLayout& layout);
 
@@ -121,12 +119,8 @@ namespace Aether
 		D3D_DRIVER_TYPE m_D3DDriverType = D3D_DRIVER_TYPE_UNKNOWN;
 		Microsoft::WRL::ComPtr<ID3D11Texture2D> m_pDepthStencilBuffer = nullptr;
 		Microsoft::WRL::ComPtr<ID3D11DepthStencilView> m_pDepthStencilView = nullptr;
-
-
-		// Use our shader wrapper to handle shader files themselves
-		std::unordered_map<ShaderHandle, ShaderDX11*> m_ShaderCache;
 		
-		// Cache of pipelines that we can bind for materials
+		// Cache of pipelines that we can bind for materials, sets shaders too
 		std::unordered_map<PipelineHandle, PipelineDX11*> m_PipelineCache;
 
 		

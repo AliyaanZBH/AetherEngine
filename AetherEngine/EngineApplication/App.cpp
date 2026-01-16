@@ -18,8 +18,8 @@ public:
 	void OnAttach() override
 	{
 		// Define where and how we want to draw using a dedicated transform that we can update!
-		m_CubeTransform.m_Scale = { 1.0f, 1.0f, 1.0f };
-		m_CubeTransform.m_Position = { -2.f, 0.f, 2.0f };
+		m_CubeTransform.m_Scale = { 0.2f, 0.2f, 0.2f };
+		m_CubeTransform.m_Position = { -2.f, 0.f, 1.0f };
 
 		
 		// Setup material instances, these are attached to objects
@@ -77,11 +77,13 @@ public:
 		m_CameraController->Update(Aether::Time::GetDT());
 
 		// Update rotation
-		m_CubeTransform.m_Rotation.y += Aether::Time::GetDT();
+		//m_CubeTransform.m_Rotation.y += Aether::Time::GetDT();
 	}
 
 	void Render() override
 	{
+		Aether::Renderer::Draw(Aether::eDrawGeoType::kCube, m_CubeTransform, m_CubeMaterial);
+
 		// Define where and how we want to draw using a local transform helper
 		Aether::Transform trans;
 		trans.m_Scale = { 0.75f, 0.75f, 1.f };
@@ -97,7 +99,6 @@ public:
 			}
 		}
 
-		Aether::Renderer::Draw(Aether::eDrawGeoType::kCube, m_CubeTransform, m_CubeMaterial);
 
 		// Can re-use local transform for another draw!
 		trans.m_Scale = { 1.75f, 1.75f, 1.f };

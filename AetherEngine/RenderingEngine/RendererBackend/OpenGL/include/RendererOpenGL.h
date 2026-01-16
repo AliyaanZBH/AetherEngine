@@ -6,6 +6,7 @@
 #include "IRendererBackend.h"
 #include "ShaderOpenGL.h"
 #include "BufferOpenGL.h"
+#include "PipelineOpenGL.h"
 //===============================================================================
 namespace Aether
 {
@@ -29,6 +30,7 @@ namespace Aether
 
 		Buffer* CreateBuffer(const BufferDesc& desc) override;
 		void BindFrameConstants(const ConstantBufferView* cbv) override;
+		void FinalizeUploads() override;
 
 		void* GetNativeDevice() override { return 0; }
 		void* GetNativeContext() override { return 0; }
@@ -37,20 +39,22 @@ namespace Aether
 		void BeginImGuiRender() override;
 		void EndImGuiRender() override;
 	private:
-		ShaderOpenGL* LoadShader(ShaderHandle vertHandle, ShaderHandle fragHandle);
-		
+		ShaderOpenGL* LoadShader(const ShaderHandle vertHandle, const ShaderHandle fragHandle);
 		void BindConstantBuffer(const ConstantBufferView* cbv);
+
+		// Gets or lazily creates VAOs for a unique pair of geometry + pipeline
+		GLuint LoadVAO(const GLuint vb, const GLuint ib);
 
 		GLFWwindow* m_pWindow;
 
-		unsigned int m_VertexAttributeArray = 0;
-		int m_DynamicColourLocation = 0;
-		int m_TransformLocation = 0;
-		int m_SolidColourLocation = 0;
+		// Cache current pipeline handle to use to look up our VAO cache
+		PipelineHandle m_CurrentPipeline;
 
-		// In OpenGL, multiple shaders must be linked into a single shader program, this one contains a vertex and pixel shader
-		ShaderOpenGL* m_DefaultShader = nullptr;
-		std::unordered_map<ShaderHandle, ShaderOpenGL*> m_ShaderCache;
+		// Cache of pipelines that we can bind for materials, sets shaders too
+		std::unordered_map<PipelineHandle, PipelineOpenGL*> m_PipelineCache;
+		
+		//std::unordered_map<VAOKey, GLuint, VAOKeyHasher> m_VAOCache;
+		std::unordered_map<PipelineHandle, GLuint> m_VAOCache;
 
 		BufferOpenGL* m_VertexBuffer = nullptr;
 		BufferOpenGL* m_IndexBuffer = nullptr;

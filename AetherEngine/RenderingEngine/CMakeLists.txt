@@ -55,6 +55,7 @@ set(SRC
     RendererBackend/OpenGL/src/RendererOpenGL.cpp
     RendererBackend/OpenGL/src/ShaderOpenGL.cpp
     RendererBackend/OpenGL/src/BufferOpenGL.cpp
+    RendererBackend/OpenGL/src/PipelineOpenGL.cpp
 
     Layers/src/ImGuiLayer.cpp
 )
@@ -139,6 +140,7 @@ set(INCLUDE
     RendererBackend/OpenGL/include/RendererOpenGL.h
     RendererBackend/OpenGL/include/ShaderOpenGL.h
     RendererBackend/OpenGL/include/BufferOpenGL.h
+    RendererBackend/OpenGL/include/PipelineOpenGL.h
 
     # Events
     Events/include/EventContext.h

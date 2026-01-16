@@ -116,7 +116,7 @@ namespace Aether
         CreateQuadGeometry();
         CreateBoxGeometry();
 
-        // Finalise our uploads to the renderer
+        // Finalise our uploads to the renderer - this sets up any final state each backend needs (cmd list exec in DX12, VAO creation for geometry in OGL)
         s_RendererBackend->FinalizeUploads();
 
         // Reserve some space for our command queue up-front, to avoid re-allocations
@@ -187,6 +187,7 @@ namespace Aether
         {
             case eDrawGeoType::kTri:
             {
+                cmd.m_Type = eDrawGeoType::kTri;
                 cmd.m_VBV = &s_TriGeoBuffer->vbView;
                 cmd.m_IBV = &s_TriGeoBuffer->ibView;
                 break;
@@ -194,6 +195,7 @@ namespace Aether
 
             case eDrawGeoType::kQuad:
             {
+                cmd.m_Type = eDrawGeoType::kQuad;
                 cmd.m_VBV = &s_QuadGeoBuffer->vbView;
                 cmd.m_IBV = &s_QuadGeoBuffer->ibView;
                 break;
@@ -201,6 +203,7 @@ namespace Aether
 
             case eDrawGeoType::kCube:
             {
+                cmd.m_Type = eDrawGeoType::kCube;
                 cmd.m_VBV = &s_BoxGeoBuffer->vbView;
                 cmd.m_IBV = &s_BoxGeoBuffer->ibView;
                 break;
@@ -227,7 +230,6 @@ namespace Aether
                 break;
             }
         }
-
     }
 
     void Renderer::UploadMaterialInstance(MaterialInstance& instance)
@@ -293,7 +295,6 @@ namespace Aether
             // Submit the draw command for rendering, along with this draw calls CBV
             s_RendererBackend->Submit(cmd, &s_PerDrawCBView);
         };
-
 
     }
 

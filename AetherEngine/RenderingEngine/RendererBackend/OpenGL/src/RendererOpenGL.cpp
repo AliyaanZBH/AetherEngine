@@ -96,18 +96,15 @@ namespace Aether
 		};
 		m_IndexBuffer = static_cast<BufferOpenGL*>(CreateBuffer(ibDesc));
 		m_IndexBuffer->Upload(indices, ibDesc.m_SizeInBytes);
-
+		
+		// Get depth testing turned on so we don't get weirdness (and also get those mad optimisations in too :D)
+		glEnable(GL_DEPTH_TEST);
+		glDepthFunc(GL_LEQUAL);
 		return ar;
 	}
 
-	ShaderOpenGL* RendererOpenGL::LoadShader(ShaderHandle vertHandle, ShaderHandle fragHandle)
+	ShaderOpenGL* RendererOpenGL::LoadShader(const ShaderHandle vertHandle, const ShaderHandle fragHandle)
 	{
-		// See if this shader was already compiled, return it if so. 
-		// Only check for the vert shader, OpenGL shaders are made in pairs so if the vertex shader can't be found, then neither will the frag
-		auto it = m_ShaderCache.find(vertHandle);
-		if (it != m_ShaderCache.end())
-			return it->second;
-
 		// Doesn't exist yet, let's build it
 		const ShaderDesc& vsDesc = ShaderLibrary::Get().GetDesc(vertHandle);
 		const ShaderDesc& psDesc = ShaderLibrary::Get().GetDesc(fragHandle);
@@ -115,13 +112,8 @@ namespace Aether
 		// Push into vector
 		const std::vector<ShaderDesc> shaderDescs = { vsDesc, psDesc };
 
-		ShaderOpenGL* shader = new ShaderOpenGL(shaderDescs);
-
-		// Register shaders in local OpenGL cache
-		m_ShaderCache[vertHandle] = shader;
-		m_ShaderCache[fragHandle] = shader;
-
-		return shader;
+		// Create and shader program
+		return new ShaderOpenGL(shaderDescs);
 	}
 
 	void RendererOpenGL::CreatePipeline(const PipelineDesc& desc, const PipelineHandle handle)
@@ -130,39 +122,21 @@ namespace Aether
 		//
 		
 		// OpenGL requires that both vert and frag shaders are compiled together into a SINGLE GLprogram object
-		m_DefaultShader = LoadShader(desc.m_VertexShader, desc.m_PixelShader);
+		ShaderOpenGL* shader = LoadShader(desc.m_VertexShader, desc.m_PixelShader);
 
-		// Bind those bois
-		m_DefaultShader->Bind();
+		// Create pipeline in cache
+		m_PipelineCache[handle] = new PipelineOpenGL(shader);
 
-		// Create VAO object to define our input layout
-		glCreateVertexArrays(1, &m_VertexAttributeArray);
-
-		// Propogate pipeline layout to get vertex attributes
-		for (VertexAttribute attrib : desc.m_Layout.m_Attributes)
-		{
-			// Derive location from semantic name (position is 0, colour 1, etc.)
-			uint32_t location = ToGLLocation(attrib.m_Name);
-			// Define the attribute in the OpenGL format
-			glVertexArrayAttribFormat(
-				m_VertexAttributeArray,
-				location,											// attrib index
-				VertexAttributeComponentCount(attrib.m_Format),		// Size  in OpenGL land actually means `component count`. So we want 4 instead of 16
-				ToGLFormat(attrib.m_Format),						// GL enum that matches our format (usually GL_FLOAT)
-				GL_FALSE,											// Force false on normalisation for now
-				attrib.m_Offset										// offset within vertex struct ( e.g. colour would be 16 bytes offset as there are 16 bytes of position data first)
-			);
-
-			// Set the binding location to be used in the shaders. In my engine today, each vertex attribute location maps to a single binding slot, because all attributes come from the same interleaved buffer. 
-			glVertexArrayAttribBinding(m_VertexAttributeArray, location, 0);
-
-			// Finally, enable the attribute in the vertex array
-			glEnableVertexArrayAttrib(m_VertexAttributeArray, location);
-		}
+		// VAOs will be lazily created and cached as necessary
 	}
 
 	void RendererOpenGL::BindPipeline(const PipelineHandle handle)
 	{
+		// Bind pipeline and use linked shader program
+		m_PipelineCache[handle]->BindShader();
+
+		// Store this handle to be used when looking up VAOs
+		m_CurrentPipeline = handle;
 	}
 
 	void RendererOpenGL::BindGlobalResources(Buffer* materialBuffer)
@@ -174,23 +148,23 @@ namespace Aether
 
 	void RendererOpenGL::Render()
 	{
-		// Uniform setup for varying colours!
-		float deltaTime = glfwGetTime();
-
-		// Bind and draw our geo!
-		glBindVertexArray(m_VertexAttributeArray);
-		
-		glVertexArrayVertexBuffer(
-			m_VertexAttributeArray,
-			0,   // same index used when binding attributes for the VAO
-			m_VertexBuffer->GetHandle(),
-			0,
-			sizeof(Vertex)
-		);
-
-		// Bind index buffer
-		glVertexArrayElementBuffer(m_VertexAttributeArray, m_IndexBuffer->GetHandle());
-		glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, nullptr);
+		//// Uniform setup for varying colours!
+		//float deltaTime = glfwGetTime();
+		//
+		//// Bind and draw our geo!
+		//glBindVertexArray(m_VertexAttributeArray);
+		//
+		//glVertexArrayVertexBuffer(
+		//	m_VertexAttributeArray,
+		//	0,   // same index used when binding attributes for the VAO
+		//	m_VertexBuffer->GetHandle(),
+		//	0,
+		//	sizeof(Vertex)
+		//);
+		//
+		//// Bind index buffer
+		//glVertexArrayElementBuffer(m_VertexAttributeArray, m_IndexBuffer->GetHandle());
+		//glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, nullptr);
 	}
 
 	void RendererOpenGL::Submit(const DrawCommand& cmd, ConstantBufferView* cbv)
@@ -203,20 +177,23 @@ namespace Aether
 
 	void RendererOpenGL::Render(VertexBufferView* vbv, IndexBufferView* ibv)
 	{
-		// Need to rebind vertex array as it is still pointing at the old set of geometry!
-		glBindVertexArray(m_VertexAttributeArray);
+		GLuint vbHandle = static_cast<const BufferOpenGL*>(vbv->m_Buffer)->GetHandle();
+		GLuint ibHandle = static_cast<const BufferOpenGL*>(ibv->m_Buffer)->GetHandle();
 
+		// Creates VAO for unique pair of geometry and pipeline once, looks them up from cache on subsequent 
+		GLuint vao = LoadVAO(vbHandle, ibHandle);
+		glBindVertexArray(vao);
+		// Bind geometry buffers
 		glVertexArrayVertexBuffer(
-			m_VertexAttributeArray,
-			0,   // same index used when binding attributes for the VAO
-			static_cast<BufferOpenGL*>(vbv->m_Buffer)->GetHandle(),
-			vbv->m_Offset,
+			vao,
+			0,
+			vbHandle,
+			0,
 			vbv->m_Stride
 		);
 
-		glVertexArrayElementBuffer(m_VertexAttributeArray, static_cast<BufferOpenGL*>(ibv->m_Buffer)->GetHandle());
+		glVertexArrayElementBuffer(vao, ibHandle);
 		glDrawElements(GL_TRIANGLES, ibv->m_Count, GL_UNSIGNED_INT, nullptr);
-
 	}
 	
 	void RendererOpenGL::Present()
@@ -227,7 +204,7 @@ namespace Aether
 	void RendererOpenGL::ClearFrame()
 	{
 		glClearColor(0.2f, 0.7f, 0.9f, 1.f);
-		glClear(GL_COLOR_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	}
 	
 	void RendererOpenGL::Terminate()
@@ -246,11 +223,76 @@ namespace Aether
 		BindConstantBuffer(cbv);
 	}
 
+	void RendererOpenGL::FinalizeUploads()
+	{
+		// TODO: Pre-build VAOs for known geometry-pipeline pairs at this point
+		m_VAOCache.clear();
+	}
+
 	void RendererOpenGL::BindConstantBuffer(const ConstantBufferView* cbv)
 	{
 		const BufferOpenGL* glBuf = static_cast<const BufferOpenGL*>(cbv->m_Buffer);
 
 		glBindBufferBase(GL_UNIFORM_BUFFER, cbv->m_Slot, glBuf->GetHandle());
+	}
+
+	GLuint RendererOpenGL::LoadVAO(const GLuint vbHandle, const GLuint ibHandle)
+	{
+		// Create a key with this pair of geometry buffers and pipeline
+		//VAOKey key{ vbHandle, ibHandle, m_CurrentPipeline };
+
+		// Use key to check if we've already created this VAO, return it if so
+		//auto it = m_VAOCache.find(key);
+		auto it = m_VAOCache.find(m_CurrentPipeline);
+		if (it != m_VAOCache.end())
+			return it->second;
+
+		// Otherwise, continue creating this VAO
+
+		// Create VAO object to define our input layout
+		GLuint vertexAttributeArray;
+		glCreateVertexArrays(1, &vertexAttributeArray);
+
+		// Get desc of current pipe
+		const PipelineDesc& desc = PipelineLibrary::Get().GetDesc(m_CurrentPipeline);
+
+		// Propogate pipeline layout to get vertex attributes
+		for (const VertexAttribute& attrib : desc.m_Layout.m_Attributes)
+		{
+			// Derive location from semantic name (position is 0, colour 1, etc.)
+			uint32_t location = ToGLLocation(attrib.m_Name);
+			// Define the attribute in the OpenGL format
+			glVertexArrayAttribFormat(
+				vertexAttributeArray,
+				location,											// attrib index
+				VertexAttributeComponentCount(attrib.m_Format),		// Size  in OpenGL land actually means `component count`. So we want 4 instead of 16
+				ToGLFormat(attrib.m_Format),						// GL enum that matches our format (usually GL_FLOAT)
+				GL_FALSE,											// Force false on normalisation for now
+				attrib.m_Offset										// offset within vertex struct ( e.g. colour would be 16 bytes offset as there are 16 bytes of position data first)
+			);
+
+			// Set the binding location to be used in the shaders. In my engine today, each vertex attribute location maps to a single binding slot, because all attributes come from the same interleaved buffer. 
+			glVertexArrayAttribBinding(vertexAttributeArray, location, 0);
+
+			// Finally, enable the attribute in the vertex array
+			glEnableVertexArrayAttrib(vertexAttributeArray, location);
+		}
+
+		// Bind geometry buffers
+		//glVertexArrayVertexBuffer(
+		//	vertexAttributeArray,
+		//	0,
+		//	vbHandle,
+		//	0,
+		//	desc.m_Layout.m_Stride
+		//);
+		//
+		//glVertexArrayElementBuffer(vertexAttributeArray, ibHandle);
+
+		// Cache VAO for reuse
+		//m_VAOCache[key] = vertexAttributeArray;
+		m_VAOCache[m_CurrentPipeline] = vertexAttributeArray;
+		return vertexAttributeArray;
 	}
 
 	

@@ -52,48 +52,13 @@ namespace Aether
 
 	ShaderDX11* RendererDX11::LoadShader(ShaderHandle handle)
 	{
-		// See if this shader was already compiled, return it if so
-		auto it = m_ShaderCache.find(handle);
-		if (it != m_ShaderCache.end())
-			return it->second;
-
 		// Doesn't exist yet, let's build it. This will fail if the shader hasn't yet been registered
 		const ShaderDesc& desc = ShaderLibrary::Get().GetDesc(handle);
 
 		// DX is weird and windows-y so it wants a wstring
 		std::wstring windowsPath = ToWide(ResolveDirectXShaderPath(desc.m_Name));
-		ShaderDX11* shader = new ShaderDX11(windowsPath, ShaderStageToHLSLCompilerString(desc.m_ShaderStage));
 
-		// Register shader in DX11 cache
-		m_ShaderCache[handle] = shader;
-
-		return shader;
-	}
-
-	PipelineDX11* RendererDX11::LoadPipeline(PipelineHandle handle)
-	{
-		auto it = m_PipelineCache.find(handle);
-		if (it != m_PipelineCache.end())
-			return it->second;
-
-		const PipelineDesc& desc = PipelineLibrary::Get().GetDesc(handle);
-
-		// Load shaders into temp objects via desc handle
-		ShaderDX11* vs = LoadShader(desc.m_VertexShader);
-		ShaderDX11* ps = LoadShader(desc.m_PixelShader);
-
-		// Translate and create the input layout for our device
-		std::vector<D3D11_INPUT_ELEMENT_DESC> inputs = TranslateLayout(desc.m_Layout);
-
-		PipelineDX11* pipeline = new PipelineDX11(vs, ps, inputs, m_pD3DDevice.Get());
-
-		m_PipelineCache[handle] = pipeline;
-
-		// Delete danglers
-		delete vs;
-		delete ps;
-
-		return pipeline;
+		return new ShaderDX11(windowsPath, ShaderStageToHLSLCompilerString(desc.m_ShaderStage));
 	}
 
 	std::vector<D3D11_INPUT_ELEMENT_DESC> RendererDX11::TranslateLayout(const VertexLayout& layout)
@@ -136,8 +101,18 @@ namespace Aether
 
 	void RendererDX11::CreatePipeline(const PipelineDesc& desc, const PipelineHandle handle)
 	{
-		// Find or create pipeline object, this function inserts it into our cache too
-		LoadPipeline(handle);
+		// Load shaders into temp objects via desc handle
+		ShaderDX11* vs = LoadShader(desc.m_VertexShader);
+		ShaderDX11* ps = LoadShader(desc.m_PixelShader);
+
+		// Translate and create the input layout for our device
+		std::vector<D3D11_INPUT_ELEMENT_DESC> inputs = TranslateLayout(desc.m_Layout);
+
+		m_PipelineCache[handle] = new PipelineDX11(vs, ps, inputs, m_pD3DDevice.Get());
+
+		// Delete danglers
+		delete vs;
+		delete ps;
 	}
 
 	void RendererDX11::BindPipeline(const PipelineHandle handle)
