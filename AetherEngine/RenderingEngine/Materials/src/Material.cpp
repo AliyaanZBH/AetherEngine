@@ -4,9 +4,27 @@
 //===============================================================================
 #include "Material.h"
 #include "AetherUtils.h"
+#include "Drawing.h"
 //===============================================================================
 namespace Aether
 {
+	void Material::InitialiseDefaults(void* instanceData) const
+	{
+		switch (m_Type)
+		{
+			case eMaterialType::kSolidColour:
+			{
+				*reinterpret_cast<FlatColourMaterialData*>(instanceData) = FlatColourMaterialData();
+				break;
+			}
+
+			case eMaterialType::kBlinnPhong:
+			{
+				*reinterpret_cast<LitColourMaterialData*>(instanceData) = LitColourMaterialData();
+			}
+		}
+	}
+
 	MaterialHandle MaterialLibrary::Register(const eMaterialType name, const Material* mat)
 	{
 		// Check if it's already been registered, don't want to do this twice

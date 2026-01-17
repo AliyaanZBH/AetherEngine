@@ -12,8 +12,13 @@ namespace Aether
 	MaterialInstance::MaterialInstance(eMaterialType material)
 	{
 		m_MaterialRef = MaterialLibrary::Get().GetHandle(material);
+		const Material& mat = MaterialLibrary::Get().GetMaterial(m_MaterialRef);
+		
 		// Guarantee that our instance has enough storage for the material data
-		m_Data.resize(MaterialLibrary::Get().GetMaterial(m_MaterialRef).GetDataStride());
+		m_Data.resize(mat.GetDataStride());
+
+		// Default initialise material data for this material instance
+		mat.InitialiseDefaults(m_Data.data());
 	}
 
 	void MaterialInstance::Upload()

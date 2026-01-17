@@ -10,6 +10,7 @@
 #include <cstdarg>
 
 #include <functional>
+#include <variant>
 #include <memory>
 #include <vector>
 

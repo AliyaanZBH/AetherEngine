@@ -18,8 +18,8 @@ namespace Aether
 		switch (semantic)
 		{
 		case eShaderSemantic::kPosition:  return 0;
-		case eShaderSemantic::kColour:    return 1;
-		case eShaderSemantic::kNormal:    return 2;
+		case eShaderSemantic::kNormal:    return 1;
+		case eShaderSemantic::kColour:    return 2;
 		case eShaderSemantic::kTexCoord0: return 3;
 		case eShaderSemantic::kTexCoord1: return 4;
 		default:
@@ -66,9 +66,9 @@ namespace Aether
 		// Create geometry itself - centered tri for now
 		Vertex verts[]
 		{
-			{ { -0.5f,	-0.5f,	0.f, 1.f},	{1.f, 0.f, 0.f, 1.f} },
-			{ {  0.5f,	-0.5f,	0.f, 1.f},	{0.f, 1.f, 0.f, 1.f} },
-			{ {  0.f,	 0.5f,	0.f, 1.f},	{0.f, 0.f, 1.f, 1.f} }
+			{ { -0.5f,	-0.5f,	0.f, 1.f},	{1.f, 0.f, 0.f} },
+			{ {  0.5f,	-0.5f,	0.f, 1.f},	{0.f, 1.f, 0.f} },
+			{ {  0.f,	 0.5f,	0.f, 1.f},	{0.f, 0.f, 1.f} }
 		};
 
 		// Create vertex buffer here with our fancy new buffer desc
@@ -100,6 +100,11 @@ namespace Aether
 		// Get depth testing turned on so we don't get weirdness (and also get those mad optimisations in too :D)
 		glEnable(GL_DEPTH_TEST);
 		glDepthFunc(GL_LEQUAL);
+
+		//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);	// For wireframe testing!
+		//glPolygonMode(GL_FRONT, GL_FILL);
+		//glCullFace(GL_BACK);
+
 		return ar;
 	}
 
@@ -184,13 +189,7 @@ namespace Aether
 		GLuint vao = LoadVAO(vbHandle, ibHandle);
 		glBindVertexArray(vao);
 		// Bind geometry buffers
-		glVertexArrayVertexBuffer(
-			vao,
-			0,
-			vbHandle,
-			0,
-			vbv->m_Stride
-		);
+		glVertexArrayVertexBuffer(vao, 0, vbHandle, 0, vbv->m_Stride);
 
 		glVertexArrayElementBuffer(vao, ibHandle);
 		glDrawElements(GL_TRIANGLES, ibv->m_Count, GL_UNSIGNED_INT, nullptr);

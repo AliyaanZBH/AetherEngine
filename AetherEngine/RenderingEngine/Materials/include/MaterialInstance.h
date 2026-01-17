@@ -19,6 +19,7 @@ namespace Aether
 
 		const Material& GetMaterialRef() const;
 
+		eMaterialType GetType() const { return MaterialLibrary::Get().GetMaterial(m_MaterialRef).GetType(); }
 		uint32_t GetMaterialIndex() const { return m_MaterialIndex; }
 		void SetMaterialIndex(uint32_t index);
 
@@ -32,6 +33,7 @@ namespace Aether
 		{
 			m_bDirty = true;
 			return *reinterpret_cast<T*>(m_Data.data());
+			//return std::get<T>(m_Data);
 		}
 
 		bool IsDirty() const { return m_bDirty; }
@@ -40,6 +42,7 @@ namespace Aether
 	private:
 		MaterialHandle m_MaterialRef;
 		std::vector<uint8_t> m_Data;
+		//MaterialDataVariant m_Data;
 		uint32_t m_MaterialIndex = UINT32_MAX;
 		// Dirty flag so we know when to update our material data
 		bool m_bDirty = false;

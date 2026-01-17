@@ -12,7 +12,7 @@ layout (std140, binding = 1) uniform PerDrawData
 };
 
 layout (location = 0) in vec4 a_Pos;
-layout (location = 1) in vec4 a_Col;
+layout (location = 1) in vec3 a_Norm;
 
 void main()
 {

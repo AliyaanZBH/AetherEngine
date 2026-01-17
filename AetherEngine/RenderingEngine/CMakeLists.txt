@@ -162,20 +162,22 @@ set(INCLUDE
 # Specify shaders
 set(HLSL_SHADER_FILES
 
-    Shaders/DirectX/VertexShader.hlsl
-    Shaders/DirectX/PixelShader.hlsl
+    Shaders/DirectX/FlatSolidColourVertexShader.hlsl
+    Shaders/DirectX/FlatSolidColourPixelShader.hlsl
 )
 
 # Extra steps for HLSL and MSVC
 set_source_files_properties(${HLSL_SHADER_FILES} PROPERTIES ShaderModel "5_0")
-set_source_files_properties(Shaders/DirectX/VertexShader.hlsl PROPERTIES ShaderType "vs")
-set_source_files_properties(Shaders/DirectX/PixelShader.hlsl PROPERTIES ShaderType "ps")
+set_source_files_properties(Shaders/DirectX/FlatSolidColourVertexShader.hlsl PROPERTIES ShaderType "vs")
+set_source_files_properties(Shaders/DirectX/FlatSolidColourPixelShader.hlsl PROPERTIES ShaderType "ps")
 
 # Repeat for GLSL
 set(GLSL_SHADER_FILES
 
-    Shaders/OpenGL/VertexShader.glsl
-    Shaders/OpenGL/PixelShader.glsl
+    Shaders/OpenGL/FlatSolidColourVertexShader.glsl
+    Shaders/OpenGL/FlatSolidColourPixelShader.glsl
+    Shaders/OpenGL/LitBPVertexShader.glsl
+    Shaders/OpenGL/LitBPPixelShader.glsl
 )
 
 

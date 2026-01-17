@@ -38,15 +38,22 @@ namespace Aether
 {
     std::unique_ptr<IRendererBackend> Renderer::s_RendererBackend = nullptr;
     std::vector<DrawCommand> Renderer::s_SolidColourCommandQueue = {};
+    std::vector<DrawCommand> Renderer::s_BlinnPhongSolidColourCommandQueue = {};
     std::vector<DrawCommand> Renderer::s_TexturedCommandQueue = {};
 
     const std::string Renderer::s_SolidColourPipeName = "SolidColour";
+    const std::string Renderer::s_BlinnPhongSolidColourPipeName = "BlinnPhong";
 
     // Materials
-    Material* Renderer::s_SolidMat;
+    Material* Renderer::s_FlatSolidColourMat;
+    Material* Renderer::s_BlinnPhongLitSolidColourMat;
 
-    std::vector<uint8_t> Renderer::s_MaterialDataCPU;
-    Buffer* Renderer::s_MaterialDataGPU = nullptr;
+    std::vector<uint8_t> Renderer::s_SolidColourMaterialDataCPU;
+    Buffer* Renderer::s_SolidColourMaterialDataGPU = nullptr;
+
+    std::vector<uint8_t> Renderer::s_BPMaterialDataCPU;
+    Buffer* Renderer::s_BPMaterialDataGPU = nullptr;
+
     uint32_t Renderer::s_NextMatIdx = 0u;
 
     // Constant buffer instances
@@ -121,6 +128,7 @@ namespace Aether
 
         // Reserve some space for our command queue up-front, to avoid re-allocations
         s_SolidColourCommandQueue.reserve(128);
+        s_BlinnPhongSolidColourCommandQueue.reserve(128);
         s_TexturedCommandQueue.reserve(128);
 
         // Create constant buffers for per-frame and per-draw data
@@ -152,6 +160,7 @@ namespace Aether
         // Now upload per-frame data to the GPU
         PerFrameData data;
         data.m_ViewProj = camera.GetViewProj();
+        data.m_CameraPos = glm::vec4(camera.GetPosition(), 1.0f);
 
         s_PerFrameBuffer->Upload(&data, sizeof(PerFrameData));
         s_RendererBackend->BindFrameConstants(&s_PerFrameCBView);
@@ -224,6 +233,12 @@ namespace Aether
                 break;
             }
 
+            case eMaterialType::kBlinnPhong:
+            {
+                s_BlinnPhongSolidColourCommandQueue.push_back(cmd);
+                break;
+            }
+
             case eMaterialType::kTextured:
             {
                 s_TexturedCommandQueue.push_back(cmd);
@@ -242,14 +257,33 @@ namespace Aether
 
         size_t offset = index * stride;
 
-        // Update CPU side data
-        if (s_MaterialDataCPU.size() < offset + stride)
-            s_MaterialDataCPU.resize(offset + stride);
+        // Grab correct material buffer
+        std::vector<uint8_t>* cpuBuffer;
+        Buffer* gpuBuffer = nullptr;
+        switch (instance.GetType())
+        {
+            case eMaterialType::kSolidColour:
+            {
+                cpuBuffer = &s_SolidColourMaterialDataCPU;
+                gpuBuffer = s_SolidColourMaterialDataGPU;
+                break;
+            }
+            case eMaterialType::kBlinnPhong:
+            {
+                cpuBuffer = &s_BPMaterialDataCPU;
+                gpuBuffer = s_BPMaterialDataGPU;
+                break;
+            }
+        }
 
-        memcpy(s_MaterialDataCPU.data() + offset, instance.GetRawData(), stride);
+        // Update CPU side data
+        if (cpuBuffer->size() < offset + stride)
+            cpuBuffer->resize(offset + stride);
+
+        memcpy(cpuBuffer->data() + offset, instance.GetRawData(), stride);
 
         // Upload to GPU structured buffer
-        s_MaterialDataGPU->Upload(s_MaterialDataCPU.data(), s_MaterialDataCPU.size());
+        gpuBuffer->Upload(cpuBuffer->data(), cpuBuffer->size());
     }
 
     void Renderer::UpdateMaterialInstance(MaterialInstance& inst)
@@ -260,7 +294,23 @@ namespace Aether
         const uint32_t index = inst.GetMaterialIndex();
         const uint32_t size = inst.GetMaterialRef().GetDataStride();
 
-        s_MaterialDataGPU->Upload(
+        // Grab correct material buffer
+        Buffer* gpuBuffer;
+        switch (inst.GetType())
+        {
+            case eMaterialType::kSolidColour:
+            {
+                gpuBuffer = s_SolidColourMaterialDataGPU;
+                break;
+            }
+            case eMaterialType::kBlinnPhong:
+            {
+                gpuBuffer = s_BPMaterialDataGPU;
+                break;
+            }
+        }
+
+        gpuBuffer->Upload(
             inst.GetRawData(),          // Pointer to ONE material struct
             size,
             index * size,               // Byte offset to the correct element
@@ -280,7 +330,7 @@ namespace Aether
         s_RendererBackend->BindPipeline(PipelineLibrary::Get().GetHandle(s_SolidColourPipeName));
 
         // Pass up our material buffer as a global resource for this pass
-        s_RendererBackend->BindGlobalResources(s_MaterialDataGPU);
+        s_RendererBackend->BindGlobalResources(s_SolidColourMaterialDataGPU);
 
         // TODO: Maybe further improve this by seperating render passes by Opaque and Transparent?
 
@@ -296,11 +346,27 @@ namespace Aether
             s_RendererBackend->Submit(cmd, &s_PerDrawCBView);
         };
 
+        // Repeat for all pipelines
+        s_RendererBackend->BindPipeline(PipelineLibrary::Get().GetHandle(s_BlinnPhongSolidColourPipeName));
+        s_RendererBackend->BindGlobalResources(s_BPMaterialDataGPU);
+
+        for (DrawCommand& cmd : s_BlinnPhongSolidColourCommandQueue)
+        {
+            // Update constant buffer with data for this objects material
+            PerDrawData data;
+            data.m_ModelMatrix = cmd.m_ModelMatrix;
+            data.m_MaterialIndex = cmd.m_MaterialInstance->GetMaterialIndex();
+            s_PerDrawBuffer->Upload(&data, sizeof(data));
+
+            // Submit the draw command for rendering, along with this draw calls CBV
+            s_RendererBackend->Submit(cmd, &s_PerDrawCBView);
+        };
     }
 
     void Renderer::Flush()
     {
         s_SolidColourCommandQueue.clear();
+        s_BlinnPhongSolidColourCommandQueue.clear();
         s_TexturedCommandQueue.clear();
     }
 
@@ -332,9 +398,9 @@ namespace Aether
         // Clockwise verts! Clockwise winding order!
         Vertex triVerts[] =
         {
-            { {	-0.5f,		-0.5f,		0.5f,	1.f	}, {1.f, 0.f, 0.f, 1.f} },	// Bottom Left
-            { {	 0.0f,		 0.5f,		0.5f,	1.f	}, {0.f, 1.f, 0.f, 1.f} },	// Top
-            { {	 0.5f,		-0.5f,		0.5f,	1.f	}, {0.f, 0.f, 1.f, 1.f} },	// Bottom Right
+            { {	-0.5f,		-0.5f,		0.5f,	1.f	}, { 0.f, 0.f, 1.f } },	// Bottom Left
+            { {	 0.0f,		 0.5f,		0.5f,	1.f	}, { 0.f, 0.f, 1.f } },	// Top
+            { {	 0.5f,		-0.5f,		0.5f,	1.f	}, { 0.f, 0.f, 1.f } }	// Bottom Right
         };
 
         BufferDesc triVBDesc
@@ -372,10 +438,10 @@ namespace Aether
     {
         Vertex quadVerts[] =
         {
-            { {	-0.5f,		-0.5f,		0.5f,	1.f	}, {1.f, 0.f, 0.f, 1.f} },	// Bottom Left
-            { {	-0.5f,		 0.5f,		0.5f,	1.f	}, {0.f, 1.f, 0.f, 1.f} },	// Top Left
-            { {	 0.5f,		 0.5f,		0.5f,	1.f	}, {0.f, 0.f, 1.f, 1.f} },	// Top Right
-            { {	 0.5f,		-0.5f,		0.5f,	1.f	}, {0.f, 1.f, 1.f, 1.f} }	// Bottom Right
+            { {	-0.5f,		-0.5f,		0.5f,	1.f	}, { 0.f, 0.f, 1.f } },	// Bottom Left
+            { {	-0.5f,		 0.5f,		0.5f,	1.f	}, { 0.f, 0.f, 1.f } },	// Top Left
+            { {	 0.5f,		 0.5f,		0.5f,	1.f	}, { 0.f, 0.f, 1.f } },	// Top Right
+            { {	 0.5f,		-0.5f,		0.5f,	1.f	}, { 0.f, 0.f, 1.f } }	// Bottom Right
         };
 
         BufferDesc quadVBDesc
@@ -413,19 +479,73 @@ namespace Aether
     {
         // Make the extents .5 and then offset them from the center of our shape to create a 1x1x1 cube with origin at the center
         glm::vec4 extents = { 0.5f, 0.5f, 0.5f, 1.f };
-        glm::vec4 flatWhite = { 1.f, 1.f, 1.f, 1.f };
 
-        Vertex boxVerts[] =
+        // Unique vert positions of the box
+        glm::vec4 boxCorners[] =
         {
-            { { -extents.x,  extents.y,  extents.z, extents.w },   flatWhite },  		// V0 = -0.5,  0.5,  0.5
-            { { -extents.x,  extents.y, -extents.z, extents.w },   flatWhite },		    // V1 = -0.5,  0.5, -0.5
-            { {  extents.x,  extents.y, -extents.z, extents.w },   flatWhite },		    // V2 =  0.5,  0.5, -0.5
-            { {  extents.x,  extents.y,  extents.z, extents.w },   flatWhite },		    // V3 =  0.5,  0.5,  0.5
-            { { -extents.x, -extents.y,  extents.z, extents.w },   flatWhite },		    // V4 = -0.5, -0.5,  0.5
-            { { -extents.x, -extents.y, -extents.z, extents.w },   flatWhite },		    // V5 = -0.5, -0.5, -0.5
-            { {  extents.x, -extents.y, -extents.z, extents.w },   flatWhite },		    // V6 =  0.5, -0.5, -0.5
-            { {  extents.x, -extents.y,  extents.z, extents.w },   flatWhite }		    // V7 =  0.5, -0.5,  0.5
+            { -extents.x,  extents.y,  extents.z, extents.w },  	// V0 = -0.5,  0.5,  0.5
+            { -extents.x,  extents.y, -extents.z, extents.w },		// V1 = -0.5,  0.5, -0.5
+            {  extents.x,  extents.y, -extents.z, extents.w },		// V2 =  0.5,  0.5, -0.5
+            {  extents.x,  extents.y,  extents.z, extents.w },		// V3 =  0.5,  0.5,  0.5
+            { -extents.x, -extents.y,  extents.z, extents.w },		// V4 = -0.5, -0.5,  0.5
+            { -extents.x, -extents.y, -extents.z, extents.w },		// V5 = -0.5, -0.5, -0.5
+            {  extents.x, -extents.y, -extents.z, extents.w },		// V6 =  0.5, -0.5, -0.5
+            {  extents.x, -extents.y,  extents.z, extents.w }		// V7 =  0.5, -0.5,  0.5
         };
+
+        // Organized by face
+        int boxIndices[] =
+        {
+            // +-x
+            0,1,4,	4,1,5,
+            2,3,6,	6,3,7,
+
+            // +-y
+            1,0,2,	2,0,3,
+            4,5,6,	4,6,7,
+
+            // +-z
+            2,5,1,	2,6,5,
+            3,0,4,	3,4,7
+        };
+
+        const int kVertsPerTri = 3;
+        const int kTrisPerFace = 2;
+        const int kFaces = 6;
+        const int kVertCount = kVertsPerTri * kTrisPerFace * kFaces;
+
+        Vertex boxVerts[kVertCount];
+
+        // Duplicate verts so that we can caluclate proper face normals and get correct shading
+        for (size_t i = 0; i < kVertCount; i++)
+        {
+            boxVerts[i].m_Position = boxCorners[boxIndices[i]];
+        }
+
+        // Calculate surface normals
+        // Iterate through all our tris
+        for (size_t i = 0; i < kVertCount; i += 3) 
+        {
+            // Get verts of current tri via indices
+            glm::vec3 v0 = boxVerts[i + 0].m_Position;
+            glm::vec3 v1 = boxVerts[i + 1].m_Position;
+            glm::vec3 v2 = boxVerts[i + 2].m_Position;
+
+            // Calculate edges
+            glm::vec3 edge0 = v1 - v0;
+            glm::vec3 edge1 = v2 - v0;
+
+            // Calculate cross product
+            glm::vec3 crossPrd = glm::normalize(glm::cross(edge0, edge1));
+           
+            // Normalise
+            crossPrd = glm::normalize(crossPrd);
+
+            // Set normals
+            boxVerts[i + 0].m_Normal = crossPrd;
+            boxVerts[i + 1].m_Normal = crossPrd;
+            boxVerts[i + 2].m_Normal = crossPrd;
+        }
 
         BufferDesc boxVBDesc
         {
@@ -441,33 +561,30 @@ namespace Aether
         s_BoxGeoBuffer->vbView.m_Stride = sizeof(Vertex);
         s_BoxGeoBuffer->vbView.m_Offset = 0;
 
-        // Hardcode indices
-        int boxIndices[] =
+        // Re-create a dummy IB, each triangle now has unique verts
+        int sequentialIndices[] =
         {
-            // +-x
-            0,1,4,	4,1,5,
-            2,3,6,	6,3,7,
+            0,1,2,	    3,4,5,
+            6,7,8,	    9,10,11,
 
-            // +-y
-            1,0,2,	2,0,3,
-            4,5,6,	4,6,7,
+            12,13,14,   15,16,17,
+            18,19,20,	21,22,23,
 
-            // +-z
-            2,5,1,	2,6,5,
-            3,0,4,	3,4,7,
+            24,25,26,	27,28,29,
+            30,31,32,	33,34,35
         };
 
         BufferDesc boxIBDesc
         {
-            .m_Data = boxIndices,
-            .m_SizeInBytes = sizeof(boxIndices),
+            .m_Data = sequentialIndices,
+            .m_SizeInBytes = sizeof(sequentialIndices),
             .m_Type = eBufferType::kIndex,
             .m_CPUVisible = false
         };
 
         s_BoxGeoBuffer->ibView.m_Buffer = s_RendererBackend->CreateBuffer(boxIBDesc);
         s_BoxGeoBuffer->ibView.m_Buffer->Upload(boxIBDesc.m_Data, boxIBDesc.m_SizeInBytes);
-        s_BoxGeoBuffer->ibView.m_Count = 36;
+        s_BoxGeoBuffer->ibView.m_Count = kVertCount;
         s_BoxGeoBuffer->ibView.m_IndexSize = sizeof(unsigned int);
         s_BoxGeoBuffer->ibView.m_Offset = 0;
     }
@@ -505,43 +622,46 @@ namespace Aether
             .m_Offset = 0   // Offset is optional and will be calculated by the layout constructor!
         };
 
-        VertexAttribute aColour = { eShaderSemantic::kColour, eVertexAttributeFormat::kFloat4 };
+        VertexAttribute aNormal = { eShaderSemantic::kNormal, eVertexAttributeFormat::kFloat3 };
 
         // Construct a layout with these attributes, offset and stride will be calculated internally
-        VertexLayout layout({ aPos, aColour });
+        VertexLayout defaultLayout({ aPos, aNormal });
 
         // Grab shader library and register shaders or grab handle in the case that they've already been registered (not the case here, but could be when called later!)
         ShaderLibrary& shaders = ShaderLibrary::Get();
         ShaderDesc vsDesc
         {
-            .m_Name = "VertexShader",       // No extensions, ideally we have identical shaders for both GLSL and HLSL. Let the renderer API figure out which one it needs to loads
+            .m_Name = "FlatSolidColourVertexShader",       // No extensions, ideally we have identical shaders for both GLSL and HLSL. Let the renderer API figure out which one it needs to loads
             .m_ShaderStage = eShaderStage::kVertex
         };
-        ShaderHandle vsHandle = shaders.Register("DefaultVertexShader", vsDesc);
+        ShaderHandle vsHandle = shaders.Register("FlatSolidColourVertexShader", vsDesc);
 
         ShaderDesc psDesc
         {
-            .m_Name = "PixelShader",
+            .m_Name = "FlatSolidColourPixelShader",
             .m_ShaderStage = eShaderStage::kPixel
         };
-        ShaderHandle psHandle = shaders.Register("DefaultPixelShader", psDesc);
+        ShaderHandle psHandle = shaders.Register("FlatSolidColourPixelShader", psDesc);
 
         PipelineDesc pipelineDesc =
         {
             .m_VertexShader = vsHandle,
             .m_PixelShader = psHandle,
-            .m_Layout = layout
+            .m_Layout = defaultLayout
         };
 
-        // Register pipeline too
-        PipelineHandle solidColourPipeline = PipelineLibrary::Get().Register(s_SolidColourPipeName, pipelineDesc);
+        // Register pipeline and store handle for use in material creation
+        PipelineLibrary& pipelines = PipelineLibrary::Get();
+        PipelineHandle solidColourPipeline = pipelines.Register(s_SolidColourPipeName, pipelineDesc);
 
         s_RendererBackend->CreatePipeline(pipelineDesc, solidColourPipeline);
 
-        // Create and register our material with this pipeline handle
-        uint32_t materialStride = sizeof(SolidColourMaterialData);
-        s_SolidMat = new Aether::Material(solidColourPipeline, materialStride, eMaterialType::kSolidColour);
-        MaterialLibrary::Get().Register(eMaterialType::kSolidColour, s_SolidMat);
+        // Create and register the materials with this pipeline handle
+        uint32_t materialStride = sizeof(FlatColourMaterialData);
+        s_FlatSolidColourMat = new Aether::Material(solidColourPipeline, materialStride, eMaterialType::kSolidColour);
+       
+        MaterialLibrary& materials = MaterialLibrary::Get();
+        materials.Register(eMaterialType::kSolidColour, s_FlatSolidColourMat);
 
         // Make sure our buffer for GPU material data is created too
         BufferDesc matBufDesc
@@ -553,6 +673,30 @@ namespace Aether
             .m_CPUVisible = true
         };
 
-        s_MaterialDataGPU = s_RendererBackend->CreateBuffer(matBufDesc);
+        s_SolidColourMaterialDataGPU = s_RendererBackend->CreateBuffer(matBufDesc);
+
+        // Repeat for as many pipelines as we want!
+        //
+
+        ShaderHandle blinnPhongVS = shaders.Register("LitBPVertexShader", { "LitBPVertexShader", eShaderStage::kVertex });
+        ShaderHandle blinnPhongPS = shaders.Register("LitBPPixelShader", { "LitBPPixelShader", eShaderStage::kPixel });
+        PipelineDesc blinnPhongDesc = { blinnPhongVS, blinnPhongPS, defaultLayout };
+
+        PipelineHandle blinnPhongHandle = pipelines.Register(s_BlinnPhongSolidColourPipeName, blinnPhongDesc);
+
+        uint32_t bpMatStride = sizeof(LitColourMaterialData);
+        s_BlinnPhongLitSolidColourMat = new Aether::Material(blinnPhongHandle, bpMatStride, eMaterialType::kBlinnPhong);
+        materials.Register(eMaterialType::kBlinnPhong, s_BlinnPhongLitSolidColourMat);
+        s_RendererBackend->CreatePipeline(blinnPhongDesc, blinnPhongHandle);
+        BufferDesc bpMatBufDesc
+        {
+            //.m_Data = nullptr, // empty for now, will be uploaded per material instance
+            .m_SizeInBytes = kMaxMaterialInstances * bpMatStride,
+            .m_StructStride = bpMatStride,
+            .m_Type = eBufferType::kStructuredStorage,
+            .m_CPUVisible = true
+        };
+
+        s_BPMaterialDataGPU = s_RendererBackend->CreateBuffer(bpMatBufDesc);
     }
 }

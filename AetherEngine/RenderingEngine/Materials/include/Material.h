@@ -4,6 +4,7 @@
 // auth: Aliyaan Zulfiqar
 //===============================================================================
 #include "Core.h"
+//#include <variant>
 //===============================================================================
 
 namespace Aether
@@ -11,7 +12,10 @@ namespace Aether
 	using PipelineHandle = uint32_t;
 	using MaterialHandle = uint32_t;
 
-	enum class eMaterialType {kSolidColour, kTextured, kPBR};
+	// Variant to help material instance data stay visible and not collapse into opaque byte-blobs that are hard to read
+	//using MaterialDataVariant =	std::variant<FlatColourMaterialData, LitColourMaterialData>;
+
+	enum class eMaterialType {kSolidColour, kBlinnPhong, kTextured, kPBR};
 
 	constexpr uint32_t kMaxMaterialInstances = 512;
 
@@ -19,10 +23,13 @@ namespace Aether
 	{
 	public:
 		Material(PipelineHandle pipeline, uint32_t dataStride, eMaterialType type)
-			: m_Pipeline(pipeline), m_DataStride(dataStride), m_Type(type) {
-		}
+			: m_Pipeline(pipeline), m_DataStride(dataStride), m_Type(type)
+		{}
 
 		virtual ~Material() = default;
+
+		// Used to initialise a new material instance
+		void InitialiseDefaults(void* instanceData) const;
 
 		const eMaterialType GetType() const { return m_Type; }
 

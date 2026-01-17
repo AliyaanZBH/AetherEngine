@@ -31,6 +31,8 @@ namespace Aether
 
 		const eProjectionType GetProjectionType()	const { return m_ProjectionType; }
 
+		const glm::vec3 GetPosition() const { return m_Position; }
+
 		const glm::mat4& GetView()			const { return m_View; }
 		const glm::mat4& GetProjection()	const { return m_Projection; }
 		const glm::mat4 GetViewProj()		const { return m_Projection * m_View; }

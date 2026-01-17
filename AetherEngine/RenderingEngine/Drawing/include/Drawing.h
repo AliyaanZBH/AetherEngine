@@ -15,6 +15,27 @@
 
 namespace Aether
 {
+	namespace Colours
+	{
+		const glm::vec4 kPureBlack = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+		const glm::vec4 kPureWhite = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+
+		const glm::vec4 kGunmetalGrey = glm::vec4(0.068f, 0.068f, 0.068f, 0.965f);
+		const glm::vec4 kAetherGold = glm::vec4(1.f, 0.8f, 0.f, 1.f);
+
+		const glm::vec4 kPureRed = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
+		const glm::vec4 kPureGreen = glm::vec4(0.0f, 1.0f, 0.0f, 1.0f);
+		const glm::vec4 kPureBlue = glm::vec4(0.0f, 0.0f, 1.0f, 1.0f);
+
+		const glm::vec4 kDarkRed = glm::vec4(0.8f, 0.0f, 0.0f, 1.0f);
+		const glm::vec4 kDarkGreen = glm::vec4(0.0f, 0.8f, 0.0f, 1.0f);
+		const glm::vec4 kDarkBlue = glm::vec4(0.0f, 0.0f, 0.8f, 1.0f);
+
+		const glm::vec4 kYellow = glm::vec4(1.0f, 1.0f, 0.0f, 1.0f);
+		const glm::vec4 kMagenta = glm::vec4(1.0f, 0.0f, 1.0f, 1.0f);
+		const glm::vec4 kCyan = glm::vec4(0.0f, 1.0f, 1.0f, 1.0f);
+	};
+
 	struct Transform
 	{
 		glm::vec3 m_Position = glm::vec3(0.f);
@@ -35,9 +56,16 @@ namespace Aether
 	};
 
 
-	struct alignas(16) SolidColourMaterialData
+	struct alignas(16) FlatColourMaterialData
 	{
 		glm::vec4 m_Colour = glm::vec4(1.f);		// 16
+	};
+
+	struct alignas(16) LitColourMaterialData
+	{
+		glm::vec4 m_Diffuse = Colours::kAetherGold;		// 16
+		glm::vec3 m_SpecularR0 = glm::vec3(0.05f);		// 12
+		float m_Roughness = 0.5f;						// 4
 	};
 
 	struct alignas(16)  PerDrawData_Textured
@@ -54,23 +82,6 @@ namespace Aether
 		uint32_t m_NormalTexID;		// 4
 	};
 
-	namespace Colours
-	{
-		const glm::vec4 kPureBlack = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
-		const glm::vec4 kPureWhite = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
-
-		const glm::vec4 kPureRed = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
-		const glm::vec4 kPureGreen = glm::vec4(0.0f, 1.0f, 0.0f, 1.0f);
-		const glm::vec4 kPureBlue = glm::vec4(0.0f, 0.0f, 1.0f, 1.0f);
-
-		const glm::vec4 kDarkRed = glm::vec4(0.8f, 0.0f, 0.0f, 1.0f);
-		const glm::vec4 kDarkGreen = glm::vec4(0.0f, 0.8f, 0.0f, 1.0f);
-		const glm::vec4 kDarkBlue = glm::vec4(0.0f, 0.0f, 0.8f, 1.0f);
-
-		const glm::vec4 kYellow = glm::vec4(1.0f, 1.0f, 0.0f, 1.0f);
-		const glm::vec4 kMagenta = glm::vec4(1.0f, 0.0f, 1.0f, 1.0f);
-		const glm::vec4 kCyan = glm::vec4(0.0f, 1.0f, 1.0f, 1.0f);
-	};
 
 	enum class eDrawGeoType { kLine, kTri, kQuad, kCircle, kCube, kMesh };
 

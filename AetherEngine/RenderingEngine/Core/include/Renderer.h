@@ -71,18 +71,27 @@ namespace Aether
 		static std::vector<DrawCommand> s_SolidColourCommandQueue;
 		static const std::string s_SolidColourPipeName;
 
+		static std::vector<DrawCommand> s_BlinnPhongSolidColourCommandQueue;
+		static const std::string s_BlinnPhongSolidColourPipeName;
+
 		static std::vector<DrawCommand> s_TexturedCommandQueue;
 
 
 		// Material objects
 		// Single Material object that can be reused for multiple geometry
-		static Aether::Material* s_SolidMat;
+		static Aether::Material* s_FlatSolidColourMat;
+		static Aether::Material* s_BlinnPhongLitSolidColourMat;
 
 		//
 		// Material data - shared across API
 		//
-		static std::vector<uint8_t> s_MaterialDataCPU;
-		static Buffer* s_MaterialDataGPU;
+
+		static std::vector<uint8_t> s_SolidColourMaterialDataCPU;
+		static Buffer* s_SolidColourMaterialDataGPU;
+
+		static std::vector<uint8_t> s_BPMaterialDataCPU;
+		static Buffer* s_BPMaterialDataGPU;
+
 		static uint32_t s_NextMatIdx;
 
 		//
