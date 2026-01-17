@@ -1,11 +1,13 @@
-#
-# Set renderer-specific implementations
-#
-
 # Specify the precompiled header file first
 set(PCH_HEADER "PCH/AetherPCH.h")
 
-# Specify the source files
+#  Use cool glob to automatically grab all our header files in one go and avoid manually adding them every time we make new ones
+file(GLOB_RECURSE INCLUDE "${CMAKE_CURRENT_SOURCE_DIR}/**/*.h")
+
+# Filter out the third-party stuff, they'll be built separately
+list(FILTER INCLUDE EXCLUDE REGEX ".*/ThirdParty/.*")
+
+# Source files need to be specified manually as they define build order and using a glob will not trigger a reconfigure of the CMake cache when we add source files
 set(SRC
     
     Core/src/CoreApp.cpp 
@@ -16,29 +18,22 @@ set(SRC
     Core/src/Renderer.cpp
     Core/src/LayerStack.cpp
 
+    # Input
     Input/src/Input.cpp
     Input/src/CameraController.cpp
 
+    # Windows
     Window/src/WindowGLFW.cpp
 
-    #
     # Graphics Primitives
-    #
-
     Graphics/src/Shader.cpp
     Graphics/src/Pipeline.cpp
 
-    #
-    # Materials
-    #
-    
+    # Materials    
     Materials/src/Material.cpp
     Materials/src/MaterialInstance.cpp
 
-    #
     # DirectX Implementations
-    #
-
     RendererBackend/DirectX/src/RendererDX11.cpp
     RendererBackend/DirectX/src/BufferDX11.cpp
     RendererBackend/DirectX/src/PipelineDX11.cpp
@@ -48,154 +43,54 @@ set(SRC
     RendererBackend/DirectX/src/BufferDX12.cpp
     RendererBackend/DirectX/src/ShaderDX12.cpp
 
-    #
     # OpenGL Implementations
-    #
-
     RendererBackend/OpenGL/src/RendererOpenGL.cpp
     RendererBackend/OpenGL/src/ShaderOpenGL.cpp
     RendererBackend/OpenGL/src/BufferOpenGL.cpp
     RendererBackend/OpenGL/src/PipelineOpenGL.cpp
 
+    # Layers
     Layers/src/ImGuiLayer.cpp
 )
 
-set(INCLUDE
+# Grab shaders via glob too
+file(GLOB_RECURSE HLSL_SHADERS "${CMAKE_CURRENT_SOURCE_DIR}/Shaders/DirectX/*.hlsl")
+file(GLOB_RECURSE GLSL_SHADERS "${CMAKE_CURRENT_SOURCE_DIR}/Shaders/OpenGL/*.glsl")
 
-    EntryPoint.h
+# Run through our hlsl shaders and configure each shader in turn for a smooth MSVC setup!
+foreach(shader ${HLSL_SHADERS})
+    get_filename_component(FILE_NAME ${shader} NAME)
 
-    # Core
-    Core/include/Aether.h
-    Core/include/Core.h
-    Core/include/AetherUtils.h
-    Core/include/CoreApp.h
-    Core/include/Camera.h
-    Core/include/Log.h
-    Core/include/AetherTime.h
-    Core/include/Event.h
-    Core/include/Layer.h
-    Core/include/LayerStack.h
-    Core/include/Renderer.h
-    Core/include/Window.h
-    
-    # Input
-    Input/include/InputCodes.h
-    Input/include/Input.h
-    Input/include/CameraController.h
+    # Set shader type based on suffix
 
+    if (FILE_NAME MATCHES ".*VS\\.hlsl$")
+        set(SHADER_TYPE "vs")
+    elseif (FILE_NAME MATCHES ".*PS\\.hlsl$")
+        set(SHADER_TYPE "ps")
+    elseif (FILE_NAME MATCHES ".*CS\\.hlsl$")
+        set(SHADER_TYPE "cs")
+    elseif (FILE_NAME MATCHES ".*GS\\.hlsl$")
+        set(SHADER_TYPE "gs")
+    else()
+        message(FATAL_ERROR "Unknown shader stage for ${FILE_NAME}")
+    endif()
 
-    # Interfaces
-    RendererBackend/interface/IRendererBackend.h
-    Window/interface/IWindow.h
-
-    Window/include/WindowContext.h
-    Window/include/WindowGLFW.h
-
-    #
-    # Graphics Primitives
-    #
-
-    Graphics/include/GraphicsContext.h
-    Graphics/include/DrawCommand.h
-    Graphics/include/GraphicsCommon.h
-    Graphics/include/Shader.h
-    Graphics/include/Buffer.h
-    Graphics/include/Vertex.h
-    Graphics/include/Pipeline.h
-
-    #
-    #   Materials
-    #
-
-    Materials/include/Material.h
-    Materials/include/MaterialInstance.h
-    
-
-    #
-    # DirectX
-    #
-
-    RendererBackend/DirectX/include/D3DUtils.h
-    
-    # DX11
-    #
-    RendererBackend/DirectX/include/RendererDX11.h
-    RendererBackend/DirectX/include/BufferDX11.h
-    RendererBackend/DirectX/include/ShaderDX11.h
-    RendererBackend/DirectX/include/PipelineDX11.h
-    
-    # DX12
-    #
-    RendererBackend/DirectX/include/RendererDX12.h
-    RendererBackend/DirectX/include/ImGuiDX12.h
-    RendererBackend/DirectX/include/LinearAllocatorDX12.h
-    RendererBackend/DirectX/include/BufferDX12.h
-    RendererBackend/DirectX/include/ShaderDX12.h
-
-
-    #
-    # OpenGL
-    #
-
-    RendererBackend/OpenGL/include/RendererOpenGL.h
-    RendererBackend/OpenGL/include/ShaderOpenGL.h
-    RendererBackend/OpenGL/include/BufferOpenGL.h
-    RendererBackend/OpenGL/include/PipelineOpenGL.h
-
-    # Events
-    Events/include/EventContext.h
-    Events/include/KeyEvent.h
-    Events/include/MouseEvent.h
-    Events/include/AppEvent.h
-
-    # Layers
-    Layers/include/ImGuiLayer.h
-
-    # Drawing
-    Drawing/include/Drawing.h
-
-
-    # Miscellaneous third-party includes
-    ThirdParty/dx12Helper/include/d3dx12.h
- )
-
-# Specify shaders
-set(HLSL_SHADER_FILES
-
-    Shaders/DirectX/FlatSolidColourVertexShader.hlsl
-    Shaders/DirectX/FlatSolidColourPixelShader.hlsl
-)
-
-# Extra steps for HLSL and MSVC
-set_source_files_properties(${HLSL_SHADER_FILES} PROPERTIES ShaderModel "5_0")
-set_source_files_properties(Shaders/DirectX/FlatSolidColourVertexShader.hlsl PROPERTIES ShaderType "vs")
-set_source_files_properties(Shaders/DirectX/FlatSolidColourPixelShader.hlsl PROPERTIES ShaderType "ps")
-
-# Repeat for GLSL
-set(GLSL_SHADER_FILES
-
-    Shaders/OpenGL/FlatSolidColourVertexShader.glsl
-    Shaders/OpenGL/FlatSolidColourPixelShader.glsl
-    Shaders/OpenGL/LitBPVertexShader.glsl
-    Shaders/OpenGL/LitBPPixelShader.glsl
-)
-
-
+    # Set source file properties for the file
+    set_source_files_properties(${shader} PROPERTIES ShaderType ${SHADER_TYPE} ShaderModel "5_0")
+endforeach()
 
 # Define the target - we want a DLL for development and a static lib (for the juicy optimisations) when shipping.
-# Decide library type based on config
-message( ${CMAKE_BUILD_TYPE})
 if(CMAKE_BUILD_TYPE STREQUAL "Shipping")
-    add_library(AetherRenderer STATIC ${SRC} ${INCLUDE})
+    add_library(AetherRenderer STATIC ${SRC})
 else()
-    add_library(AetherRenderer SHARED ${SRC} ${INCLUDE})
+    add_library(AetherRenderer SHARED ${SRC})
     
     # This macro ensures that engine functions are exported when building a DLL - This is undefined in the application and which will import them instead! And when static linking, this define gets superseded and is ignored. 
     # See Core.h for implementation
     target_compile_definitions(AetherRenderer PRIVATE AETHER_BUILD_DLL)
 endif()
 
-# Link config to propogate configuration macros
+# Link config to propogate configuration macros so we can write debug code
 target_link_libraries(AetherRenderer PRIVATE AetherConfig)
 
 # Enable PCH for Visual Studio
@@ -206,33 +101,32 @@ if (MSVC)
     #target_compile_options(AetherRenderer PRIVATE /sourceDependencies)
 endif()
 
-# Include directories for the DLL
+# Include directories for the engine - this actually affects build order
 target_include_directories(AetherRenderer
-                    # Certain things need to be public as the application target needs to see these interfaces. Detailed implementations can remain private
-                    PUBLIC
-                            Core/include 
-                            Graphics/include
-                            Drawing/include
-                            Materials/include
-                            Input/include
-
-                    PRIVATE 
-                            ${PROJECT_SOURCE_DIR}/include
-                            Window/interface
-                            Window/include
-                            RendererBackend/interface
-                            RendererBackend/DirectX/include
-                            RendererBackend/OpenGL/include
-                            Events/include
-                            Layers/include
-                            ThirdParty/dx12Helper/include
+    # Certain things need to be public as the application target needs to see these interfaces. Detailed implementations can remain private
+    PUBLIC
+        Core/include 
+        Graphics/include
+        Drawing/include
+        Materials/include
+        Input/include
+    
+    PRIVATE 
+        ${PROJECT_SOURCE_DIR}/include   # Global entry point lives here, could (should?) move this up to the root directory that houses the engine and the game
+        Window/interface
+        Window/include
+        RendererBackend/interface
+        RendererBackend/DirectX/include
+        RendererBackend/OpenGL/include
+        Events/include
+        Layers/include
+        ThirdParty/dx12Helper/include
 )
-
 
 # Set source groups for VS2022 quality of life
 source_group("src" FILES ${SRC})
 source_group("include" FILES ${INCLUDE})
-source_group("shaders" FILES ${HLSL_SHADER_FILES} ${GLSL_SHADER_FILES})
+source_group("shaders" FILES ${HLSL_SHADERS} ${GLSL_SHADERS})
 
 #
 # Third-party libraries and subdirectories (subdirectories only for projects that contain a CMakeLists file)
@@ -327,10 +221,9 @@ endif()
 
 
 # Build HLSL shaders
-foreach(FILE ${HLSL_SHADER_FILES})
+foreach(FILE ${HLSL_SHADERS})
     get_filename_component(FILE_WE ${FILE} NAME_WE)
     # Create list of compiled and raw shader files
-    list(APPEND RAW_HLSL_SHADER_FILES  ${CMAKE_CURRENT_SOURCE_DIR}/${FILE})
     list(APPEND CSO_SHADER_FILES ${CMAKE_CURRENT_BINARY_DIR}/${FILE_WE}.cso)
     
     get_source_file_property(shadertype ${FILE} ShaderType)
@@ -349,13 +242,8 @@ foreach(FILE ${HLSL_SHADER_FILES})
     )
 endforeach(FILE)
 
-# Create a list of full paths to our GLSL files too
-foreach(FILE ${GLSL_SHADER_FILES})
-    list(APPEND RAW_GLSL_SHADER_FILES  ${CMAKE_CURRENT_SOURCE_DIR}/${FILE})
-endforeach(FILE)
-
 # Create a target for shaders - using snake_case to denote that this is an intermediate target only
-add_custom_target(aether_shaders DEPENDS ${CSO_SHADER_FILES} ${GLSL_SHADER_FILES})
+add_custom_target(aether_shaders DEPENDS ${CSO_SHADER_FILES} ${GLSL_SHADERS})
 
 # Make renderer depend on shader compilation
 add_dependencies(AetherRenderer aether_shaders)
@@ -371,9 +259,8 @@ add_custom_target(deploy_shaders ALL
     COMMAND ${CMAKE_COMMAND} -E make_directory ${SHADER_DEST_DIRECTX}
     COMMAND ${CMAKE_COMMAND} -E make_directory ${SHADER_DEST_OPENGL}
     COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CSO_SHADER_FILES} ${SHADER_DEST_DIRECTX} COMMAND_EXPAND_LISTS
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${RAW_HLSL_SHADER_FILES} ${SHADER_DEST_DIRECTX} COMMAND_EXPAND_LISTS
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${RAW_GLSL_SHADER_FILES} ${SHADER_DEST_OPENGL} COMMAND_EXPAND_LISTS
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${HLSL_SHADERS} ${SHADER_DEST_DIRECTX} COMMAND_EXPAND_LISTS
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${GLSL_SHADERS} ${SHADER_DEST_OPENGL} COMMAND_EXPAND_LISTS
     COMMENT "Deploying AetherEngine shaders..."
     COMMAND ${CMAKE_COMMAND} -E echo "Engine shader files deployed!"
 )
-

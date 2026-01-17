@@ -17,7 +17,7 @@ set(INCLUDE
 
 
 # Define the executable
-add_executable(AetherApp ${SRC} ${INCLUDE})
+add_executable(AetherApp ${SRC})
 
 # Include directories for the executable
 target_include_directories(AetherApp PRIVATE 

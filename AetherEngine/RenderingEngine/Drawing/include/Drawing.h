@@ -61,6 +61,7 @@ namespace Aether
 		glm::vec4 m_Colour = glm::vec4(1.f);		// 16
 	};
 
+	// Uses a modern Blinn-Phong implementatin
 	struct alignas(16) LitColourMaterialData
 	{
 		glm::vec4 m_Diffuse = Colours::kAetherGold;		// 16
@@ -68,13 +69,13 @@ namespace Aether
 		float m_Roughness = 0.5f;						// 4
 	};
 
-	struct alignas(16)  PerDrawData_Textured
+	struct alignas(16) PerDrawData_Textured
 	{
 		glm::vec4 m_Tint = glm::vec4(1.f);			// 16
 		uint32_t m_TextureID = 0u;					// 4
 	};
 
-	struct alignas(16)  PerDrawData_PBR
+	struct alignas(16) PerDrawData_PBR
 	{
 		float m_Roughness;			// 4
 		float m_Metallic;			// 4

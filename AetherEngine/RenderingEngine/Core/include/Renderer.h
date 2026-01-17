@@ -68,30 +68,34 @@ namespace Aether
 		static std::unique_ptr<IRendererBackend> s_RendererBackend;
 
 		// Per-frame render lists, separated by material
-		static std::vector<DrawCommand> s_SolidColourCommandQueue;
-		static const std::string s_SolidColourPipeName;
+		static std::vector<DrawCommand> s_FlatColourCommandQueue;
+		static const std::string s_FlatColourPipeName;
 
-		static std::vector<DrawCommand> s_BlinnPhongSolidColourCommandQueue;
-		static const std::string s_BlinnPhongSolidColourPipeName;
+		static std::vector<DrawCommand> s_LitColourCommandQueue;
+		static const std::string s_LitColourPipeName;
 
 		static std::vector<DrawCommand> s_TexturedCommandQueue;
 
 
+		//
 		// Material objects
+		//  
+		
 		// Single Material object that can be reused for multiple geometry
-		static Aether::Material* s_FlatSolidColourMat;
-		static Aether::Material* s_BlinnPhongLitSolidColourMat;
+		static Aether::Material* s_FlatColourMat;
+		static Aether::Material* s_LitColourMat;
 
 		//
-		// Material data - shared across API
+		// Material data buffers 
 		//
 
-		static std::vector<uint8_t> s_SolidColourMaterialDataCPU;
-		static Buffer* s_SolidColourMaterialDataGPU;
+		static std::vector<uint8_t> s_FlatColourMaterialDataCPU;
+		static Buffer* s_FlatColourMaterialDataGPU;
 
-		static std::vector<uint8_t> s_BPMaterialDataCPU;
-		static Buffer* s_BPMaterialDataGPU;
+		static std::vector<uint8_t> s_LitColourMaterialDataCPU;
+		static Buffer* s_LitColourMaterialDataGPU;
 
+		// Global material instance index
 		static uint32_t s_NextMatIdx;
 
 		//

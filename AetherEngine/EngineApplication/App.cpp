@@ -97,8 +97,8 @@ public:
 
 		// Update rotations
 		m_CubeSmoothTransform.m_Rotation.y += Aether::Time::GetDT() * 0.75f;
-		m_CubeRoughTransform.m_Rotation.y += Aether::Time::GetDT() * 0.75f;
-		m_CubeAverageTransform.m_Rotation.y += Aether::Time::GetDT() * 0.75f;
+		m_CubeRoughTransform.m_Rotation.y -= Aether::Time::GetDT() * 0.75f;
+		m_CubeAverageTransform.m_Rotation.z += Aether::Time::GetDT() * 0.75f;
 	}
 
 	void Render() override

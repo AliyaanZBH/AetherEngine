@@ -37,22 +37,22 @@
 namespace Aether
 {
     std::unique_ptr<IRendererBackend> Renderer::s_RendererBackend = nullptr;
-    std::vector<DrawCommand> Renderer::s_SolidColourCommandQueue = {};
-    std::vector<DrawCommand> Renderer::s_BlinnPhongSolidColourCommandQueue = {};
+    std::vector<DrawCommand> Renderer::s_FlatColourCommandQueue = {};
+    std::vector<DrawCommand> Renderer::s_LitColourCommandQueue = {};
     std::vector<DrawCommand> Renderer::s_TexturedCommandQueue = {};
 
-    const std::string Renderer::s_SolidColourPipeName = "SolidColour";
-    const std::string Renderer::s_BlinnPhongSolidColourPipeName = "BlinnPhong";
+    const std::string Renderer::s_FlatColourPipeName = "SolidColour";
+    const std::string Renderer::s_LitColourPipeName = "BlinnPhong";
 
     // Materials
-    Material* Renderer::s_FlatSolidColourMat;
-    Material* Renderer::s_BlinnPhongLitSolidColourMat;
+    Material* Renderer::s_FlatColourMat;
+    Material* Renderer::s_LitColourMat;
 
-    std::vector<uint8_t> Renderer::s_SolidColourMaterialDataCPU;
-    Buffer* Renderer::s_SolidColourMaterialDataGPU = nullptr;
+    std::vector<uint8_t> Renderer::s_FlatColourMaterialDataCPU;
+    Buffer* Renderer::s_FlatColourMaterialDataGPU = nullptr;
 
-    std::vector<uint8_t> Renderer::s_BPMaterialDataCPU;
-    Buffer* Renderer::s_BPMaterialDataGPU = nullptr;
+    std::vector<uint8_t> Renderer::s_LitColourMaterialDataCPU;
+    Buffer* Renderer::s_LitColourMaterialDataGPU = nullptr;
 
     uint32_t Renderer::s_NextMatIdx = 0u;
 
@@ -127,8 +127,8 @@ namespace Aether
         s_RendererBackend->FinalizeUploads();
 
         // Reserve some space for our command queue up-front, to avoid re-allocations
-        s_SolidColourCommandQueue.reserve(128);
-        s_BlinnPhongSolidColourCommandQueue.reserve(128);
+        s_FlatColourCommandQueue.reserve(128);
+        s_LitColourCommandQueue.reserve(128);
         s_TexturedCommandQueue.reserve(128);
 
         // Create constant buffers for per-frame and per-draw data
@@ -229,13 +229,13 @@ namespace Aether
         {
             case eMaterialType::kSolidColour:
             {
-                s_SolidColourCommandQueue.push_back(cmd);
+                s_FlatColourCommandQueue.push_back(cmd);
                 break;
             }
 
             case eMaterialType::kBlinnPhong:
             {
-                s_BlinnPhongSolidColourCommandQueue.push_back(cmd);
+                s_LitColourCommandQueue.push_back(cmd);
                 break;
             }
 
@@ -264,14 +264,14 @@ namespace Aether
         {
             case eMaterialType::kSolidColour:
             {
-                cpuBuffer = &s_SolidColourMaterialDataCPU;
-                gpuBuffer = s_SolidColourMaterialDataGPU;
+                cpuBuffer = &s_FlatColourMaterialDataCPU;
+                gpuBuffer = s_FlatColourMaterialDataGPU;
                 break;
             }
             case eMaterialType::kBlinnPhong:
             {
-                cpuBuffer = &s_BPMaterialDataCPU;
-                gpuBuffer = s_BPMaterialDataGPU;
+                cpuBuffer = &s_LitColourMaterialDataCPU;
+                gpuBuffer = s_LitColourMaterialDataGPU;
                 break;
             }
         }
@@ -300,12 +300,12 @@ namespace Aether
         {
             case eMaterialType::kSolidColour:
             {
-                gpuBuffer = s_SolidColourMaterialDataGPU;
+                gpuBuffer = s_FlatColourMaterialDataGPU;
                 break;
             }
             case eMaterialType::kBlinnPhong:
             {
-                gpuBuffer = s_BPMaterialDataGPU;
+                gpuBuffer = s_LitColourMaterialDataGPU;
                 break;
             }
         }
@@ -327,14 +327,14 @@ namespace Aether
     {
 
         // Iterate through our command queues and fire off draw commands. Set pipeline / render pass state once at the start
-        s_RendererBackend->BindPipeline(PipelineLibrary::Get().GetHandle(s_SolidColourPipeName));
+        s_RendererBackend->BindPipeline(PipelineLibrary::Get().GetHandle(s_FlatColourPipeName));
 
         // Pass up our material buffer as a global resource for this pass
-        s_RendererBackend->BindGlobalResources(s_SolidColourMaterialDataGPU);
+        s_RendererBackend->BindGlobalResources(s_FlatColourMaterialDataGPU);
 
         // TODO: Maybe further improve this by seperating render passes by Opaque and Transparent?
 
-        for (DrawCommand& cmd : s_SolidColourCommandQueue)
+        for (DrawCommand& cmd : s_FlatColourCommandQueue)
         {
             // Update constant buffer with data for this objects material
             PerDrawData data;
@@ -347,10 +347,10 @@ namespace Aether
         };
 
         // Repeat for all pipelines
-        s_RendererBackend->BindPipeline(PipelineLibrary::Get().GetHandle(s_BlinnPhongSolidColourPipeName));
-        s_RendererBackend->BindGlobalResources(s_BPMaterialDataGPU);
+        s_RendererBackend->BindPipeline(PipelineLibrary::Get().GetHandle(s_LitColourPipeName));
+        s_RendererBackend->BindGlobalResources(s_LitColourMaterialDataGPU);
 
-        for (DrawCommand& cmd : s_BlinnPhongSolidColourCommandQueue)
+        for (DrawCommand& cmd : s_LitColourCommandQueue)
         {
             // Update constant buffer with data for this objects material
             PerDrawData data;
@@ -365,8 +365,8 @@ namespace Aether
 
     void Renderer::Flush()
     {
-        s_SolidColourCommandQueue.clear();
-        s_BlinnPhongSolidColourCommandQueue.clear();
+        s_FlatColourCommandQueue.clear();
+        s_LitColourCommandQueue.clear();
         s_TexturedCommandQueue.clear();
     }
 
@@ -631,17 +631,17 @@ namespace Aether
         ShaderLibrary& shaders = ShaderLibrary::Get();
         ShaderDesc vsDesc
         {
-            .m_Name = "FlatSolidColourVertexShader",       // No extensions, ideally we have identical shaders for both GLSL and HLSL. Let the renderer API figure out which one it needs to loads
+            .m_Name = "FlatColourVS",       // No extensions, ideally we have identical shaders for both GLSL and HLSL. Let the renderer API figure out which one it needs to loads
             .m_ShaderStage = eShaderStage::kVertex
         };
-        ShaderHandle vsHandle = shaders.Register("FlatSolidColourVertexShader", vsDesc);
+        ShaderHandle vsHandle = shaders.Register("FlatColourVS", vsDesc);
 
         ShaderDesc psDesc
         {
-            .m_Name = "FlatSolidColourPixelShader",
+            .m_Name = "FlatColourPS",
             .m_ShaderStage = eShaderStage::kPixel
         };
-        ShaderHandle psHandle = shaders.Register("FlatSolidColourPixelShader", psDesc);
+        ShaderHandle psHandle = shaders.Register("FlatColourPS", psDesc);
 
         PipelineDesc pipelineDesc =
         {
@@ -652,16 +652,16 @@ namespace Aether
 
         // Register pipeline and store handle for use in material creation
         PipelineLibrary& pipelines = PipelineLibrary::Get();
-        PipelineHandle solidColourPipeline = pipelines.Register(s_SolidColourPipeName, pipelineDesc);
+        PipelineHandle solidColourPipeline = pipelines.Register(s_FlatColourPipeName, pipelineDesc);
 
         s_RendererBackend->CreatePipeline(pipelineDesc, solidColourPipeline);
 
         // Create and register the materials with this pipeline handle
         uint32_t materialStride = sizeof(FlatColourMaterialData);
-        s_FlatSolidColourMat = new Aether::Material(solidColourPipeline, materialStride, eMaterialType::kSolidColour);
+        s_FlatColourMat = new Aether::Material(solidColourPipeline, materialStride, eMaterialType::kSolidColour);
        
         MaterialLibrary& materials = MaterialLibrary::Get();
-        materials.Register(eMaterialType::kSolidColour, s_FlatSolidColourMat);
+        materials.Register(eMaterialType::kSolidColour, s_FlatColourMat);
 
         // Make sure our buffer for GPU material data is created too
         BufferDesc matBufDesc
@@ -673,20 +673,20 @@ namespace Aether
             .m_CPUVisible = true
         };
 
-        s_SolidColourMaterialDataGPU = s_RendererBackend->CreateBuffer(matBufDesc);
+        s_FlatColourMaterialDataGPU = s_RendererBackend->CreateBuffer(matBufDesc);
 
         // Repeat for as many pipelines as we want!
         //
 
-        ShaderHandle blinnPhongVS = shaders.Register("LitBPVertexShader", { "LitBPVertexShader", eShaderStage::kVertex });
-        ShaderHandle blinnPhongPS = shaders.Register("LitBPPixelShader", { "LitBPPixelShader", eShaderStage::kPixel });
+        ShaderHandle blinnPhongVS = shaders.Register("LitColourVS", { "LitColourVS", eShaderStage::kVertex });
+        ShaderHandle blinnPhongPS = shaders.Register("LitColourPS", { "LitColourPS", eShaderStage::kPixel });
         PipelineDesc blinnPhongDesc = { blinnPhongVS, blinnPhongPS, defaultLayout };
 
-        PipelineHandle blinnPhongHandle = pipelines.Register(s_BlinnPhongSolidColourPipeName, blinnPhongDesc);
+        PipelineHandle blinnPhongHandle = pipelines.Register(s_LitColourPipeName, blinnPhongDesc);
 
         uint32_t bpMatStride = sizeof(LitColourMaterialData);
-        s_BlinnPhongLitSolidColourMat = new Aether::Material(blinnPhongHandle, bpMatStride, eMaterialType::kBlinnPhong);
-        materials.Register(eMaterialType::kBlinnPhong, s_BlinnPhongLitSolidColourMat);
+        s_LitColourMat = new Aether::Material(blinnPhongHandle, bpMatStride, eMaterialType::kBlinnPhong);
+        materials.Register(eMaterialType::kBlinnPhong, s_LitColourMat);
         s_RendererBackend->CreatePipeline(blinnPhongDesc, blinnPhongHandle);
         BufferDesc bpMatBufDesc
         {
@@ -697,6 +697,6 @@ namespace Aether
             .m_CPUVisible = true
         };
 
-        s_BPMaterialDataGPU = s_RendererBackend->CreateBuffer(bpMatBufDesc);
+        s_LitColourMaterialDataGPU = s_RendererBackend->CreateBuffer(bpMatBufDesc);
     }
 }
