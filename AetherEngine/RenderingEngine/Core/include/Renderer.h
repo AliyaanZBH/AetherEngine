@@ -58,6 +58,9 @@ namespace Aether
 		// Create a default high-level description for a rendering pipeline, built by the backend
 		static void CreateBackendPipeline();
 
+		// Small helper function to reduce code dupe by submitting all commands from a command queue
+		static void SubmitCommandQueue(std::vector<DrawCommand>& queue);
+
 		// Signal to backend API to execute the command queue
 		static void Dispatch();
 

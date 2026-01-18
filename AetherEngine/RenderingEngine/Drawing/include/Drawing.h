@@ -53,6 +53,13 @@ namespace Aether
 			modelMatrix = t  * r  * s;
 			return modelMatrix;
 		}
+
+		glm::mat4 CreateNormalMatrix() const
+		{
+			// This will implicitly cast the model matrix to a 3x3 which is all we need
+			glm::mat4 modelMatrix = CreateModelMatrix();
+			return glm::transpose(glm::inverse(modelMatrix));
+		}
 	};
 
 

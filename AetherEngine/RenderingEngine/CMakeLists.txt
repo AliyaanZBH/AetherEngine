@@ -34,20 +34,20 @@ set(SRC
     Materials/src/MaterialInstance.cpp
 
     # DirectX Implementations
-    RendererBackend/DirectX/src/RendererDX11.cpp
     RendererBackend/DirectX/src/BufferDX11.cpp
-    RendererBackend/DirectX/src/PipelineDX11.cpp
     RendererBackend/DirectX/src/ShaderDX11.cpp
+    RendererBackend/DirectX/src/PipelineDX11.cpp
+    RendererBackend/DirectX/src/RendererDX11.cpp
 
-    RendererBackend/DirectX/src/RendererDX12.cpp
     RendererBackend/DirectX/src/BufferDX12.cpp
     RendererBackend/DirectX/src/ShaderDX12.cpp
+    RendererBackend/DirectX/src/RendererDX12.cpp
 
     # OpenGL Implementations
-    RendererBackend/OpenGL/src/RendererOpenGL.cpp
-    RendererBackend/OpenGL/src/ShaderOpenGL.cpp
     RendererBackend/OpenGL/src/BufferOpenGL.cpp
+    RendererBackend/OpenGL/src/ShaderOpenGL.cpp
     RendererBackend/OpenGL/src/PipelineOpenGL.cpp
+    RendererBackend/OpenGL/src/RendererOpenGL.cpp
 
     # Layers
     Layers/src/ImGuiLayer.cpp

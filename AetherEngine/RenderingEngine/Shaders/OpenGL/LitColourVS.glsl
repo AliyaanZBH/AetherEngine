@@ -9,6 +9,7 @@ layout (std140, binding = 0) uniform PerFrameData
 layout (std140, binding = 1) uniform PerDrawData
 {
     mat4 u_ModelMatrix;
+    mat4 u_NormalMatrix;
     uint u_MaterialIndex;
 };
 
@@ -21,8 +22,7 @@ out vec3 v_Normal;
 void main()
 {
     v_WorldPos = u_ModelMatrix * a_Pos;
-    mat3 normMat = transpose(inverse(mat3(u_ModelMatrix)));
-    v_Normal = normalize(normMat * a_Norm);
+    v_Normal = normalize(mat3(u_NormalMatrix) * a_Norm);
 
     gl_Position = u_ViewProjection * v_WorldPos;
 }

@@ -3,11 +3,14 @@
 layout (std140, binding = 0) uniform PerFrameData
 {
     mat4 u_ViewProjection;
+    vec4 u_CameraPos;
+    uint u_MaterialIndex;
 };
 
 layout (std140, binding = 1) uniform PerDrawData
 {
     mat4 u_ModelMatrix;
+    mat4 u_NormalMatrix;
     uint u_MaterialIndex;
 };
 

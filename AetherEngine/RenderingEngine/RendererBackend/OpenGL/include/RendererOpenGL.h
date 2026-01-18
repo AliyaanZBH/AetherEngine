@@ -55,9 +55,5 @@ namespace Aether
 		
 		//std::unordered_map<VAOKey, GLuint, VAOKeyHasher> m_VAOCache;
 		std::unordered_map<PipelineHandle, GLuint> m_VAOCache;
-
-		BufferOpenGL* m_VertexBuffer = nullptr;
-		BufferOpenGL* m_IndexBuffer = nullptr;
-
 	};
 };

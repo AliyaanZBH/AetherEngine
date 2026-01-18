@@ -13,6 +13,7 @@ layout(std430, binding = 0) buffer MaterialBuffer
 layout (std140, binding = 1) uniform PerDrawData
 {
     mat4 u_ModelMatrix;
+    mat4 u_NormalMatrix;
     uint u_MaterialIndex;
 };
 

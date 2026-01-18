@@ -1,7 +1,7 @@
 struct VS_OUTPUT
 {
     float4 pos : SV_POSITION;
-    float4 colour : COLOR;
+    float3 normal : NORMAL;
 };
 
 struct MaterialData
@@ -14,6 +14,7 @@ StructuredBuffer<MaterialData> g_Materials : register(t0);
 cbuffer PerDrawData : register(b1)
 {
     float4x4 u_Model;
+    float4x4 u_NormalMatrix;
     uint u_MaterialIndex;
 };
 

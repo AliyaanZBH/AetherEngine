@@ -62,40 +62,6 @@ namespace Aether
 		const char* rendererString = (const char*)glGetString(GL_RENDERER);
 		const char* versionString = (const char*)glGetString(GL_VERSION);
 		AETHER_CORE_INFO("OpenGL Info:\n    Vendor: {0}\n    Device: {1}\n    GL Version & Driver: {2}", vendorString, rendererString, versionString);
-
-		// Create geometry itself - centered tri for now
-		Vertex verts[]
-		{
-			{ { -0.5f,	-0.5f,	0.f, 1.f},	{1.f, 0.f, 0.f} },
-			{ {  0.5f,	-0.5f,	0.f, 1.f},	{0.f, 1.f, 0.f} },
-			{ {  0.f,	 0.5f,	0.f, 1.f},	{0.f, 0.f, 1.f} }
-		};
-
-		// Create vertex buffer here with our fancy new buffer desc
-		BufferDesc vbDesc =
-		{
-			.m_Data = verts,
-			.m_SizeInBytes = sizeof(verts),
-			.m_Type = eBufferType::kVertex,
-			.m_CPUVisible = true
-		};
-
-		m_VertexBuffer = static_cast<BufferOpenGL*>(CreateBuffer(vbDesc));
-
-		// Memory has been allocated, now upload data to it
-		m_VertexBuffer->Upload(verts, vbDesc.m_SizeInBytes);
-
-		// Create indices and repeat
-		unsigned int indices[3] = { 0, 1, 2 };
-		BufferDesc ibDesc =
-		{
-			.m_Data = indices,	// We can skip this (as we did with verts) and it will default to nullptr, allowing us to manually upload data later. Supplying this causes an immediate upload
-			.m_SizeInBytes = sizeof(indices),
-			.m_Type = eBufferType::kIndex,
-			.m_CPUVisible = true
-		};
-		m_IndexBuffer = static_cast<BufferOpenGL*>(CreateBuffer(ibDesc));
-		m_IndexBuffer->Upload(indices, ibDesc.m_SizeInBytes);
 		
 		// Get depth testing turned on so we don't get weirdness (and also get those mad optimisations in too :D)
 		glEnable(GL_DEPTH_TEST);
@@ -153,23 +119,6 @@ namespace Aether
 
 	void RendererOpenGL::Render()
 	{
-		//// Uniform setup for varying colours!
-		//float deltaTime = glfwGetTime();
-		//
-		//// Bind and draw our geo!
-		//glBindVertexArray(m_VertexAttributeArray);
-		//
-		//glVertexArrayVertexBuffer(
-		//	m_VertexAttributeArray,
-		//	0,   // same index used when binding attributes for the VAO
-		//	m_VertexBuffer->GetHandle(),
-		//	0,
-		//	sizeof(Vertex)
-		//);
-		//
-		//// Bind index buffer
-		//glVertexArrayElementBuffer(m_VertexAttributeArray, m_IndexBuffer->GetHandle());
-		//glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, nullptr);
 	}
 
 	void RendererOpenGL::Submit(const DrawCommand& cmd, ConstantBufferView* cbv)
@@ -208,8 +157,7 @@ namespace Aether
 	
 	void RendererOpenGL::Terminate()
 	{
-		delete m_VertexBuffer;
-		delete m_IndexBuffer;
+
 	}
 
 	Buffer* RendererOpenGL::CreateBuffer(const BufferDesc& desc)

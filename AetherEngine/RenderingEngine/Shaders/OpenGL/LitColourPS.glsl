@@ -16,11 +16,13 @@ layout (std140, binding = 0) uniform PerFrameData
 {
     mat4 u_ViewProjection;
     vec4 u_CameraPos;
+    vec4 u_SunlightPos;
 };
 
 layout (std140, binding = 1) uniform PerDrawData
 {
     mat4 u_ModelMatrix;
+    mat4 u_NormalMatrix;
     uint u_MaterialIndex;
 };
 
@@ -42,7 +44,7 @@ void main()
     // Temp hardcoded light vec
     // TODO: Put this in Cbuffer so that we can move the light around!
     vec3 lightPos = vec3(100.0, 100.0, 100.0);
-    vec3 lightDir = normalize(lightPos - v_WorldPos.xyz);
+    vec3 lightDir = normalize(u_SunlightPos.xyz - v_WorldPos.xyz);
 
     vec3 viewDir = normalize(u_CameraPos.xyz - v_WorldPos.xyz);
 

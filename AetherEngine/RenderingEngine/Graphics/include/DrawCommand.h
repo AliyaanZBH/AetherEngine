@@ -21,6 +21,7 @@ namespace Aether
 		IndexBufferView* m_IBV;
 		MaterialInstance* m_MaterialInstance;
 		glm::mat4 m_ModelMatrix;
+		glm::mat4 m_NormalMatrix;
 		//glm::vec4[4] m_PerVertexColour;
 		//const Mesh* m_Mesh = nullptr;
 	};

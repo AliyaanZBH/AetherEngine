@@ -161,6 +161,8 @@ namespace Aether
         PerFrameData data;
         data.m_ViewProj = camera.GetViewProj();
         data.m_CameraPos = glm::vec4(camera.GetPosition(), 1.0f);
+        // TODO: Make this moveable!
+        data.m_SunlightPos = glm::vec4(glm::vec3(100.f), 1.f);
 
         s_PerFrameBuffer->Upload(&data, sizeof(PerFrameData));
         s_RendererBackend->BindFrameConstants(&s_PerFrameCBView);
@@ -189,6 +191,7 @@ namespace Aether
     {
         DrawCommand cmd;
         cmd.m_ModelMatrix = transform.CreateModelMatrix();
+        cmd.m_NormalMatrix = transform.CreateNormalMatrix();
         cmd.m_MaterialInstance = mat;
 
         // Switch on draw type and bind correct geo buffers
@@ -322,45 +325,40 @@ namespace Aether
     //
     // Dispatch rendering
     //
-
-    void Renderer::Dispatch()
+  
+    void Renderer::SubmitCommandQueue(std::vector<DrawCommand>& queue)
     {
-
-        // Iterate through our command queues and fire off draw commands. Set pipeline / render pass state once at the start
-        s_RendererBackend->BindPipeline(PipelineLibrary::Get().GetHandle(s_FlatColourPipeName));
-
-        // Pass up our material buffer as a global resource for this pass
-        s_RendererBackend->BindGlobalResources(s_FlatColourMaterialDataGPU);
-
-        // TODO: Maybe further improve this by seperating render passes by Opaque and Transparent?
-
-        for (DrawCommand& cmd : s_FlatColourCommandQueue)
+        for (DrawCommand& cmd : queue)
         {
             // Update constant buffer with data for this objects material
             PerDrawData data;
             data.m_ModelMatrix = cmd.m_ModelMatrix;
-            data.m_MaterialIndex = cmd.m_MaterialInstance->GetMaterialIndex();
-            s_PerDrawBuffer->Upload(&data, sizeof(data));  
-            
-            // Submit the draw command for rendering, along with this draw calls CBV
-            s_RendererBackend->Submit(cmd, &s_PerDrawCBView);
-        };
-
-        // Repeat for all pipelines
-        s_RendererBackend->BindPipeline(PipelineLibrary::Get().GetHandle(s_LitColourPipeName));
-        s_RendererBackend->BindGlobalResources(s_LitColourMaterialDataGPU);
-
-        for (DrawCommand& cmd : s_LitColourCommandQueue)
-        {
-            // Update constant buffer with data for this objects material
-            PerDrawData data;
-            data.m_ModelMatrix = cmd.m_ModelMatrix;
+            data.m_NormalMatrix = cmd.m_NormalMatrix;
             data.m_MaterialIndex = cmd.m_MaterialInstance->GetMaterialIndex();
             s_PerDrawBuffer->Upload(&data, sizeof(data));
 
             // Submit the draw command for rendering, along with this draw calls CBV
             s_RendererBackend->Submit(cmd, &s_PerDrawCBView);
-        };
+        }
+    }
+
+    void Renderer::Dispatch()
+    {
+
+        // Set pipeline / render pass state once at the start
+        s_RendererBackend->BindPipeline(PipelineLibrary::Get().GetHandle(s_FlatColourPipeName));
+
+        // Pass up our material buffer as a global resource for this pass
+        s_RendererBackend->BindGlobalResources(s_FlatColourMaterialDataGPU);
+
+        // Iterate through our command queue and fire off draw commands.
+        // TODO: Maybe further improve this by seperating render passes by Opaque and Transparent?
+        SubmitCommandQueue(s_FlatColourCommandQueue);
+
+        // Repeat for all pipelines
+        s_RendererBackend->BindPipeline(PipelineLibrary::Get().GetHandle(s_LitColourPipeName));
+        s_RendererBackend->BindGlobalResources(s_LitColourMaterialDataGPU);
+        SubmitCommandQueue(s_LitColourCommandQueue);
     }
 
     void Renderer::Flush()
