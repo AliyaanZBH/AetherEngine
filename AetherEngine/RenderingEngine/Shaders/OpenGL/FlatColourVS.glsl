@@ -4,7 +4,7 @@ layout (std140, binding = 0) uniform PerFrameData
 {
     mat4 u_ViewProjection;
     vec4 u_CameraPos;
-    uint u_MaterialIndex;
+    uint u_SunlightPos;
 };
 
 layout (std140, binding = 1) uniform PerDrawData

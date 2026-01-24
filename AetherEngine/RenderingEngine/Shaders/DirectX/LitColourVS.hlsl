@@ -15,6 +15,7 @@ cbuffer PerFrameData : register(b0)
 {
     float4x4 u_ViewProjection;
     float4 u_CameraPos;
+    float4 u_SunlightPos;
 }
 
 cbuffer PerDrawData : register(b1)
@@ -30,7 +31,8 @@ VS_OUTPUT main(VS_INPUT input)
     
     float4 world = mul(u_ModelMatrix, input.pos);
     output.worldPos = world;
-    output.normal = normalize(mul(u_NormalMatrix, input.normal));
+    // Take top left corner or normal matrix
+    output.normal = normalize(mul((float3x3)u_NormalMatrix, input.normal));
     output.pos = mul(u_ViewProjection, world);
     
     return output;

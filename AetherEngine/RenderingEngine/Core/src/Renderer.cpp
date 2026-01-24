@@ -162,7 +162,7 @@ namespace Aether
         data.m_ViewProj = camera.GetViewProj();
         data.m_CameraPos = glm::vec4(camera.GetPosition(), 1.0f);
         // TODO: Make this moveable!
-        data.m_SunlightPos = glm::vec4(glm::vec3(100.f), 1.f);
+        data.m_SunlightPos = glm::vec4(-100.f, 100.f, -100.f, 1.f);
 
         s_PerFrameBuffer->Upload(&data, sizeof(PerFrameData));
         s_RendererBackend->BindFrameConstants(&s_PerFrameCBView);
